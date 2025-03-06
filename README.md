@@ -14,21 +14,21 @@ Our task is to create an Order Creation API that is compliant / acts as a soluti
 
 # API Content
 
-Expected Input : User, Payment, and Delivery data.
+**Expected Input:** User, Payment, and Delivery data.
 
-Buyer and Seller Personal Information (Name, Phone, Email, ID, Address, Item Order, User ID.)
+  - Buyer and Seller Personal Information (Name, Phone, Email, ID, Address, Item Order, User ID.)
 
-Payment Information (Credit Card details, Bank Account details.)
+  - Payment Information (Credit Card details, Bank Account details.)
 
-Delivery Information (Postal Code, Location.)
+  - Delivery Information (Postal Code, Location.)
 
-Product Type (Item, Product ID, Size, Quantity, Description.)
+  - Product Type (Item, Product ID, Size, Quantity, Description.)
 
-Expected Output: Successful Order Placement.
+**Expected Output:** Successful Order Placement.
 
-A standardised UBL order document: from provided data (UBL XML document).
+  - A standardised UBL order document: based on the provided data (UBL XML document).
 
-Email notification: Sent to both buyer and seller at order confirmation
+  - Email notification: Sent to both buyer and seller at order confirmation
 
 # Value from a consumer’s perspective
 
@@ -48,47 +48,47 @@ The main motivation behind this project is to support small and medium-sized ent
 
 # Non-functional requirements
 
-Usability & Documentation
+**Usability & Documentation**
 
-Provide clear API documentation using Swagger
+  - Provide clear API documentation using Swagger
 
-Error messages must be descriptive and actionable.
+  - Error messages must be descriptive and actionable.
 
-Security
+**Security**
 
-Regular, automated database backups should be implemented to prevent data loss or breaches
+  - Regular, automated database backups should be implemented to prevent data loss or breaches
 
-Enforce rate limits (e.g., 100 requests per minute per user)
+  - Enforce rate limits (e.g., 100 requests per minute per user)
 
-Performance & Scalability
+**Performance & Scalability**
 
-The API must handle at least 100 concurrent users without performance degradation.
+  - The API must handle at least 100 concurrent users without performance degradation.
 
-Maintainability & Extensibility
+  - Maintainability & Extensibility
 
-The system must be modular, allowing easy integration of new features
+  - The system must be modular, allowing easy integration of new features
 
-Code should follow industry standards (RESTful API design)
+  - Code should follow industry standards (RESTful API design)
 
-Constraints
+# Constraints
 
-Technical & Performance: These define the system’s operational efficiency, reliability and scalability
+**Technical & Performance:** These define the system’s operational efficiency, reliability and scalability
 
-Limit user requests per minute to not overload the system
+  - Limit user requests per minute to not overload the system
 
-API responses must conform to UBL-compliant XML formats, and also have capability to convert to/from other file formats such as JSON, CSV, and JSV.
+  - API responses must conform to UBL-compliant XML formats, and also have capability to convert to/from other file formats such as JSON, CSV, and JSV.
 
-API should return meaningful error messages.
+  - API should return meaningful error messages.
 
-Minimal to zero bugs/errors to occur during use after deployment.
+  - Minimal to zero bugs/errors to occur during use after deployment.
 
-Support responsive use on multiple devices (phone, laptop, and PC)
+  - Support responsive use on multiple devices (phone, laptop, and PC)
 
-At the current stage of development, the system must be able to handle a minimum of a couple hundred concurrent users at a time.
+  - At the current stage of development, the system must be able to handle a minimum of a couple hundred concurrent users at a time.
 
-API should be optimised for speed, ensuring latency and fast response times
+  - API should be optimised for speed, ensuring latency and fast response times
 
-Team: This project involves team constraints, members have varying levels of expertise, with some being less experienced in specific fields than others. To maintain efficiency and productivity, efficient role assignment and task delegation must be done in a way that best suits each team member's abilities. 
+**Team:** This project involves team constraints, members have varying levels of expertise, with some being less experienced in specific fields than others. To maintain efficiency and productivity, efficient role assignment and task delegation must be done in a way that best suits each team member's abilities. 
 
 Role allocation must be based on individual strengths and prioritise an equal load
 
@@ -98,23 +98,23 @@ A robust peer review process must be enforced for both documentation as well as 
 
 For conflict resolution, GitHub will be utilised for version control
 
-Data: During this task, some data constraints exist that affect the operations of the whole project. As a team, we have to be aware of what data is distributed and shared. This may include:
+**Data:** During this task, some data constraints exist that affect the operations of the whole project. As a team, we have to be aware of what data is distributed and shared. This may include:
 
-User account limits: One email associated with each User / Account.
+  - User account limits: One email associated with each User / Account.
 
-Product stock: Limited stock, minimum/maximum order quantities
+  - Product stock: Limited stock, minimum/maximum order quantities
 
-Input validation:
+  - Input validation:
 
-User IDs should be authorised
+  - User IDs should be authorised
 
-API tokens must be valid
+  - API tokens must be valid
 
-Correct data types for each parameter
+  - Correct data types for each parameter
 
-OrderID should be in a specified format (eg, 5-number string or custom format like YYMMDD-XXX)
+  - OrderID should be in a specified format (eg, 5-number string or custom format like YYMMDD-XXX)
 
-Data privacy and security must be handled in a way that complies with regulation
+  - Data privacy and security must be handled in a way that complies with regulation
 
 # Target Audience
 
