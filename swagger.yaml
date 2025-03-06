@@ -1,0 +1,329 @@
+swagger: "2.0"
+info:
+  title: Order API
+  description: API for creating and managing orders with UBL XML document generation.
+  version: 1.0.0
+
+schemes:
+  - https
+
+tags:
+  - name: "Version 1"
+    description: Routes written in sprint 1
+  # - name: "Version 2"
+  #   description: Routes written in sprint 2
+  # - name: "Version 3"
+  #   description: Routes written in sprint 3
+  # - name: "Version 4"
+  #   description: Routes written in sprint 4
+
+paths:
+  /v1/order/create:
+    post:
+      summary: Creates an order and produces a UBL XML document.
+      description: Creates an order with items, user details, billing details, and delivery instructions.
+      tags:
+        - "Version 1"
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: order
+          required: true
+          schema:
+            $ref: "#/definitions/OrderRequest"
+      responses:
+        201:
+          description: Order created
+          schema:
+            type: object
+            properties:
+              orderId:
+                type: integer
+        400:
+          description: Bad request from client
+        401:
+          description: Token is unauthorized/invalid.
+
+  /v1/{userId}/order/{orderId}/change:
+    put:
+      summary: Edit an existing order with new details to update the UBL XML document.
+      description: Allows updating of order details, including items, user information, billing details, and delivery instructions.
+      tags:
+        - "Version 1"
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: integer
+        - name: orderId
+          in: path
+          required: true
+          type: integer
+        - in: body
+          name: updateDetails
+          schema:
+            $ref: "#/definitions/OrderUpdate"
+      responses:
+        201:
+          description: Order updated
+        400:
+          description: Bad request from client
+        401:
+          description: Token is unauthorized/invalid.
+
+  /v1/{userId}/order/{orderId}/cancel:
+    put:
+      summary: Cancel an order before dispatch.
+      description: Cancels an existing order and adds it to the user's cancel order history.
+      tags:
+        - "Version 1"
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: integer
+        - name: orderId
+          in: path
+          required: true
+          type: integer
+        - in: body
+          name: cancelRequest
+          schema:
+            type: object
+            properties:
+              reason:
+                type: string
+      responses:
+        200:
+          description: Order canceled
+          schema:
+            type: object
+            properties:
+              cancelled:
+                type: boolean
+              reason:
+                type: string
+        400:
+          description: Unknown orderId
+        404:
+          description: Order not found.
+
+  /v1/order/{orderId}/confirm:
+    put:
+      summary: Finalize and confirm order.
+      description: Finalizes the UBL XML document and adds it to the user’s successful order history.
+      tags:
+        - "Version 1"
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Order confirmed
+          schema:
+            type: object
+        400:
+          description: OrderId missing or invalid
+        404:
+          description: Order not found
+
+  /v1/order/{orderId}/send:
+    post:
+      summary: Send order confirmation via email.
+      description: Sends confirmation of order acceptance or rejection between buyer and seller.
+      tags:
+        - "Version 1"
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: emailDetails
+          required: true
+          schema:
+            $ref: "#/definitions/EmailRequest"
+        - name: orderId
+          in: path
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Order confirmation sent
+          schema:
+            $ref: "#/definitions/EmailResponse"
+        400:
+          description: OrderId missing or invalid
+        404:
+          description: Order not found
+
+  /v1/{userId}/order/history:
+    post:
+      summary: Retrieve user order history.
+      description: Retrieves the order history of the specific buyer.
+      tags:
+        - "Version 1"
+      produces:
+        - application/json
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Order history retrieved
+          schema:
+            $ref: "#/definitions/OrderHistory"
+        400:
+          description: UserId missing or invalid
+
+  /v1/{userId}/order/recommendation:
+    get:
+      summary: Recommend orders based on history.
+      description: Views trends in order history and recommends an order to the buyer.
+      tags:
+        - "Version 1"
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Recommended order
+          schema:
+            $ref: "#/definitions/OrderRecommendation"
+
+  /v1/order/{userId}/sales:
+    get:
+      summary: Send sales analytics data.
+      description: Sends analytical data to the product distributor. 
+      tags:
+        - "Version 1"
+      parameters:
+        - name: CSV
+          in: query
+          type: boolean
+          default: true
+        - name: JSON
+          in: query
+          type: boolean
+          default: true
+        - name: PDF
+          in: query
+          type: boolean
+          default: true
+        - name: userId
+          in: path
+          required: true
+          type: integer
+      responses:
+        200:
+          description: Sales data sent
+          schema:
+            type: object
+            # $ref: "#/definitions/SalesData"
+        400:
+          description: UserId missing or invalid
+
+definitions:
+  OrderRequest:
+    type: object
+    properties:
+      items:
+        type: array
+        items:
+          $ref: "#/definitions/Item"
+      user:
+        $ref: "#/definitions/User"
+      billingDetails:
+        $ref: "#/definitions/BillingDetails"
+      deliveryInstructions:
+        type: string
+  OrderUpdate:
+    type: object
+    properties:
+      items:
+        type: array
+        items:
+          $ref: "#/definitions/Item"
+  Item:
+    type: object
+    properties:
+      productId:
+        type: string
+      name:
+        type: string
+      price:
+        type: number
+      quantity:
+        type: integer
+  User:
+    type: object
+    properties:
+      userId:
+        type: integer
+      name:
+        type: string
+  BillingDetails:
+    type: object
+    properties:
+      creditCardNumber:
+        type: integer
+      CVV:
+        type: integer
+      expiryDate:
+        type: string
+  EmailRequest:
+    type: object
+    properties:
+      emailFrom:
+        type: string
+      emailTo:
+        type: string
+      status:
+        type: boolean
+  EmailResponse:
+    type: object
+    properties:
+      sellerConfirm:
+        type: boolean
+      buyerConfirm:
+        type: boolean
+  OrderHistory:
+    type: object
+    properties:
+      successfulOrders:
+        type: array
+        items: 
+          $ref: "#/definitions/OrderRequest"
+      cancelledOrders:
+        type: array
+        items: 
+          $ref: "#/definitions/OrderRequest"
+  OrderRecommendation:
+    type: object
+    properties:
+      recommendedOrder:
+        type: array
+        items: 
+          $ref: "#/definitions/OrderRequest"
+  # SalesData:
+  #   type: object
+  #   properties:
+  #     sales:
+  #       type: array
