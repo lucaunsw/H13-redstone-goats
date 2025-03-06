@@ -1,0 +1,32 @@
+{
+  "name": "h13-redstone-goats",
+  "version": "1.0.0",
+  "description": "**✨ 💖  SENG2021 💖  ✨**",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/server.js",
+    "dev": "ts-node src/server.ts",
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucaunsw/H13-redstone-goats.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lucaunsw/H13-redstone-goats/issues"
+  },
+  "homepage": "https://github.com/lucaunsw/H13-redstone-goats#readme",
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  }
+}
