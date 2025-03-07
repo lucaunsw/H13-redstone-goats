@@ -130,7 +130,7 @@ Our team will follow a few style conventions regarding general code, branch nami
   - iteration/Initials/Route Name/version
 
 **Commit messages:**
-  - [Initials][BUG/FIX/FEATURE/MERGE] reason for commit
+  - [Initials][BUG/FIX/FEAT/MERGE] reason for commit
 
 **Naming:**
   - Camel case (e.g firstName, userPassword)
