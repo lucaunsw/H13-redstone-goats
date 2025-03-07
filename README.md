@@ -120,3 +120,17 @@ For conflict resolution, GitHub will be utilised for version control
 
 Our team’s target audience consists of small—to medium-sized distribution businesses that seek to use an Order Creation API to convert their orders into an XML UBL-standardized document or create their own orders with a Seller. 
 
+# Style
+Our team will follow a few style conventions regarding general code, branch naming etc.
+
+**Indentation:**
+  - 2 spaces.
+
+**Branch naming:**
+  - iteration/Initials/Route Name/version
+
+**Commit messages:**
+  - [Initials][BUG/FIX/FEAT/MERGE] reason for commit
+
+**Naming:**
+  - Camel case (e.g firstName, userPassword)
