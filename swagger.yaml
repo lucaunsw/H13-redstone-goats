@@ -8,6 +8,8 @@ schemes:
   - https
 
 tags:
+  - name: "User Functions"
+    description: Routes for user account handling
   - name: "Version 1"
     description: Routes written in sprint 1
   # - name: "Version 2"
@@ -18,6 +20,95 @@ tags:
   #   description: Routes written in sprint 4
 
 paths:
+  /v1/user/register:
+    post:
+      summary: Register a new user.
+      description: Registers a new user and returns the userId.
+      tags:
+        - "User Functions"
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+              password:
+                type: string
+              nameFirst:
+                type: string
+              nameLast:
+                type: string
+      responses:
+        200: 
+          description: Sucess
+          schema: 
+            type: object
+            properties:
+              userId:
+                type: integer
+        400:
+          description: Bad request from client.
+        401:
+          description: Token is unauthorized/invalid.
+          
+  /v1/user/login:
+    post:
+      summary: Login an existing user
+      description: Authenticate a user with email and password.
+      tags:
+        - "User Functions"
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+              password:
+                type: string
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+            properties:
+              userId:
+                type: integer
+        400:
+          description: Bad request from client
+        401:
+          description: Token is unauthorized/invalid
+
+  /v1/user/logout:
+    post:
+      summary: Logout an existing user
+      description: Logout a user who has an active session.
+      tags:
+        - "User Functions"
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              userId:
+                type: integer
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+        400:
+          description: Bad request from client
+        401:
+          description: Token is unauthorized/invalid
+
   /v1/order/create:
     post:
       summary: Creates an order and produces a UBL XML document.
