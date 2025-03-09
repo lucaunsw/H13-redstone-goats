@@ -21,10 +21,14 @@
   },
   "homepage": "https://github.com/lucaunsw/H13-redstone-goats#readme",
   "dependencies": {
-    "express": "^4.21.2"
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "morgan": "^1.10.0"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/morgan": "^1.9.9",
     "@types/node": "^22.13.9",
     "@types/validator": "^13.12.2",
     "ts-node": "^10.9.2",
