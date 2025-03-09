@@ -1,4 +1,8 @@
 export type UserId = number;
+export type SessionId = string;
+
+// Special Helper type as {} is ambiguous
+export type EmptyObj = Record<string, never>;
 
 export interface UserData {
   nameFirst: string;
