@@ -1,4 +1,5 @@
 import express from "express";
+import config from "../config.json";
 import cors from "cors";
 import morgan from "morgan";
 
@@ -13,7 +14,7 @@ app.use(cors());
 // Middleware for logging HTTP requests
 app.use(morgan("dev"));
 
-const PORT = parseInt(process.env.PORT || "3000", 10);
+const PORT = parseInt(process.env.PORT || config.port);
 const HOST = process.env.IP || "127.0.0.1";
 
 // ===========================================================================
