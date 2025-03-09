@@ -43,7 +43,7 @@ paths:
                 type: string
       responses:
         200: 
-          description: Sucess
+          description: Success
           schema: 
             type: object
             properties:
@@ -231,35 +231,35 @@ paths:
         404:
           description: Order not found
 
-  /v1/order/{orderId}/send:
-    post:
-      summary: Send order confirmation via email.
-      description: Sends confirmation of order acceptance or rejection between buyer and seller.
-      tags:
-        - "Version 1"
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: emailDetails
-          required: true
-          schema:
-            $ref: "#/definitions/EmailRequest"
-        - name: orderId
-          in: path
-          required: true
-          type: integer
-      responses:
-        200:
-          description: Order confirmation sent
-          schema:
-            $ref: "#/definitions/EmailResponse"
-        400:
-          description: OrderId missing or invalid
-        404:
-          description: Order not found
+  # /v1/order/{orderId}/send:
+  #   post:
+  #     summary: Send order confirmation via email.
+  #     description: Sends confirmation of order acceptance or rejection between buyer and seller.
+  #     tags:
+  #       - "Version 1"
+  #     consumes:
+  #       - application/json
+  #     produces:
+  #       - application/json
+  #     parameters:
+  #       - in: body
+  #         name: emailDetails
+  #         required: true
+  #         schema:
+  #           $ref: "#/definitions/EmailRequest"
+  #       - name: orderId
+  #         in: path
+  #         required: true
+  #         type: integer
+  #     responses:
+  #       200:
+  #         description: Order confirmation sent
+  #         schema:
+  #           $ref: "#/definitions/EmailResponse"
+  #       400:
+  #         description: OrderId missing or invalid
+  #       404:
+  #         description: Order not found
 
   /v1/{userId}/order/history:
     post:
@@ -388,13 +388,13 @@ definitions:
         type: string
       status:
         type: boolean
-  EmailResponse:
-    type: object
-    properties:
-      sellerConfirm:
-        type: boolean
-      buyerConfirm:
-        type: boolean
+  # EmailResponse:
+  #   type: object
+  #   properties:
+  #     sellerConfirm:
+  #       type: boolean
+  #     buyerConfirm:
+  #       type: boolean
   OrderHistory:
     type: object
     properties:
