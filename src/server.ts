@@ -92,9 +92,9 @@ const HOST = process.env.IP || "127.0.0.1";
 //   res.json(result);
 // });
 
-// app.get("/", (req, res) => {
-//   res.send("Hello, Express with TypeScript!");
-// });
+app.get("/", (req, res) => {
+  res.send("Hello, Express with TypeScript!");
+});
 
 app.put("/v1/:userId/order/:orderId/cancel", (req: Request, res: Response) => {
   try {
