@@ -35,7 +35,9 @@
     "@types/node": "^22.13.9",
     "@types/validator": "^13.12.2",
     "jest": "^29.7.0",
+    "ts-jest": "^29.2.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
   }
+  
 }
