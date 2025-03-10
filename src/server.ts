@@ -7,13 +7,13 @@ import morgan from "morgan";
 import { ErrKind, SessionId, UserId, Err } from './types';
 import { randomUUID } from 'crypto';
 
-import {
-  userLogin,
-  userLogout,
-  userRegister,
-  userDetails,
-  userDetailsUpdate,
-} from './user';
+// import {
+//   userLogin,
+//   userLogout,
+//   userRegister,
+//   userDetails,
+//   userDetailsUpdate,
+// } from './user';
 
 const app = express();
 
@@ -33,68 +33,68 @@ const HOST = process.env.IP || "127.0.0.1";
 // ============================= ROUTES BELOW ================================
 // ===========================================================================
 
-// Custom middleware
-app.use((req: Request, res: Response, next: NextFunction) => {
-  // Check if we need to intercept a request (does it contain a token)
-  const token = req.query.token ?? req.body.token ?? req.headers.token;
-  if (token === undefined) {
-    return next();
-  }
+// // Custom middleware
+// app.use((req: Request, res: Response, next: NextFunction) => {
+//   // Check if we need to intercept a request (does it contain a token)
+//   const token = req.query.token ?? req.body.token ?? req.headers.token;
+//   if (token === undefined) {
+//     return next();
+//   }
 
-  const sessions = getData().userSessions;
-  if (!sessions.has(token)) {
-    throw new Err('Token does not refer to a valid, logged in session', ErrKind.ENOTOKEN);
-  }
+//   const sessions = getData().userSessions;
+//   if (!sessions.has(token)) {
+//     throw new Err('Token does not refer to a valid, logged in session', ErrKind.ENOTOKEN);
+//   }
 
-  // THE INCOMING userId is shoved into the BODY.token!!
-  req.body.token = sessions.get(token);
-  next();
-});
+//   // THE INCOMING userId is shoved into the BODY.token!!
+//   req.body.token = sessions.get(token);
+//   next();
+// });
 
-function makeFmtToken(userId: UserId): { token: SessionId } {
-  const sId = randomUUID();
-  getData().userSessions.set(sId, userId);
-  setData();
-  return { token: sId };
-}
-// END Custom middleware
+// function makeFmtToken(userId: UserId): { token: SessionId } {
+//   const sId = randomUUID();
+//   getData().userSessions.set(sId, userId);
+//   setData();
+//   return { token: sId };
+// }
+// // END Custom middleware
 
-app.post('/v1/user/logout', (req: Request, res: Response) => {
-  const token = req.body.token ?? req.headers.token;
-  const result = userLogout(token);
-  res.json(result);
-});
+// app.post('/v1/user/logout', (req: Request, res: Response) => {
+//   const token = req.body.token ?? req.headers.token;
+//   const result = userLogout(token);
+//   res.json(result);
+// });
 
-app.post('/v1/user/register', (req: Request, res: Response) => {
-  const { email, password, nameFirst, nameLast } = req.body;
-  const result = userRegister(email, password, nameFirst, nameLast);
-  res.json(makeFmtToken(result.userId));
-});
+// app.post('/v1/user/register', (req: Request, res: Response) => {
+//   const { email, password, nameFirst, nameLast } = req.body;
+//   const result = userRegister(email, password, nameFirst, nameLast);
+//   res.json(makeFmtToken(result.userId));
+// });
 
-app.post('/v1/user/login', (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  const result = userLogin(email, password);
+// app.post('/v1/user/login', (req: Request, res: Response) => {
+//   const { email, password } = req.body;
+//   const result = userLogin(email, password);
 
-  res.json(makeFmtToken(result.userId));
-});
+//   res.json(makeFmtToken(result.userId));
+// });
 
-app.get('/v1/user/details', (req: Request, res: Response) => {
-  const userId = req.body.token; // INTERCEPTED!!
-  const result = userDetails(userId);
+// app.get('/v1/user/details', (req: Request, res: Response) => {
+//   const userId = req.body.token; // INTERCEPTED!!
+//   const result = userDetails(userId);
 
-  // token interceptor should have handled this for us
-  res.json(result);
-});
+//   // token interceptor should have handled this for us
+//   res.json(result);
+// });
 
-app.put('/v1/user/details/update', (req: Request, res: Response) => {
-  const { token, email, nameFirst, nameLast } = req.body; // INTERCEPTED!
-  const result = userDetailsUpdate(token, email, nameFirst, nameLast);
-  res.json(result);
-});
+// app.put('/v1/user/details/update', (req: Request, res: Response) => {
+//   const { token, email, nameFirst, nameLast } = req.body; // INTERCEPTED!
+//   const result = userDetailsUpdate(token, email, nameFirst, nameLast);
+//   res.json(result);
+// });
 
-app.get("/", (req, res) => {
-  res.send("Hello, Express with TypeScript!");
-});
+// app.get("/", (req, res) => {
+//   res.send("Hello, Express with TypeScript!");
+// });
 
 app.put("/v1/:userId/order/:orderId/cancel", (req: Request, res: Response) => {
   try {
@@ -116,8 +116,6 @@ app.put("/v1/:userId/order/:orderId/cancel", (req: Request, res: Response) => {
     res.status(statusCode).json({ error: e.message });
   }
 });
-
-
 
 // ===========================================================================
 // ============================= ROUTES ABOVE ================================
