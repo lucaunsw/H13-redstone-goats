@@ -21,6 +21,15 @@ export enum ErrKind {
   ENOTOKEN = 401,
 }
 
+// We don't want this to be extensible
+export type UserDataSummary = {
+  userId: UserId;
+  name: string;
+  email: string;
+  numSuccessfulLogins: number;
+  numFailedPasswordsSinceLastLogin: number;
+};
+
 export class Err extends Error {
 public readonly kind: ErrKind;
 
