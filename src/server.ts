@@ -1,7 +1,7 @@
 import express from "express";
 import { Request, Response } from "express";
 import { orderCancel } from "./app";
-import config from "../config.json";
+import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
 
