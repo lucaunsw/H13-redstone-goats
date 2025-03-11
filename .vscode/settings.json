@@ -1,0 +1,24 @@
+{
+    "sqltools.connections": [
+        {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": false,
+                    "ca": "",
+                    "cert": "",
+                    "requestCert": true
+                }
+            },
+            "previewLimit": 50,
+            "server": "redstone-postgres.cwc3grcl9mtw.us-east-1.rds.amazonaws.com",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "PostgreSQL - Redstone",
+            "username": "postgredstone",
+            "database": "postgres",
+            "connectionTimeout": 30,
+            "password": "Q9!Y69TOY)su",
+            "group": "PostgreSQL - Redstone"
+        }
+    ]
+}

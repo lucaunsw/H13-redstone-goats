@@ -1,13 +1,35 @@
 export type UserId = number;
 
 export interface UserData {
+  id?: number | null;
   nameFirst: string;
   nameLast: string;
   email: string;
   password: string;
-  prevPasswords: Set<string>;
+  //prevPasswords: Set<string>;
   numSuccessfulLogins: number;
   numFailedPasswordsSinceLastLogin: number;
+}
+
+export interface Item {
+  id: number;
+  name: string;
+  price: number;
+  description?: string;
+  createdAt: Date;
+}
+
+export interface Order {
+  id: number;
+  userId: number;
+  totalPrice: number;
+  createdAt: Date;
+}
+
+export interface OrderItem {
+  orderId: number;
+  itemId: number;
+  quantity: number;
 }
 
 // Special error handling / other types
