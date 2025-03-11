@@ -16,4 +16,8 @@ const orderCancel = (userId: string, orderId: string, reason: string) => {
   //   return { reason };
 };
 
-export { orderCancel };
+function orderUserSales(CSV: boolean, JSON: boolean, PDF: boolean, userId: number) {
+
+}
+
+export { orderCancel, orderUserSales };
