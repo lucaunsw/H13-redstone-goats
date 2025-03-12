@@ -34,6 +34,15 @@ export interface OrderItem {
   quantity: number;
 }
 
+// Not sure if necessary, but response for orderChange function
+export interface OrderChangeResponse {
+  orderId: number;               
+  newVersionId: number;         
+  timeLastEdited: number;        
+  reason: string;                
+  versions: number[];
+}
+
 // Special error handling / other types
 export enum ErrKind {
   EINVALID = 400,
