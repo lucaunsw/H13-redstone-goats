@@ -1,13 +1,13 @@
-import { Order } from './types';
+import { OrderParam } from './types';
 
 /**
  * Create an order and produce a UBL document, and return the
  * orderId value
  *
- * @param {Order} order - object containing all the order information
+ * @param {OrderParam} order - object containing all the order information
  * @returns {{ orderId: number }} orderId - Unique identifier for an order
  */
-function orderCreate (order: Order) {
+function orderCreate (order: OrderParam) {
   // check if userId exists 
   // check name
   // check if items exist?
@@ -18,8 +18,10 @@ function orderCreate (order: Order) {
   const date = new Date();
   order.lastEdited = date;
   // database.push(order);
-  
-  return;
+  // const orderId = store.size + 1;
+  // database.push(orderId);
+
+  return orderId;
 }
 
 const orderCancel = (userId: string, orderId: string, reason: string) => {

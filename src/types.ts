@@ -20,31 +20,35 @@ export interface Item {
   name: string;
   price: number;
   description?: string;
+}
+
+export interface Order {
+  id: number;
+  userId: number;
+  totalPrice: number;
   createdAt: Date;
 }
 
-// export interface Order {
-//   id: number;
-//   userId: number;
-//   totalPrice: number;
-//   createdAt: Date;
-// }
-
 export interface User {
+  userId: number;
+  totalPrice: number;
+}
+
+export interface UserParam {
   userId: number;
   name: string;
 }
 
-export interface BillingDetails {
+export interface BillingDetailsParam {
   creditCardNumber: number;
   CVV: number;
   expiryDate: Date;
 }
 
-export interface Order {
+export interface OrderParam {
   items: Item[];
-  user: User;
-  billingDetails: BillingDetails;
+  user: UserParam;
+  billingDetails: BillingDetailsParam;
   deliveryInstructions: string;
   lastEdited?: Date;
 }

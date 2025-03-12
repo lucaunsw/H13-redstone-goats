@@ -1,5 +1,6 @@
 import { userRegister } from './testHelper';
-import { SessionId, Order, User, Item, BillingDetails } from '../types';
+import { SessionId, OrderParam, UserParam, 
+  Item, BillingDetailsParam } from '../types';
 import { getPostResponse } from '../wrapper';
 
 const SERVER_URL = `http://127.0.0.1:3200`;
@@ -8,7 +9,7 @@ const TIMEOUT_MS = 20 * 1000;
 import request from "sync-request-curl";
 
 function requestOrderCreate(
-  body: Order,
+  body: OrderParam,
 ) {
   const res = request("POST", SERVER_URL + `/v1/order/create`, {
     json: body,
@@ -23,9 +24,9 @@ function requestOrderCreate(
 // let user: {body: { token: SessionId }};
 let userId: number;
 let name: string;
-let user: User;
+let user: UserParam;
 let testItem: Item;
-let testBillingDetails: BillingDetails;
+let testBillingDetails: BillingDetailsParam;
 const date = new Date();
 
 beforeEach(() => {
@@ -46,7 +47,6 @@ beforeEach(() => {
     name: 'soap',
     price: 5,
     description: 'This is soap',
-    createdAt: date,
   };
   testBillingDetails = {
     creditCardNumber: 1000000000000000,
