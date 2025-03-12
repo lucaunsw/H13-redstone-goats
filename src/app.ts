@@ -7,8 +7,13 @@ import { Order } from './types';
  * @param {Order} order - object containing all the order information
  * @returns {{ orderId: number }} orderId - Unique identifier for an order
  */
-
 function orderCreate (order: Order) {
+  // check if userId exists and check name
+  if (order.billingDetails.creditCardNumber > 9999999999999999 || 
+    order.billingDetails.creditCardNumber < 100000000000) {
+    throw new Error ('Invalid bank details');
+  }
+
   return;
 }
 
