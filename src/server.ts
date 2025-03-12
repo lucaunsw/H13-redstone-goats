@@ -122,11 +122,6 @@ app.post('/v1/:userId/order/:orderId/items/change', (req: Request, res: Response
     const { userId, orderId } = req.params;
     const { items } = req.body // expects an array of items to update
 
-    // Process each item change      
-    const updatedItems = items.map((item: { itemId: number, newQuantity: number }) => 
-    orderChange(orderId, item.itemId, item.newQuantity)
-    );
-
     // Call function
     try {
       const updatedOrder = await orderChange(orderId, items);
