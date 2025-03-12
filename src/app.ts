@@ -1,3 +1,17 @@
+import { Order } from './types';
+
+/**
+ * Create an order and produce a UBL document, and return the
+ * orderId value
+ *
+ * @param {Order} order - object containing all the order information
+ * @returns {{ orderId: number }} orderId - Unique identifier for an order
+ */
+
+function orderCreate (order: Order) {
+  return;
+}
+
 const orderCancel = (userId: string, orderId: string, reason: string) => {
   //   const data = getData();
   //   if (!data.orders || !data.orders[userId]) {

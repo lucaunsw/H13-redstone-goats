@@ -23,11 +23,30 @@ export interface Item {
   createdAt: Date;
 }
 
-export interface Order {
-  id: number;
+// export interface Order {
+//   id: number;
+//   userId: number;
+//   totalPrice: number;
+//   createdAt: Date;
+// }
+
+export interface User {
   userId: number;
-  totalPrice: number;
-  createdAt: Date;
+  name: string;
+}
+
+export interface BillingDetails {
+  creditCardNumber: number;
+  CVV: number;
+  expiryDate: Date;
+}
+
+export interface Order {
+  items: Item[];
+  user: User;
+  billingDetails: BillingDetails;
+  deliveryInstructions: string;
+  lastEdited?: Date;
 }
 
 export interface OrderItem {
