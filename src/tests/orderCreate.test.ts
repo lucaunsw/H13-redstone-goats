@@ -10,7 +10,7 @@ import request from "sync-request-curl";
 function requestOrderCreate(
   body: Order,
 ) {
-  const res = request("PUT", `http://localhost:3000/v1/order/create`, {
+  const res = request("POST", SERVER_URL + `/v1/order/create`, {
     json: body,
     timeout: TIMEOUT_MS,
   });

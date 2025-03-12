@@ -1,6 +1,6 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
-import { orderCancel } from "./app";
+import { orderCreate, orderCancel } from "./app";
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
@@ -94,6 +94,21 @@ const HOST = process.env.IP || "127.0.0.1";
 
 app.get("/", (req, res) => {
   res.send("Hello, Express with TypeScript!");
+});
+
+// route that creates an order 
+app.post("/v1/order/create", (req: Request, res: Response) => {
+  const order = req.body;
+  try {
+    const result = orderCreate(order);
+    res.status(201).json(result);
+  } catch (error) {
+    const e = error as Error;
+    if (e.message === 'invalid userId') {
+      res.status(401).json({ error: e.message });
+    } 
+    res.status(400).json({ error: e.message });
+  }
 });
 
 app.put("/v1/:userId/order/:orderId/cancel", (req: Request, res: Response) => {
