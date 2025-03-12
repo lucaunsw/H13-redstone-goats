@@ -1,6 +1,6 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
-import { orderCancel } from "./app";
+import { orderCancel, orderChange } from "./app";
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
@@ -117,10 +117,42 @@ app.put("/v1/:userId/order/:orderId/cancel", (req: Request, res: Response) => {
   }
 });
 
+// orderChange
+app.post('/v1/:userId/order/:orderId/items/change', (req: Request, res: Response) => {
+    const { userId, orderId } = req.params;
+    const { items } = req.body // expects an array of items to update
+
+    // Process each item change      
+    const updatedItems = items.map((item: { itemId: number, newQuantity: number }) => 
+    orderChange(orderId, item.itemId, item.newQuantity)
+    );
+
+    // Call function
+    try {
+      const updatedOrder = await orderChange(orderId, items);
+      res.json(updatedOrder);
+
+    // Error Checking
+    } catch (error) {
+      const e = error as Error;
+      let statusCode = 500; // default error code
+
+      if (e.message === "invalid orderId" || e.message === "invalid userId") {
+        statusCode = 401; // Unauthorized
+      }
+
+      res.status(statusCode).json({ error: e.message });
+    };
+});
+
 // ===========================================================================
 // ============================= ROUTES ABOVE ================================
 // ===========================================================================
 
+// Error Handling
+
+
+// Start server
 const server = app.listen(PORT, HOST, () => {
   console.log(`Server is running on http://${HOST}:${PORT}`);
 });
