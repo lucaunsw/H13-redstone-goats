@@ -20,14 +20,12 @@ export interface Item {
   name: string;
   price: number;
   description?: string;
-  createdAt: Date;
 }
 
 export interface Order {
   id: number;
   userId: number;
   totalPrice: number;
-  createdAt: Date;
 }
 
 export interface OrderItem {

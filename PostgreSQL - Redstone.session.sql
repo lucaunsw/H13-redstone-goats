@@ -22,8 +22,8 @@ CREATE TABLE Orders (
 );
 
 CREATE TABLE OrderItems (
-  orderId INTEGER REFERENCES orders(orderId) ON DELETE CASCADE,
-  itemId INTEGER REFERENCES items(itemId) ON DELETE CASCADE,
+  orderId INTEGER REFERENCES Orders(orderId) ON DELETE CASCADE,
+  itemId INTEGER REFERENCES Items(itemId) ON DELETE CASCADE,
   quantity INTEGER NOT NULL CHECK (quantity > 0),
   PRIMARY KEY (orderId, itemId)
 );
