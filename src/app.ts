@@ -8,12 +8,17 @@ import { Order } from './types';
  * @returns {{ orderId: number }} orderId - Unique identifier for an order
  */
 function orderCreate (order: Order) {
-  // check if userId exists and check name
+  // check if userId exists 
+  // check name
+  // check if items exist?
   if (order.billingDetails.creditCardNumber > 9999999999999999 || 
     order.billingDetails.creditCardNumber < 100000000000) {
     throw new Error ('Invalid bank details');
   }
-
+  const date = new Date();
+  order.lastEdited = date;
+  // database.push(order);
+  
   return;
 }
 
