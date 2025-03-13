@@ -132,11 +132,9 @@ app.put("/v1/:userId/order/:orderId/cancel", (req: Request, res: Response) => {
   }
 });
 
-
 // ===========================================================================
 // ============================= ROUTES ABOVE ================================
 // ===========================================================================
-
 
 const server = app.listen(PORT, HOST, () => {
   console.log(`Server is running on http://${HOST}:${PORT}`);

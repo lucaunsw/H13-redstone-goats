@@ -86,7 +86,6 @@ export interface OrderItem {
   quantity: number;
 }
 
-
 // Special error handling / other types
 export enum ErrKind {
   EINVALID = 400,
