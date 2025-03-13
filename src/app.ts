@@ -27,8 +27,9 @@ function orderCreate (order: OrderParam) {
   // const orderId = store.size + 1;
   // database.push(orderId);
 
-  const UBLDocument = generateUBL(orderId, order);
-  return orderId;
+  // const UBLDocument = generateUBL(orderId, order);
+  // return orderId;
+  return;
 }
 
 const orderCancel = (userId: string, orderId: string, reason: string) => {
