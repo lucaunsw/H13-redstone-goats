@@ -27,7 +27,7 @@ let name: string;
 let user: UserParam;
 let testItem: Item;
 let testBillingDetails: BillingDetailsParam;
-const date = new Date();
+const date = new Date().toISOString().split('T')[0];;
 
 beforeEach(() => {
   // clear function
@@ -100,7 +100,7 @@ describe.skip('Test orderCreate route', () => {
   })
 
   test('Error from invalid bank details', () => {
-    const date = new Date();
+    const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
       user: user,
@@ -119,7 +119,7 @@ describe.skip('Test orderCreate route', () => {
   })
 
   test('Success case: Returns orderId', () => {
-    const date = new Date();
+    const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
       user: user,

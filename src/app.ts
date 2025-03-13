@@ -1,4 +1,6 @@
 import { OrderParam } from './types';
+import { generateUBL } from './helper';
+import { getAllUsers } from './dataStore'
 
 /**
  * Create an order and produce a UBL document, and return the
@@ -8,6 +10,10 @@ import { OrderParam } from './types';
  * @returns {{ orderId: number }} orderId - Unique identifier for an order
  */
 function orderCreate (order: OrderParam) {
+  // const users = await getAllUsers();
+  // for (const user of users) {
+
+  // }
   // check if userId exists 
   // check name
   // check if items exist?
@@ -15,12 +21,13 @@ function orderCreate (order: OrderParam) {
     order.billingDetails.creditCardNumber < 100000000000) {
     throw new Error ('Invalid bank details');
   }
-  const date = new Date();
+  const date = new Date().toISOString().split('T')[0];;
   order.lastEdited = date;
   // database.push(order);
   // const orderId = store.size + 1;
   // database.push(orderId);
 
+  const UBLDocument = generateUBL(orderId, order);
   return orderId;
 }
 
