@@ -155,7 +155,7 @@ app.post("/v1/order/create", (req: Request, res: Response) => {
     res.status(201).json(result);
   } catch (error) {
     const e = error as Error;
-    if (e.message === 'invalid userId') {
+    if (e.message === 'Invalid userId or a different name is registered to userId') {
       res.status(401).json({ error: e.message });
     } 
     res.status(400).json({ error: e.message });
