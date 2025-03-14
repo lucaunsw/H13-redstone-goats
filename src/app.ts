@@ -30,12 +30,13 @@ async function orderCreate (order: OrderParam) {
   order.lastEdited = currDate;
   order.status = status.PENDING;
   
-  const orderId = await addOrder(order, order.items);
+  // const orderId = await addOrder(order, order.items);
   
-  if (orderId !== null) {
-    const UBLDocument = generateUBL(orderId, order);
-  }
-  return { orderId };
+  // if (orderId !== null) {
+  //   const UBLDocument = generateUBL(orderId, order);
+  // }
+  // return { orderId };
+  return;
 }
 
 
