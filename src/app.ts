@@ -23,8 +23,15 @@ async function orderCreate (order: OrderParam) {
   }
 
   const currDate = new Date().toISOString().split('T')[0];
-  if (order.delivery.startDate < currDate || order.delivery.endDate < currDate) {
-    throw new Error ('Invalid date');
+  if (order.delivery.startDate < currDate || order.delivery.endDate < currDate
+    || order.delivery.startDate > order.delivery.endDate) {
+    throw new Error ('Invalid date selection');
+  }
+
+  for (const item of order.items) {
+    if (item.price < 0) {
+      throw new Error ('Invalid item price');
+    }
   }
 
   order.lastEdited = currDate;

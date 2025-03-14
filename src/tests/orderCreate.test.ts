@@ -136,9 +136,24 @@ describe.skip('Test orderCreate route', () => {
     expect(response.statusCode).toBe(401);
   });
 
-  test.skip('Error from invalid item', () => {
-
-  })
+  test('Error from invalid item', () => {
+    const body = {
+      items: [{
+        id: 124,
+        name: 'Toothpaste',
+        price: -2,
+        description: 'This is Toothpaste',
+      }],
+      user: testUser,
+      seller: testSeller,
+      billingDetails: testBillingDetails,
+      delivery: testDeliveryDetails,
+      lastEdited: date,
+    }
+    const response = requestOrderCreate(body);
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toStrictEqual({ error: expect.any(String) });
+  });
 
   test('Error from invalid bank details', () => {
     const date = new Date().toISOString().split('T')[0];
@@ -157,8 +172,62 @@ describe.skip('Test orderCreate route', () => {
     const response = requestOrderCreate(body);
 
     expect(response.statusCode).toBe(400);
-    expect(response.body).toStrictEqual({ orderId: expect.any(Number) });
-  })
+    expect(response.body).toStrictEqual({ error: expect.any(String) });
+  });
+
+  test('Error from invalid delivery date (start date is before current date)', () => {
+    const date = new Date().toISOString().split('T')[0];
+    const body = {
+      items: [testItem],
+      user: testUser,
+      seller: testSeller,
+      billingDetails: testBillingDetails,
+      delivery: {
+        streetName: 'White St',
+        citName: 'Sydney',
+        postalZone: '2000',
+        countrySubentity: 'NSW',
+        addressLine: '33 White St, Sydney NSW',
+        cbcCode: 'AU',
+        startDate: new Date(2025, 0, 1).toISOString().split('T')[0],
+        startTime: '13:00',
+        endDate: new Date(2025, 0, 1).toISOString().split('T')[0],
+        endTime: '13:00'
+      },
+      lastEdited: date,
+    }
+    const response = requestOrderCreate(body);
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toStrictEqual({ error: expect.any(String) });
+  });
+
+  test('Error from invalid delivery date (end date is before start date)', () => {
+    const date = new Date().toISOString().split('T')[0];
+    const body = {
+      items: [testItem],
+      user: testUser,
+      seller: testSeller,
+      billingDetails: testBillingDetails,
+      delivery: {
+        streetName: 'White St',
+        citName: 'Sydney',
+        postalZone: '2000',
+        countrySubentity: 'NSW',
+        addressLine: '33 White St, Sydney NSW',
+        cbcCode: 'AU',
+        startDate: new Date(2025, 9, 5).toISOString().split('T')[0],
+        startTime: '13:00',
+        endDate: new Date(2025, 9, 3).toISOString().split('T')[0],
+        endTime: '13:00'
+      },
+      lastEdited: date,
+    }
+    const response = requestOrderCreate(body);
+
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toStrictEqual({ error: expect.any(String) });
+  });
 
   test('Success case: Returns orderId', () => {
     const date = new Date().toISOString().split('T')[0];
