@@ -7,13 +7,14 @@ import morgan from "morgan";
 import { ErrKind, SessionId, UserId, Err } from './types';
 import { randomUUID } from 'crypto';
 
-// import {
-//   userLogin,
-//   userLogout,
-//   userRegister,
-//   userDetails,
-//   userDetailsUpdate,
-// } from './user';
+import {
+  userRegister,
+  // userLogin,
+  // userLogout,
+  // userDetails,
+  // userDetailsUpdate,
+} from './user';
+import { addSession, validSession } from "./dataStore";
 
 const app = express();
 
@@ -33,31 +34,39 @@ const HOST = process.env.IP || "127.0.0.1";
 // ============================= ROUTES BELOW ================================
 // ===========================================================================
 
-// // Custom middleware
-// app.use((req: Request, res: Response, next: NextFunction) => {
-//   // Check if we need to intercept a request (does it contain a token)
-//   const token = req.query.token ?? req.body.token ?? req.headers.token;
-//   if (token === undefined) {
-//     return next();
-//   }
+// Custom middleware
+app.use(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const token = req.query.token ?? req.body.token ?? req.headers.token;
 
-//   const sessions = getData().userSessions;
-//   if (!sessions.has(token)) {
-//     throw new Err('Token does not refer to a valid, logged in session', ErrKind.ENOTOKEN);
-//   }
+  if (token === undefined) {
+    return next(); 
+  }
 
-//   // THE INCOMING userId is shoved into the BODY.token!!
-//   req.body.token = sessions.get(token);
-//   next();
-// });
+  try {
+    const isValid = await validSession(Number(token)); 
 
-// function makeFmtToken(userId: UserId): { token: SessionId } {
-//   const sId = randomUUID();
-//   getData().userSessions.set(sId, userId);
-//   setData();
-//   return { token: sId };
-// }
-// // END Custom middleware
+    if (!isValid) {
+      res.status(401).json({ error: 'Token does not refer to a valid, logged-in session' });
+      return; 
+    }
+
+    req.body.token = Number(token);
+    return next();
+  } catch (err) {
+    res.status(500).json({ error: 'Server error while validating session' });
+    return; 
+  }
+});
+
+export async function makeFmtToken(userId: number): Promise<{ token: number }> {
+  const sessionId = Math.floor(Math.random() * 1000000); // Generate a numeric session ID
+  const success = await addSession(sessionId, userId);
+  if (!success) {
+    throw new Error('Failed to create session');
+  }
+  return { token: sessionId };
+}
+// END Custom middleware
 
 // app.post('/v1/user/logout', (req: Request, res: Response) => {
 //   const token = req.body.token ?? req.headers.token;
@@ -65,11 +74,20 @@ const HOST = process.env.IP || "127.0.0.1";
 //   res.json(result);
 // });
 
-// app.post('/v1/user/register', (req: Request, res: Response) => {
-//   const { email, password, nameFirst, nameLast } = req.body;
-//   const result = userRegister(email, password, nameFirst, nameLast);
-//   res.json(makeFmtToken(result.userId));
-// });
+app.post('/v1/user/register', async (req: Request, res: Response) => {
+  try {
+    const { email, password, nameFirst, nameLast } = req.body;
+    const result = await userRegister(email, password, nameFirst, nameLast); 
+    const sessionToken = await makeFmtToken(result.userId); 
+    res.json(sessionToken);
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(400).json({ error: err.message }); 
+    } else {
+      res.status(400).json({ error: 'An unknown error occurred' }); 
+    }
+  }
+});
 
 // app.post('/v1/user/login', (req: Request, res: Response) => {
 //   const { email, password } = req.body;
