@@ -1,9 +1,10 @@
 import { userRegister, reqHelper } from './testHelper';
 import { SessionId } from '../types';
+import { deleteUser } from '../dataStore';
 
-beforeEach(() => {
-  reqHelper('DELETE', '/v1/clear');
-});
+// beforeEach(() => {
+//   reqHelper('DELETE', '/v1/clear');
+// });
 
 describe('userRegister', () => {
   const tUser = {
@@ -20,24 +21,31 @@ describe('userRegister', () => {
     lName: 'lastTwo',
     token: null as unknown as SessionId,
   };
-
-  beforeEach(() => {
-    tUser.token = userRegister(
+  
+  beforeEach(async () => {
+    const resp = await userRegister(
       tUser.email,
       tUser.initpass,
       tUser.fName,
       tUser.lName
-    ).body.token;
+    );
+    tUser.token = resp.body.token;
   });
 
-  test('If a user already has an email registered, it should return an error', () => {
-    const resp = userRegister(tUser2.email, tUser2.initpass, tUser2.fName, tUser2.lName);
+  test('A user successfully registers', async () => {
+    const resp = await userRegister(`example3@email.com`, `example123`, `firstName`, `lastName`);
+    expect(resp.statusCode).toBe(200);
+    expect(resp.body).toStrictEqual({ token: expect.any(Number) });
+  });
+
+  test('If a user already has an email registered, it should return an error', async () => {
+    const resp = await userRegister(tUser2.email, tUser2.initpass, tUser2.fName, tUser2.lName);
     expect(resp.statusCode).toBe(400);
     expect(resp.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('User enters invalid Email', () => {
-    const resp = userRegister('me', tUser2.initpass, tUser2.fName, tUser2.lName);
+  test('User enters invalid Email', async () => {
+    const resp = await userRegister('me', tUser2.initpass, tUser2.fName, tUser2.lName);
     expect(resp.statusCode).toBe(400);
     expect(resp.body).toStrictEqual({ error: expect.any(String) });
   });

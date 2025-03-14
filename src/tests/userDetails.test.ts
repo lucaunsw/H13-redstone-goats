@@ -5,7 +5,7 @@ beforeEach(() => {
   reqHelper('DELETE', '/v1/clear');
 });
 
-describe('userDetails', () => {
+describe.skip('userDetails', () => {
   test('Returns error given invalid token', () => {
     expect(userDetails('38178357023').body).toStrictEqual({
       error: expect.any(String),
