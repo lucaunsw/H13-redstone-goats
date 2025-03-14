@@ -21,6 +21,11 @@ function requestOrderCreate(
   };
 }
 
+  test.skip('Temp test', () => {
+    const number = 1;
+    expect(number).toBe(1);
+  });
+
 // let user: {body: { token: SessionId }};
 let userId: number;
 let testName: string;
@@ -34,11 +39,11 @@ const date = new Date().toISOString().split('T')[0];
 beforeEach(() => {
   reqHelper('DELETE', '/v1/clear');
   testName = 'Bobby Jones'
-  userId = userRegister(
+  userId = parseInt(userRegister(
     'BobbyJones@gmail.com',
     'cake',
     'Bobby',
-    'Jones}');
+    'Jones}').body.token);
     
   testItem = {
     id: 123,
