@@ -33,9 +33,9 @@ describe('userRegister', () => {
   });
 
   test('A user successfully registers', async () => {
-    const resp = await userRegister(`example3@email.com`, `example123`, `firstName`, `lastName`);
+    const resp = await userRegister(`example5@email.com`, `example123`, `firstName`, `lastName`);
     expect(resp.statusCode).toBe(200);
-    expect(resp.body).toStrictEqual({ token: expect.any(Number) });
+    expect(resp.body).toStrictEqual({ token: expect.any(String) });
   });
 
   test('If a user already has an email registered, it should return an error', async () => {

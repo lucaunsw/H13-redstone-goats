@@ -6,6 +6,8 @@ import cors from "cors";
 import morgan from "morgan";
 import { ErrKind, SessionId, UserId, Err } from './types';
 import { randomUUID } from 'crypto';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv'; 
 
 import {
   userRegister,
@@ -29,44 +31,75 @@ app.use(morgan("dev"));
 
 const PORT = parseInt(process.env.PORT || config.port);
 const HOST = process.env.IP || "127.0.0.1";
+const JWT_SECRET = process.env.JWT_SECRET || "redstone_secret";
+
 
 // ===========================================================================
 // ============================= ROUTES BELOW ================================
 // ===========================================================================
 
 // Custom middleware
-app.use(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const token = req.query.token ?? req.body.token ?? req.headers.token;
+// app.use(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+//   const token = req.query.token ?? req.body.token ?? req.headers.token;
 
-  if (token === undefined) {
-    return next(); 
+//   if (token === undefined) {
+//     return next(); 
+//   }
+
+//   try {
+//     const isValid = await validSession(Number(token)); 
+
+//     if (!isValid) {
+//       res.status(401).json({ error: 'Token does not refer to a valid, logged-in session' });
+//       return; 
+//     }
+
+//     req.body.token = Number(token);
+//     return next();
+//   } catch (err) {
+//     res.status(500).json({ error: 'Server error while validating session' });
+//     return; 
+//   }
+// });
+
+// export async function makeFmtToken(userId: number): Promise<{ token: number }> {
+//   const sessionId = Math.floor(Math.random() * 1000000); // Generate a numeric session ID
+//   const success = await addSession(sessionId, userId);
+//   if (!success) {
+//     throw new Error('Failed to create session');
+//   }
+//   return { token: sessionId };
+// }
+// END Custom middleware
+
+//Custom middleware for JWT
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Extract the token from the Authorization header
+  const token = req.header('Authorization')?.split(' ')[1]; // Bearer <token>
+
+  if (!token) {
+    return next(); // No token provided, continue without interception
   }
 
   try {
-    const isValid = await validSession(Number(token)); 
+    // Verify and decode the token
+    const decoded: any = jwt.verify(token, JWT_SECRET);
+    
+    // Assuming 'userId' is part of the decoded JWT payload
+    req.body.token = decoded.userId;  // Attach the userId from JWT payload to the request body
 
-    if (!isValid) {
-      res.status(401).json({ error: 'Token does not refer to a valid, logged-in session' });
-      return; 
-    }
-
-    req.body.token = Number(token);
-    return next();
-  } catch (err) {
-    res.status(500).json({ error: 'Server error while validating session' });
-    return; 
+    next(); // Continue to the next middleware/route
+  } catch (error) {
+    // Handle error (invalid or expired token)
+    throw new Err('Token is not valid or expired', ErrKind.ENOTOKEN);
   }
 });
 
-export async function makeFmtToken(userId: number): Promise<{ token: number }> {
-  const sessionId = Math.floor(Math.random() * 1000000); // Generate a numeric session ID
-  const success = await addSession(sessionId, userId);
-  if (!success) {
-    throw new Error('Failed to create session');
-  }
-  return { token: sessionId };
+// Function for generating JWT 
+function makeJwtToken(userId: number): { token: SessionId } {
+  const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '1h' }); // Token expires in 1 hour
+  return { token: token };
 }
-// END Custom middleware
 
 // app.post('/v1/user/logout', (req: Request, res: Response) => {
 //   const token = req.body.token ?? req.headers.token;
@@ -78,7 +111,7 @@ app.post('/v1/user/register', async (req: Request, res: Response) => {
   try {
     const { email, password, nameFirst, nameLast } = req.body;
     const result = await userRegister(email, password, nameFirst, nameLast); 
-    const sessionToken = await makeFmtToken(result.userId); 
+    const sessionToken = makeJwtToken(result.userId); 
     res.json(sessionToken);
   } catch (err) {
     if (err instanceof Error) {
