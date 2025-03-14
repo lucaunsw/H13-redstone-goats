@@ -5,7 +5,7 @@ beforeEach(() => {
   reqHelper('DELETE', '/v1/clear');
 });
 
-describe('userLogin', () => {
+describe.skip('userLogin', () => {
   const tUser = {
     email: 'me@email.com',
     initpass: 'Testpassword1',

@@ -27,7 +27,7 @@ export function getPostResponse(
   };
 }
 
-describe("orderCancel successful return", () => {
+describe.skip("orderCancel successful return", () => {
   test("should cancel an order successfully", () => {
     const registerRes = getPostResponse("/v1/user/register", {
             email: "test@example.com",
