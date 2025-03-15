@@ -1,6 +1,10 @@
 import request from "sync-request-curl";
 const SERVER_URL = `http://127.0.0.1:3200`;
 const TIMEOUT_MS = 20 * 1000;
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
+
 function getPutResponse(route: string, body: { [key: string]: unknown }) {
   const res = request("PUT", SERVER_URL + route, {
     json: body,
@@ -11,6 +15,10 @@ function getPutResponse(route: string, body: { [key: string]: unknown }) {
     statusCode: res.statusCode,
   };
 }
+
+beforeEach(() => {
+  // Clear database
+})
 
 export function getPostResponse(
   route: string,
@@ -35,7 +43,9 @@ describe.skip("orderCancel successful return", () => {
             nameFirst: "Bruce",
             nameLast: "Wayne",
           });
-    const userId = registerRes.body.userId;
+    const token = registerRes.body.token;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
+    const userId = decoded.userId;
 
     const createOrderRes = getPostResponse(`/v1/${userId}/order/create`, {
       items: [
@@ -58,7 +68,9 @@ describe.skip("orderCancel successful return", () => {
             nameFirst: "Bruce",
             nameLast: "Wayne",
           });
-    const userId = registerRes.body.userId;
+    const token = registerRes.body.token;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
+    const userId = decoded.userId;
 
     const createOrderRes = getPostResponse(`/v1/${userId}/order/create`, {
       items: [
@@ -81,7 +93,9 @@ describe.skip("orderCancel successful return", () => {
             nameFirst: "Bruce",
             nameLast: "Wayne",
           });
-    const userId = registerRes.body.userId;
+    const token = registerRes.body.token;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
+    const userId = decoded.userId;
 
     const createOrderRes = getPostResponse(`/v1/${userId}/order/create`, {
       items: [

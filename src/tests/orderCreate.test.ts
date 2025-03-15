@@ -2,6 +2,9 @@ import { userRegister, reqHelper } from './testHelper';
 import { SessionId, OrderParam, UserParam, 
   Item, BillingDetailsParam, DeliveryInstructions } from '../types';
 import { getPostResponse } from '../wrapper';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const SERVER_URL = `http://127.0.0.1:3200`;
 const TIMEOUT_MS = 20 * 1000;
@@ -21,11 +24,6 @@ function requestOrderCreate(
   };
 }
 
-  test.skip('Temp test', () => {
-    const number = 1;
-    expect(number).toBe(1);
-  });
-
 // let user: {body: { token: SessionId }};
 let userId: number;
 let testName: string;
@@ -36,14 +34,18 @@ let testBillingDetails: BillingDetailsParam;
 let testDeliveryDetails: DeliveryInstructions;
 const date = new Date().toISOString().split('T')[0];
 
-beforeEach(() => {
+beforeEach(async () => {
   reqHelper('DELETE', '/v1/clear');
   testName = 'Bobby Jones'
-  userId = parseInt(userRegister(
+
+  // NOTE: below should correctly extract userId from token (hopefully)
+  const token = await userRegister(
     'BobbyJones@gmail.com',
     'cake',
     'Bobby',
-    'Jones}').body.token);
+    'Jones}').body.token;
+  const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
+  userId = decoded.userId;
     
   testItem = {
     id: 123,

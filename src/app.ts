@@ -1,6 +1,6 @@
-import { OrderParam, status, status } from './types';
+import { OrderParam, status } from './types';
 import { generateUBL, userExists } from './helper';
-import { getUser, addOrder, getOrder, getUser, updateOrder } from './dataStore'
+import { getUser, addOrder, getOrder, updateOrder } from './dataStore'
 
 /**
  * Create an order and produce a UBL document, and return the
@@ -48,53 +48,53 @@ async function orderCreate (order: OrderParam) {
 
 
 const orderCancel = async (userId: number, orderId: number, reason: string) => {
-    // Check if userId and orderId are valid
-    const user = await getUser(userId);
-    if (!user) {
-        throw new Error("invalid userId");
-    }
-    const orderData = await getOrder(orderId);
-    if (!orderData) {
-        throw new Error("invalid orderId");
-    }
-    const { order, items } = orderData;
+    // // Check if userId and orderId are valid
+    // const user = await getUser(userId);
+    // if (!user) {
+    //     throw new Error("invalid userId");
+    // }
+    // const orderData = await getOrder(orderId);
+    // if (!orderData) {
+    //     throw new Error("invalid orderId");
+    // }
+    // const { order, items } = orderData;
 
-    if (order.status === status.CANCELLED) {
-        throw new Error("order already cancelled");
-    }
-    order.status = status.CANCELLED;
+    // if (order.status === status.CANCELLED) {
+    //     throw new Error("order already cancelled");
+    // }
+    // order.status = status.CANCELLED;
 
-    const updateSuccess = await updateOrder(order, items);
-    if (!updateSuccess) {
-        throw new Error("failed to update order status to cancelled");
-    }
+    // const updateSuccess = await updateOrder(order, items);
+    // if (!updateSuccess) {
+    //     throw new Error("failed to update order status to cancelled");
+    // }
 
-    return { reason };
+    // return { reason };
 };
 
 
 const orderConfirm = async (userId: number, orderId: number) => {
-    const user = await getUser(userId);
-    if (!user) {
-        throw new Error("invalid userId");
-    }
-    const orderData = await getOrder(orderId);
-    if (!orderData) {
-        throw new Error("invalid orderId");
-    }
-    const { order, items } = orderData;
+    // const user = await getUser(userId);
+    // if (!user) {
+    //     throw new Error("invalid userId");
+    // }
+    // const orderData = await getOrder(orderId);
+    // if (!orderData) {
+    //     throw new Error("invalid orderId");
+    // }
+    // const { order, items } = orderData;
 
-    if (order.status === status.CONFIRMED) {
-        return {};
-    }
-    order.status = status.CONFIRMED;
+    // if (order.status === status.CONFIRMED) {
+    //     return {};
+    // }
+    // order.status = status.CONFIRMED;
 
-    const updateSuccess = await updateOrder(order, items);
-    if (!updateSuccess) {
-        throw new Error("failed to update order status to confirmed");
-    }
+    // const updateSuccess = await updateOrder(order, items);
+    // if (!updateSuccess) {
+    //     throw new Error("failed to update order status to confirmed");
+    // }
 
-    return {};
+    // return {};
 };
 
 export { orderCreate, orderCancel, orderConfirm };

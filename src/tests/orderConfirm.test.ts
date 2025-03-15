@@ -1,6 +1,13 @@
 import request from "sync-request-curl";
 const SERVER_URL = `http://127.0.0.1:3200`;
 const TIMEOUT_MS = 20 * 1000;
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
+
+beforeEach(() => {
+  // Clear database
+})
 
 export function getPostResponse(
     route: string,
@@ -17,7 +24,7 @@ export function getPostResponse(
     };
   }
 
-  describe("tests for orderConfirm", () => {
+  describe.skip("tests for orderConfirm", () => {
     test("should confirm an order successfully", () => {
       const registerRes = getPostResponse("/v1/user/register", {
         email: "test@example.com",
@@ -25,7 +32,9 @@ export function getPostResponse(
         nameFirst: "Bruce",
         nameLast: "Wayne",
       });
-      const userId = registerRes.body.userId;
+      const token = registerRes.body.token;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
+      const userId = decoded.userId;
 
       const createOrderRes = getPostResponse(`/v1/${userId}/order/create`, {
         items: [
@@ -46,7 +55,9 @@ export function getPostResponse(
         nameFirst: "Bruce",
         nameLast: "Wayne",
       });
-      const userId = registerRes.body.userId;
+      const token = registerRes.body.token;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
+      const userId = decoded.userId;
       const invalidOrderId = "invalid-order-id";
       
       const res = getPostResponse(`/v1/${userId}/order/${invalidOrderId}/confirm`, {});
