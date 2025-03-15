@@ -49,14 +49,12 @@ export interface BillingDetailsParam {
   expiryDate: string;
 }
 
-export interface deliveryInstructions {
+export interface DeliveryInstructions {
   streetName: string;
-  buildingName: string;
-  buildingNumber: number;
   citName: string;
   postalZone: string;
   countrySubentity: string;
-  adressLine: string;
+  addressLine: string;
   cbcCode: string;
   startDate: string;
   startTime: string;
@@ -75,7 +73,7 @@ export interface OrderParam {
   user: UserParam;
   seller: UserParam;
   billingDetails: BillingDetailsParam;
-  delivery: deliveryInstructions;
+  delivery: DeliveryInstructions;
   lastEdited?: string;
   status?: status;
 }

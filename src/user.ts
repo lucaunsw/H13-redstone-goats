@@ -1,57 +1,52 @@
-// import { Err, ErrKind, UserId, UserData, SessionId, EmptyObj, UserDataSummary } from './types';
+import { addUser, getAllUsers } from './dataStore';
+import { Err, ErrKind, UserId, UserData, SessionId, EmptyObj, UserDataSummary } from './types';
+import validator from 'validator';
 
-// import validator from 'validator';
+/**
+ * Register a user with an email, password, and names, then returns their
+ * userId value
+ *
+ * @param {string} email - Users email
+ * @param {string} password - Users password
+ * @param {string} nameFirst - Users first name
+ * @param {string} nameLast - Users last name
+ * @returns {{userId: number}} userId - Unique identifier for an
+ * authenticated user
+ */
+export async function userRegister(
+    email: string,
+    password: string,
+    nameFirst: string,
+    nameLast: string
+  ): Promise<{ userId: number }> {
+  if (!validator.isEmail(email)) {
+    throw new Err('Email is invalid', ErrKind.EINVALID);
+  }
 
-// /**
-//  * Register a user with an email, password, and names, then returns their
-//  * userId value
-//  *
-//  * @param {string} email - Users email
-//  * @param {string} password - Users password
-//  * @param {string} nameFirst - Users first name
-//  * @param {string} nameLast - Users last name
-//  * @returns {{userId: number}} userId - Unique identifier for an
-//  * authenticated user
-//  */
-// export function userRegister(
-//     email: string,
-//     password: string,
-//     nameFirst: string,
-//     nameLast: string
-//   ): never | { userId: UserId } {
-//   const store = getData().users; // this may have to change according to Josh.
+  const existingUsers = await getAllUsers();
+  for (const user of existingUsers) {
+      if (user.email === email) {
+          throw new Err('This email is already registered on another account', ErrKind.EINVALID);
+      }
+  }
 
-//   if (!validator.isEmail(email)) {
-//     throw new Err('Email is invalid', ErrKind.EINVALID);
-//   }
+  validatePassword(password, 'new ');
+  validateName(nameFirst, 'first ');
+  validateName(nameLast, 'last ');
 
-//   for (const user of store.values()) {
-//     if (user.email === email) {
-//       throw new Err('This email is already registered on another account', ErrKind.EINVALID);
-//     }
-//   }
-
-//   validatePassword(password, 'new ');
-//   validateName(nameFirst, 'first ');
-//   validateName(nameLast, 'last ');
-
-//   const crypto = require('crypto');
-//   const newUser: UserData = {
-//     email: email,
-//     password: crypto.createHash('sha256').update(password).digest('hex'),
-//     nameFirst: nameFirst,
-//     nameLast: nameLast,
-//     prevPasswords: new Set(),
-//     numSuccessfulLogins: 1,
-//     numFailedPasswordsSinceLastLogin: 0,
-//   };
-
-//   const userId = store.size + 1;
-//   store.set(userId, newUser);
-
-//   setData(); // this to. 
-//   return { userId: userId };
-// }
+  const crypto = require('crypto');
+  const newUser: UserData = {
+    email: email,
+    password: crypto.createHash('sha256').update(password).digest('hex'),
+    nameFirst: nameFirst,
+    nameLast: nameLast,
+    numSuccessfulLogins: 1,
+    numFailedPasswordsSinceLastLogin: 0,
+  };
+  
+  const userId = await addUser(newUser);
+  return { userId: userId };
+}
 
 // /**
 //  * Given a registered user's email and password returns their userId value.
@@ -109,24 +104,24 @@
 //   return {};
 // }
 
-// /**
-//  * Check if a password is strong enough. DOES NOT CHECK A USER'S PREV PASSWORDS!
-//  *
-//  * @param {string} password - the password to validate
-//  * @returns {boolean | Err} - valid (true) or invalid {error: string} password.
-//  */
-// function validatePassword(password: string, message: string): true | never {
-//   if (!/\d/.test(password)) {
-//     throw new Err(`${message}password does not contain a number!`, ErrKind.EINVALID);
-//   }
-//   if (!/[A-Za-z]/.test(password)) {
-//     throw new Err(`${message}password does not contain a letter!`, ErrKind.EINVALID);
-//   }
-//   if (password.length < 8) {
-//     throw new Err(`${message}password is less than 8 characters long!`, ErrKind.EINVALID);
-//   }
-//   return true;
-// }
+/**
+ * Check if a password is strong enough. DOES NOT CHECK A USER'S PREV PASSWORDS!
+ *
+ * @param {string} password - the password to validate
+ * @returns {boolean | Err} - valid (true) or invalid {error: string} password.
+ */
+function validatePassword(password: string, message: string): true | never {
+  if (!/\d/.test(password)) {
+    throw new Err(`${message}password does not contain a number!`, ErrKind.EINVALID);
+  }
+  if (!/[A-Za-z]/.test(password)) {
+    throw new Err(`${message}password does not contain a letter!`, ErrKind.EINVALID);
+  }
+  if (password.length < 8) {
+    throw new Err(`${message}password is less than 8 characters long!`, ErrKind.EINVALID);
+  }
+  return true;
+}
 
 // /**
 //  * Given admin users userId returns details about user.
@@ -190,26 +185,26 @@
 //  return {};
 // }
 
-// /**
-//  * Check if a name follows the rules for it1
-//  *
-//  * @param {string} name - the name to validate
-//  * @returns {boolean | Err } - valid (true) or invalid {error: string} name.
-//  */
-// function validateName(name: string, message: string): true | never {
-//   const invalidChar = /[^a-zA-Z' -]/;
-//   if (invalidChar.test(name)) {
-//     throw new Err(
-//       `${message}name can only contain letters, spaces, hyphens, and apostrophes.`,
-//       ErrKind.EINVALID
-//     );
-//   }
-//   if (name.length < 2 || name.length > 20) {
-//     throw new Err(
-//       `${message}name must be between 2 and 20 characters long.`,
-//       ErrKind.EINVALID
-//     );
-//   }
+/**
+ * Check if a name follows the rules for it1
+ *
+ * @param {string} name - the name to validate
+ * @returns {boolean | Err } - valid (true) or invalid {error: string} name.
+ */
+function validateName(name: string, message: string): true | never {
+  const invalidChar = /[^a-zA-Z' -]/;
+  if (invalidChar.test(name)) {
+    throw new Err(
+      `${message}name can only contain letters, spaces, hyphens, and apostrophes.`,
+      ErrKind.EINVALID
+    );
+  }
+  if (name.length < 2 || name.length > 20) {
+    throw new Err(
+      `${message}name must be between 2 and 20 characters long.`,
+      ErrKind.EINVALID
+    );
+  }
 
-//   return true;
-// }
+  return true;
+}

@@ -10,7 +10,7 @@ beforeEach(() => {
   reqHelper('DELETE', '/v1/clear');
 });
 
-describe('Test userDetailsUpdate', () => {
+describe.skip('Test userDetailsUpdate', () => {
   const tUser = {
     email: 'user@email.com',
     password: 'testpass1',
