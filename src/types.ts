@@ -26,6 +26,58 @@ export interface Order {
   id: number;
   userId: number;
   totalPrice: number;
+  createdAt: Date;
+}
+
+export interface User {
+  userId: number;
+  totalPrice: number;
+}
+
+export interface UserParam {
+  userId: number;
+  name: string;
+  streetName: string;
+  cityName: string;
+  postalZone: string;
+  cbcCode: string;
+}
+
+export interface BillingDetailsParam {
+  creditCardNumber: number;
+  CVV: number;
+  expiryDate: string;
+}
+
+export interface deliveryInstructions {
+  streetName: string;
+  buildingName: string;
+  buildingNumber: number;
+  citName: string;
+  postalZone: string;
+  countrySubentity: string;
+  adressLine: string;
+  cbcCode: string;
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+}
+
+export enum status {
+  PENDING = "pending",
+  CONFIRMED = "confirmed",
+  CANCELLED = "cancelled",
+}
+
+export interface OrderParam {
+  items: Item[];
+  user: UserParam;
+  seller: UserParam;
+  billingDetails: BillingDetailsParam;
+  delivery: deliveryInstructions;
+  lastEdited?: string;
+  status?: status;
 }
 
 export interface OrderItem {
