@@ -1,5 +1,5 @@
 import { addUser, getAllUsers } from './dataStore';
-import { Err, ErrKind, UserId, UserData, SessionId, EmptyObj, UserDataSummary } from './types';
+import { Err, ErrKind, UserId, User, SessionId, EmptyObj, UserSummary } from './types';
 import validator from 'validator';
 
 /**
@@ -35,7 +35,7 @@ export async function userRegister(
   validateName(nameLast, 'last ');
 
   const crypto = require('crypto');
-  const newUser: UserData = {
+  const newUser: User = {
     email: email,
     password: crypto.createHash('sha256').update(password).digest('hex'),
     nameFirst: nameFirst,
@@ -134,7 +134,7 @@ function validatePassword(password: string, message: string): true | never {
 // * numSuccessfulLogins: number,
 // * numFailedPasswordsSinceLastLogin: number}}
 // */
-// export function userDetails(userId: UserId): { user: UserDataSummary } | never {
+// export function userDetails(userId: UserId): { user: UserSummary } | never {
 //  const store = getData().users;
 
 //  const currentUser = store.get(userId)!;

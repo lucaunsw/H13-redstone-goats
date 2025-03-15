@@ -1,6 +1,12 @@
+<<<<<<< HEAD
+import { userRegister } from './testHelper';
+import { SessionId, Order, User, 
+  Item, BillingDetails } from '../types';
+=======
 import { userRegister, reqHelper } from './testHelper';
 import { SessionId, OrderParam, UserParam, 
   Item, BillingDetailsParam, DeliveryInstructions } from '../types';
+>>>>>>> fcedd1fa2f4ac1395e422dea1ebddfbaa26fab4f
 import { getPostResponse } from '../wrapper';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
@@ -12,7 +18,7 @@ const TIMEOUT_MS = 20 * 1000;
 import request from "sync-request-curl";
 
 function requestOrderCreate(
-  body: OrderParam,
+  body: Order,
 ) {
   const res = request("POST", SERVER_URL + `/v1/order/create`, {
     json: body,
@@ -115,7 +121,49 @@ describe.skip('Test orderCreate route', () => {
     expect(response.statusCode).toBe(401);
   });
 
+<<<<<<< HEAD
+// let user: {body: { token: SessionId }};
+// let userId: number;
+// let name: string;
+// let user: User;
+// let testItem: Item;
+// let testBillingDetails: BillingDetails;
+// const date = new Date().toISOString().split('T')[0];;
+
+// beforeEach(() => {
+//   // clear function
+//   name = 'Bobby Jones'
+//   userId = userRegister(
+// 	  'BobbyJones@gmail.com',
+// 	  'cake',
+// 	  'Bobby',
+// 	  'Jones}');
+
+//   user = {
+//     userId: userId,
+//     name: name,
+//   };
+//   testItem = {
+//     id: 123,
+//     name: 'soap',
+//     price: 5,
+//     description: 'This is soap',
+//   };
+//   testBillingDetails = {
+//     creditCardNumber: 1000000000000000,
+//     CVV: 111,
+//     expiryDate: date,
+//   };
+// });
+
+
+// describe.skip('Test orderCreate route', () => {
+
+//   test('Error from invalid token', () => {
+//     const invalidUserId = userId + 1; 
+=======
   test('Error from invalid name', () => {
+>>>>>>> fcedd1fa2f4ac1395e422dea1ebddfbaa26fab4f
     
     const body = {
       items: [testItem],

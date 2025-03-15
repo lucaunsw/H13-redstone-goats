@@ -4,7 +4,7 @@ import { HttpVerb, Options, Response } from 'sync-request-curl/dist/cjs/types';
 import {
   EmptyObj,
   SessionId,
-  UserDataSummary,
+  User,
 } from '../types';
 
 const port = config.port;
@@ -61,7 +61,7 @@ export function userLogout<T = EmptyObj>(token: SessionId) {
   });
 }
 
-export function userDetails<T = { user: UserDataSummary }>(token: SessionId) {
+export function userDetails<T = { user: User }>(token: SessionId) {
   return reqHelper<T>('GET', '/v2/admin/user/details', {
     headers: {
       token: token,
