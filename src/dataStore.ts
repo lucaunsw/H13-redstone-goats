@@ -1,10 +1,11 @@
 import pool from "./db";
-import { User, Item, Order, BillingDetails, DeliveryInstructions } from "./types";
+import { User, Item, Order, BillingDetails, DeliveryInstructions, UserSimple } from "./types";
 
 /**
  *     Database interaction functions for users, tokens, items, and orders.
  *******************************************************************************
- *  USER FUNCTIONS: addUser, getUser, getAllUsers, updateUser, deleteUser
+ *  USER FUNCTIONS: addUser, getUser, getUserSimple, getAllUsers, updateUser,
+ *                  deleteUser
  * -----------------------------------------------------------------------------
  * TOKEN FUNCTIONS: addToken, validToken, deleteToken
  * -----------------------------------------------------------------------------
@@ -53,6 +54,23 @@ export async function getUser(userId: number): Promise<User | null> {
         cbcCode: user.cbc_code,
         numSuccessfulLogins: user.num_successful_logins,
         numFailedPasswordsSinceLastLogin: user.num_failed_passwords_since_last_login
+    };
+    return userResult;
+}
+
+// Fetches user from DB (simple version)
+export async function getUserSimple(userId: number): Promise<UserSimple | null> {
+    const res = await pool.query("SELECT * FROM Users WHERE id = $1", [userId]);
+    if (res.rows.length === 0) return null;
+
+    const user = res.rows[0];
+    const userResult: UserSimple = {
+        id: user.id,
+        name: user.name_first + " " + user.name_last,
+        streetName: user.street_name,
+        cityName: user.city_name,
+        postalZone: user.postal_zone,
+        cbcCode: user.cbc_code
     };
     return userResult;
 }
@@ -148,7 +166,7 @@ export async function getItem(itemId: number): Promise<Item | null> {
     if (res.rows.length === 0) return null;
 
     const item = res.rows[0];
-    const sellerResult = await getUser(item.seller_id);
+    const sellerResult = await getUserSimple(item.seller_id);
     if (sellerResult === null) return null;
 
     const itemResult: Item = {
@@ -236,7 +254,7 @@ export async function getOrder(orderId: number): Promise<Order | null> {
     const itemResults: Item[] = [];
     const quantityResults: number[] = [];
     for (const item of itemRes.rows) {
-        const sellerResult = await getUser(item.seller);
+        const sellerResult = await getUserSimple(item.seller);
         if (sellerResult === null) return null;
 
         const itemResult: Item = {
@@ -251,8 +269,8 @@ export async function getOrder(orderId: number): Promise<Order | null> {
         quantityResults.push(item.quantity);
     }
 
-    const userResult = await getUser(order.user);
-    if (userResult === null) return null;
+    const buyerResult = await getUserSimple(order.user);
+    if (buyerResult === null) return null;
 
     const billingRes = await pool.query(
         "SELECT * FROM BillingDetails WHERE id = $1", [order.billing_id]
@@ -289,7 +307,7 @@ export async function getOrder(orderId: number): Promise<Order | null> {
         id: order.id,
         items: itemResults,
         quantities: quantityResults,
-        buyer: userResult,
+        buyer: buyerResult,
         billingDetails: billingResult,
         delivery: deliveryResult,
         lastEdited: order.last_edited,

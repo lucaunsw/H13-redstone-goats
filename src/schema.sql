@@ -35,8 +35,6 @@ CREATE TABLE BillingDetails (
 CREATE TABLE DeliveryInstructions (
     id                SERIAL PRIMARY KEY,
     street_name       TEXT NOT NULL,
-    building_name     TEXT,
-    building_no       INTEGER NOT NULL,
     city_name         TEXT NOT NULL,
     postal_zone       TEXT NOT NULL,
     country_subentity TEXT NOT NULL,

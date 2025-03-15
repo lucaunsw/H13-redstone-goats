@@ -18,10 +18,19 @@ export interface User { // Used in DB update
   numFailedPasswordsSinceLastLogin: number;
 }
 
+export interface UserSimple {
+  id?: number | null;
+  name: string,
+  streetName: string,
+  cityName: string,
+  postalZone: string,
+  cbcCode: string
+}
+
 export interface Item { // Used in DB update
   id?: number | null;
   name: string;
-  seller: User;
+  seller: UserSimple;
   description?: string;
   price: number;
 }
@@ -55,7 +64,7 @@ export interface Order {
   id?: number | null;
   items: Item[];
   quantities: number[];
-  buyer: User;
+  buyer: UserSimple;
   billingDetails: BillingDetails;
   delivery: DeliveryInstructions;
   lastEdited?: string;
