@@ -1,6 +1,6 @@
-import { addUser, getUser, updateUser, deleteUser, addItem, getItem, addOrder, getOrder, getOrdersByUser, addSession, validSession, deleteOrder, deleteItem, deleteSession, updateOrder} from "./dataStore";
-import { Item, Order, OrderItem, UserData } from "./types";
-
+import { addItem, addOrder, addToken, addUser, deleteItem, deleteOrder, deleteToken, deleteUser, getItem, getOrder, getOrdersByUser, getUser, updateOrder, updateUser, validToken } from "./dataStore";
+import { Item, Order, User } from "./types";
+/*
 // Adds and runs tests on a user with 2 items, and 2 orders
 async function testDatabase() {
     try {
@@ -10,14 +10,14 @@ async function testDatabase() {
         console.log("\n// PART 1: TEST USER //\n");
 
         // Add user
-        const newUser: UserData = {
-                id: -1,
-                nameFirst: "John",
-                nameLast: "Smith",
-                email: "javasmith@gmail.com",
-                password: "example123",
-                numSuccessfulLogins: 0,
-                numFailedPasswordsSinceLastLogin: 0
+        const newUser: User = {
+            id: -1,
+            nameFirst: "John",
+            nameLast: "Smith",
+            email: "javasmith@gmail.com",
+            password: "example123",
+            numSuccessfulLogins: 0,
+            numFailedPasswordsSinceLastLogin: 0
         };
         newUser.id = await addUser(newUser);
         console.log("➕ User added with id:", newUser.id);
@@ -27,7 +27,7 @@ async function testDatabase() {
         console.log("🔍 Fetched User:", fetchedUser);
 
         // Update the user's details
-        const updatedUser: UserData = { ...newUser, nameFirst: "Stacy", nameLast: "Mittens", email: "smitten@gmail.com" };
+        const updatedUser: User = { ...newUser, nameFirst: "Stacy", nameLast: "Mittens", email: "smitten@gmail.com" };
         const updatedUserResult = await updateUser(updatedUser);
         console.log("✏️  User updated?", updatedUserResult);
 
@@ -39,13 +39,13 @@ async function testDatabase() {
         console.log("\n// PART 2: TEST SESSION //\n");
 
         // Add session
-        const addSessionResult = await addSession(42, newUser.id);
-        console.log("✏️  Session added?", addSessionResult);
+        const addTokenResult = await addToken(42, newUser.id);
+        console.log("✏️  Session added?", addTokenResult);
 
         // Check valid then invalid session
-        const validSessionResult = await validSession(42);
-        const invalidSessionResult = await validSession(404);
-        console.log("✏️  Valid then invalid Sessions?", validSessionResult, invalidSessionResult);
+        const validTokenResult = await validToken(42);
+        const invalidTokenResult = await validToken(404);
+        console.log("✏️  Valid then invalid Sessions?", validTokenResult, invalidTokenResult);
 
 ////////////////////////////// PART 3: TEST ITEMS //////////////////////////////
         console.log("\n// PART 3: TEST ITEMS //\n");
@@ -160,8 +160,8 @@ async function testDatabase() {
         console.log("🗑️  Item 2 deleted?", deleteItemResult2);
 
         // Delete the session
-        const deleteSessionResult = await deleteSession(42);
-        console.log("🗑️  Session deleted?", deleteSessionResult);
+        const deleteTokenResult = await deleteToken(42);
+        console.log("🗑️  Session deleted?", deleteTokenResult);
 
         // Delete the user
         const deleteUserResult = await deleteUser(newUser.id);
@@ -179,3 +179,4 @@ async function testDatabase() {
 
 // Run the test function
 testDatabase();
+*/

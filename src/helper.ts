@@ -1,4 +1,4 @@
-import { OrderParam } from "./types";
+import { Order } from "./types";
 import { getUser } from './dataStore'
 
 const xml2js = require('xml2js');
@@ -6,10 +6,10 @@ const xml2js = require('xml2js');
 /**
  * Helper function to produce UBL XML document for order creation/change.
  * @param {number} orderId - Unique identifier for an order.
- * @param {OrderParam} order - object containing all the order information.
+ * @param {Order} order - object containing all the order information.
  * @returns { string } UBL document - A string containing the UBL XML document.
  */
-export function generateUBL(orderId: number, order: OrderParam) {
+export function generateUBL(orderId: number, order: Order) {
     const builder = new xml2js.Builder({
         headless: false,
         renderOpts: { 'pretty': true }
@@ -30,19 +30,19 @@ export function generateUBL(orderId: number, order: OrderParam) {
             "cbc:ID": orderId,
             "cbc:IssueDate": order.lastEdited,
             "cac:BuyerCustomerParty": {
-                "cbc:CustomerAssignedAccountID": order.user.userId,
+                "cbc:CustomerAssignedAccountID": order.buyer.id,
                 "cac:Party": {
-                    "cac:PartyName": { "cbc:Name": order.user.name },
+                    "cac:PartyName": { "cbc:Name": order.buyer.nameFirst + " " + order.buyer.nameLast },
                     "cac:PostalAddress": {
-                        "cbc:StreetName": order.user.streetName,
-                        "cbc:CityName": order.user.cityName,
-                        "cbc:PostalZone": order.user.postalZone,
-                        "cac:Country": { "cbc:IdentificationCode": order.user.cbcCode }
+                        "cbc:StreetName": order.buyer.streetName,
+                        "cbc:CityName": order.buyer.cityName,
+                        "cbc:PostalZone": order.buyer.postalZone,
+                        "cac:Country": { "cbc:IdentificationCode": order.buyer.cbcCode }
                     }
                 }
             },
             "cac:SellerSupplierParty": {
-                "cbc:CustomerAssignedAccountID": order.seller.userId,
+                "cbc:CustomerAssignedAccountID": order.seller.id,
                 "cac:Party": {
                     "cac:PartyName": { "cbc:Name": order.seller.name },
                     "cac:PostalAddress": {
@@ -56,7 +56,7 @@ export function generateUBL(orderId: number, order: OrderParam) {
             "cac:Delivery": {
                 "cac:DeliveryAddress": {
                     "cbc:StreetName": order.delivery.streetName,
-                    "cbc:CityName": order.delivery.citName,
+                    "cbc:CityName": order.delivery.cityName,
                     "cbc:PostalZone": order.delivery.postalZone,
                     "cbc:CountrySubentity": order.delivery.countrySubentity,
                     "cac:AddressLine": {
