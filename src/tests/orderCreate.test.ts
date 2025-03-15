@@ -1,6 +1,6 @@
 import { userRegister } from './testHelper';
-import { SessionId, OrderParam, UserParam, 
-  Item, BillingDetailsParam } from '../types';
+import { SessionId, Order, User, 
+  Item, BillingDetails } from '../types';
 import { getPostResponse } from '../wrapper';
 
 const SERVER_URL = `http://127.0.0.1:3200`;
@@ -9,7 +9,7 @@ const TIMEOUT_MS = 20 * 1000;
 import request from "sync-request-curl";
 
 function requestOrderCreate(
-  body: OrderParam,
+  body: Order,
 ) {
   const res = request("POST", SERVER_URL + `/v1/order/create`, {
     json: body,
@@ -29,9 +29,9 @@ function requestOrderCreate(
 // let user: {body: { token: SessionId }};
 // let userId: number;
 // let name: string;
-// let user: UserParam;
+// let user: User;
 // let testItem: Item;
-// let testBillingDetails: BillingDetailsParam;
+// let testBillingDetails: BillingDetails;
 // const date = new Date().toISOString().split('T')[0];;
 
 // beforeEach(() => {

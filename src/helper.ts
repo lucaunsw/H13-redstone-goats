@@ -1,14 +1,14 @@
-import { OrderParam } from "./types";
+import { Order } from "./types";
 
 const xml2js = require('xml2js');
 
 /**
  * Helper function to produce UBL XML document for order creation/change.
  * @param {number} orderId - Unique identifier for an order.
- * @param {OrderParam} order - object containing all the order information.
+ * @param {Order} order - object containing all the order information.
  * @returns { string } UBL document - A string containing the UBL XML document.
  */
-export function generateUBL(orderId: number, order: OrderParam) {
+export function generateUBL(orderId: number, order: Order) {
     const builder = new xml2js.Builder({
         headless: false,
         renderOpts: { 'pretty': true }
@@ -54,7 +54,7 @@ export function generateUBL(orderId: number, order: OrderParam) {
                     "cbc:StreetName": order.delivery.streetName,
                     "cbc:BuildingName": order.delivery.buildingName,
                     "cbc:BuildingNumber": order.delivery.buildingNumber,
-                    "cbc:CityName": order.delivery.citName,
+                    "cbc:CityName": order.delivery.cityName,
                     "cbc:PostalZone": order.delivery.postalZone,
                     "cbc:CountrySubentity": order.delivery.countrySubentity,
                     "cac:AddressLine": {
