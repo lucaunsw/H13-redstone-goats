@@ -26,20 +26,18 @@ export interface Item { // Used in DB update
   price: number;
 }
 
-export interface BillingDetails { // Used in DB update
+export interface BillingDetails {
   creditCardNumber: number;
   CVV: number;
   expiryDate: string;
 }
 
-export interface DeliveryInstructions { // Used in DB update
+export interface DeliveryInstructions {
   streetName: string;
-  buildingName: string;
-  buildingNumber: number;
   cityName: string;
   postalZone: string;
   countrySubentity: string;
-  adressLine: string;
+  addressLine: string;
   cbcCode: string;
   startDate: string;
   startTime: string;
@@ -47,13 +45,13 @@ export interface DeliveryInstructions { // Used in DB update
   endTime: string;
 }
 
-export enum status { // Used in DB update
+export enum status {
   PENDING = "pending",
   CONFIRMED = "confirmed",
   CANCELLED = "cancelled",
 }
 
-export interface Order { // Used in DB update
+export interface Order {
   id?: number | null;
   items: Item[];
   quantities: number[];
@@ -81,12 +79,39 @@ export interface UserParam {
   cbcCode: string;
 }
 
+export interface BillingDetailsParam {
+  creditCardNumber: number;
+  CVV: number;
+  expiryDate: string;
+}
+
+export interface DeliveryInstructions {
+  streetName: string;
+  citName: string;
+  postalZone: string;
+  countrySubentity: string;
+  addressLine: string;
+  cbcCode: string;
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+}
+
+export enum status {
+  PENDING = "pending",
+  CONFIRMED = "confirmed",
+  CANCELLED = "cancelled",
+}
+
 export interface OrderParam {
   items: Item[];
   user: UserParam;
   seller: UserParam;
   billingDetails: BillingDetails;
   delivery: deliveryInstructions;
+  billingDetails: BillingDetailsParam;
+  delivery: DeliveryInstructions;
   lastEdited?: string;
   status?: status;
 }

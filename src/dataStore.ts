@@ -187,13 +187,12 @@ export async function addOrder(order: Order): Promise<number | null> {
         const delivery = order.delivery;
         const deliveryRes = await client.query(
             `INSERT INTO DeliveryInstructions 
-                    (street_name, building_name, building_no, city_name, postal_zone, country_subentity,
-                     address_line, cbc_code, start_date, start_time, end_date, end_time)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
-            [delivery.streetName, delivery.buildingName, delivery.buildingNumber,
-             delivery.cityName, delivery.postalZone, delivery.countrySubentity,
-             delivery.adressLine, delivery.cbcCode, delivery.startDate,
-             delivery.startTime, delivery.endDate, delivery.endTime]
+                    (street_name, city_name, postal_zone, country_subentity, address_line, cbc_code,
+                     start_date, start_time, end_date, end_time)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+            [delivery.streetName, delivery.cityName, delivery.postalZone,
+             delivery.countrySubentity, delivery.addressLine, delivery.cbcCode,
+             delivery.startDate, delivery.startTime, delivery.endDate, delivery.endTime]
         );
 
         const orderRes = await client.query(
@@ -275,12 +274,10 @@ export async function getOrder(orderId: number): Promise<Order | null> {
 
     const deliveryResult: DeliveryInstructions = {
         streetName: delivery.street_name,
-        buildingName: delivery.building_name,
-        buildingNumber: delivery.building_no,
         cityName: delivery.city_name,
         postalZone: delivery.postal_zone,
         countrySubentity: delivery.country_subentity,
-        adressLine: delivery.address_line,
+        addressLine: delivery.address_line,
         cbcCode: delivery.cbc_code,
         startDate: delivery.start_date,
         startTime: delivery.start_time,
@@ -337,15 +334,14 @@ export async function updateOrder(orderId: number, order: Order): Promise<boolea
         const delivery = order.delivery;
         await client.query(
             `UPDATE DeliveryInstructions 
-             SET street_name = $1, building_name = $2, building_no = $3, city_name = $4, 
-                 postal_zone = $5, country_subentity = $6, address_line = $7, cbc_code = $8, 
-                 start_date = $9, start_time = $10, end_date = $11, end_time = $12
-             WHERE id = (SELECT delivery_id FROM Orders WHERE id = $13)`,
-            [delivery.streetName, delivery.buildingName, delivery.buildingNumber, delivery.cityName,
-             delivery.postalZone, delivery.countrySubentity, delivery.adressLine, delivery.cbcCode,
+             SET street_name = $1, city_name = $2, postal_zone = $3, 
+                 country_subentity = $4, address_line = $5, cbc_code = $6, 
+                 start_date = $7, start_time = $8, end_date = $9, end_time = $10
+             WHERE id = (SELECT delivery_id FROM Orders WHERE id = $11)`,
+            [delivery.streetName, delivery.cityName, delivery.postalZone,
+             delivery.countrySubentity, delivery.addressLine, delivery.cbcCode,
              delivery.startDate, delivery.startTime, delivery.endDate, delivery.endTime, orderId]
         );
-
 
         await client.query(
             `UPDATE Orders 

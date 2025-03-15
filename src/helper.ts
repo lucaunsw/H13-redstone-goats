@@ -1,4 +1,5 @@
 import { Order } from "./types";
+import { getUser } from './dataStore'
 
 const xml2js = require('xml2js');
 
@@ -13,7 +14,10 @@ export function generateUBL(orderId: number, order: Order) {
         headless: false,
         renderOpts: { 'pretty': true }
     });
-
+    let total = 0;
+    for (const item of order.items) {
+      total += item.price;
+    }
     const ublOrder = {
         Order: {
             $: {
@@ -26,19 +30,19 @@ export function generateUBL(orderId: number, order: Order) {
             "cbc:ID": orderId,
             "cbc:IssueDate": order.lastEdited,
             "cac:BuyerCustomerParty": {
-                "cbc:CustomerAssignedAccountID": order.user.userId,
+                "cbc:CustomerAssignedAccountID": order.buyer.id,
                 "cac:Party": {
-                    "cac:PartyName": { "cbc:Name": order.user.name },
+                    "cac:PartyName": { "cbc:Name": order.buyer.nameFirst + " " + order.buyer.nameLast },
                     "cac:PostalAddress": {
-                        "cbc:StreetName": order.user.streetName,
-                        "cbc:CityName": order.user.cityName,
-                        "cbc:PostalZone": order.user.postalZone,
-                        "cac:Country": { "cbc:IdentificationCode": order.user.cbcCode }
+                        "cbc:StreetName": order.buyer.streetName,
+                        "cbc:CityName": order.buyer.cityName,
+                        "cbc:PostalZone": order.buyer.postalZone,
+                        "cac:Country": { "cbc:IdentificationCode": order.buyer.cbcCode }
                     }
                 }
             },
             "cac:SellerSupplierParty": {
-                "cbc:CustomerAssignedAccountID": order.seller.userId,
+                "cbc:CustomerAssignedAccountID": order.seller.id,
                 "cac:Party": {
                     "cac:PartyName": { "cbc:Name": order.seller.name },
                     "cac:PostalAddress": {
@@ -52,13 +56,11 @@ export function generateUBL(orderId: number, order: Order) {
             "cac:Delivery": {
                 "cac:DeliveryAddress": {
                     "cbc:StreetName": order.delivery.streetName,
-                    "cbc:BuildingName": order.delivery.buildingName,
-                    "cbc:BuildingNumber": order.delivery.buildingNumber,
                     "cbc:CityName": order.delivery.cityName,
                     "cbc:PostalZone": order.delivery.postalZone,
                     "cbc:CountrySubentity": order.delivery.countrySubentity,
                     "cac:AddressLine": {
-                        "cbc:Line": order.delivery.adressLine
+                        "cbc:Line": order.delivery.addressLine
                     },
                     "cac:Country": {
                         "cbc:IdentificationCode": order.delivery.cbcCode
@@ -71,22 +73,28 @@ export function generateUBL(orderId: number, order: Order) {
                     "cbc:EndTime": order.delivery.endTime,
                 }
             },
-            // "cac:OrderLine": orderData.items.map((item, index) => ({
-            //     "cbc:Note": "This is an illustrative order line",
-            //     "cac:LineItem": {
-            //         "cbc:ID": index + 1,
-            //         "cbc:Quantity": { _: item.quantity, $: { unitCode: item.unit } },
-            //         "cbc:LineExtensionAmount": { _: item.amount, $: { currencyID: "GBP" } },
-            //         "cac:Item": {
-            //             "cbc:Description": item.description,
-            //             "cbc:Name": item.name,
-            //             "cac:BuyersItemIdentification": { "cbc:ID": item.buyerItemId },
-            //             "cac:SellersItemIdentification": { "cbc:ID": item.sellerItemId }
-            //         }
-            //     }
-            // }))
+            "cac:Item": order.items.map(item => ({
+                "cbc:Description": item.description,
+                "cbc:Name": item.name,
+            })),
+            "cac:AnticipatedMonetaryTotal": {
+              "cbc:PayableAmount": total,
+            },
         }
     };
-
+    
     return builder.buildObject(ublOrder);
+}
+
+/**
+ * Helper function to check if a user exists.
+ * @param {number} userId - Unique identifier for a user.
+ * @returns { boolean } - True if the user exists false else.
+ */
+export async function userExists(userId: number, name: string) {
+  const user = await getUser(userId);
+  if (user === null || `${user.nameFirst} ${user.nameLast}` !== name) {
+    return false
+  }
+  return true;
 }
