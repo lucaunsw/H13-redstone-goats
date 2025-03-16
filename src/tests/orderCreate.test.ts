@@ -1,6 +1,6 @@
 import { userRegister, reqHelper } from './testHelper';
-import { SessionId, OrderParam, UserParam, 
-  Item, BillingDetailsParam, DeliveryInstructions } from '../types';
+import { SessionId, Order, UserSimple, 
+  Item, BillingDetails, DeliveryInstructions } from '../types';
 import { getPostResponse } from '../wrapper';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
@@ -12,7 +12,7 @@ const TIMEOUT_MS = 20 * 1000;
 import request from "sync-request-curl";
 
 function requestOrderCreate(
-  body: OrderParam,
+  body: Order,
 ) {
   const res = request("POST", SERVER_URL + `/v1/order/create`, {
     json: body,
@@ -24,13 +24,12 @@ function requestOrderCreate(
   };
 }
 
-// let user: {body: { token: SessionId }};
 let userId: number;
 let testName: string;
-let testUser: UserParam;
-let testSeller: UserParam;
+let testUser: UserSimple;
+let testSeller: UserSimple;
 let testItem: Item;
-let testBillingDetails: BillingDetailsParam;
+let testBillingDetails: BillingDetails;
 let testDeliveryDetails: DeliveryInstructions;
 const date = new Date().toISOString().split('T')[0];
 
@@ -47,28 +46,30 @@ beforeEach(async () => {
   const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
   userId = decoded.userId;
     
-  testItem = {
-    id: 123,
-    name: 'soap',
-    price: 5,
-    description: 'This is soap',
-  };
-  testUser = {
-    userId: userId,
-    name: testName,
-    streetName: 'White St',
-    cityName: 'Sydney',
-    postalZone: '2000',
-    cbcCode: 'AU',
-  };
   testSeller = {
-    userId: 1,
+    id: 1,
     name: 'Test Seller',
     streetName: 'Yellow St',
     cityName: 'Brisbane',
     postalZone: '4000',
     cbcCode: 'AU'
   };
+  testItem = {
+    id: 123,
+    name: 'soap',
+    seller: testSeller,
+    price: 5,
+    description: 'This is soap',
+  };
+  testUser = {
+    id: userId,
+    name: testName,
+    streetName: 'White St',
+    cityName: 'Sydney',
+    postalZone: '2000',
+    cbcCode: 'AU',
+  };
+  
   testBillingDetails = {
     creditCardNumber: 1000000000000000,
     CVV: 111,
@@ -76,7 +77,7 @@ beforeEach(async () => {
   };
   testDeliveryDetails = {
     streetName: 'White St',
-    citName: 'Sydney',
+    cityName: 'Sydney',
     postalZone: '2000',
     countrySubentity: 'NSW',
     addressLine: '33 White St, Sydney NSW',
@@ -115,7 +116,49 @@ describe.skip('Test orderCreate route', () => {
     expect(response.statusCode).toBe(401);
   });
 
+<<<<<<< HEAD
+// let user: {body: { token: SessionId }};
+// let userId: number;
+// let name: string;
+// let user: User;
+// let testItem: Item;
+// let testBillingDetails: BillingDetails;
+// const date = new Date().toISOString().split('T')[0];;
+
+// beforeEach(() => {
+//   // clear function
+//   name = 'Bobby Jones'
+//   userId = userRegister(
+// 	  'BobbyJones@gmail.com',
+// 	  'cake',
+// 	  'Bobby',
+// 	  'Jones}');
+
+//   user = {
+//     userId: userId,
+//     name: name,
+//   };
+//   testItem = {
+//     id: 123,
+//     name: 'soap',
+//     price: 5,
+//     description: 'This is soap',
+//   };
+//   testBillingDetails = {
+//     creditCardNumber: 1000000000000000,
+//     CVV: 111,
+//     expiryDate: date,
+//   };
+// });
+
+
+// describe.skip('Test orderCreate route', () => {
+
+//   test('Error from invalid token', () => {
+//     const invalidUserId = userId + 1; 
+=======
   test('Error from invalid name', () => {
+>>>>>>> fcedd1fa2f4ac1395e422dea1ebddfbaa26fab4f
     
     const body = {
       items: [testItem],

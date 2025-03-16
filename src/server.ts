@@ -16,7 +16,7 @@ import {
   // userDetails,
   // userDetailsUpdate,
 } from './user';
-import { addSession, validSession } from "./dataStore";
+import { addToken, validToken } from "./dataStore";
 
 const app = express();
 
@@ -47,7 +47,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "redstone_secret";
 //   }
 
 //   try {
-//     const isValid = await validSession(Number(token)); 
+//     const isValid = await validToken(Number(token)); 
 
 //     if (!isValid) {
 //       res.status(401).json({ error: 'Token does not refer to a valid, logged-in session' });
@@ -64,7 +64,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "redstone_secret";
 
 // export async function makeFmtToken(userId: number): Promise<{ token: number }> {
 //   const sessionId = Math.floor(Math.random() * 1000000); // Generate a numeric session ID
-//   const success = await addSession(sessionId, userId);
+//   const success = await addToken(sessionId, userId);
 //   if (!success) {
 //     throw new Error('Failed to create session');
 //   }
