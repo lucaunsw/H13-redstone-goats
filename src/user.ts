@@ -1,4 +1,4 @@
-import { addUser, getAllUsers, getUser } from './dataStore';
+import { addUser, getAllUsers, getUser, updateUser } from './dataStore';
 import { Err, ErrKind, UserId, User, SessionId, EmptyObj, UserSummary } from './types';
 import validator from 'validator';
 
@@ -48,43 +48,44 @@ export async function userRegister(
   return { userId: userId };
 }
 
-// /**
-//  * Given a registered user's email and password returns their userId value.
-//  *
-//  * @param {email} - Users email
-//  * @param {password} - Users password
-//  * @return {userId: number} userId - Unique identifier for an
-//  * authenticated user
-//  *
-//  */
-// export function userLogin(
-//   email: string,
-//   password: string
-// ): never | { userId: UserId } {
-//   const store = getData().users;
+/**
+ * Given a registered user's email and password returns their userId value.
+ *
+ * @param {email} - Users email
+ * @param {password} - Users password
+ * @return {userId: number} userId - Unique identifier for an
+ * authenticated user
+ *
+ */
+export async function userLogin(
+  email: string,
+  password: string
+): never | Promise<{ userId: UserId }> {
+  const crypto = require('crypto');
+  
+  // Fetch all users and find the one with the matching email
+  const allUsers = await getAllUsers();
+  const user = allUsers.find((u) => u.email === email);
 
-//   const userEntry = [...store.entries()].find(([_, user]) => user.email === email);
+  if (!user) {
+    throw new Err('Email address does not exist', ErrKind.EINVALID);
+  }
 
-//   if (!userEntry) {
-//     throw new Err('email adress does not exist', ErrKind.EINVALID);
-//   }
+  // Hash the input password and compare with stored password
+  const inputHash = crypto.createHash('sha256').update(password).digest('hex');
+  if (user.password !== inputHash) {
+    user.numFailedPasswordsSinceLastLogin += 1;
+    await updateUser(user); // Update failed login count in DB
+    throw new Err('Password does not match the provided email', ErrKind.EINVALID);
+  }
 
-//   const [userId, user] = userEntry;
+  // Reset failed login attempts and increment successful logins
+  user.numFailedPasswordsSinceLastLogin = 0;
+  user.numSuccessfulLogins += 1;
+  await updateUser(user);
 
-//   const crypto = require('crypto');
-//   const inputHash = crypto.createHash('sha256').update(password).digest('hex');
-//   if (user.password !== inputHash) {
-//     user.numFailedPasswordsSinceLastLogin += 1;
-//     throw new Err('Password does not match the following email', ErrKind.EINVALID);
-//   }
-
-//   user.numFailedPasswordsSinceLastLogin = 0;
-//   user.numSuccessfulLogins += 1;
-//   setData();
-//   return {
-//     userId: userId,
-//   };
-// }
+  return { userId: user.id as number };
+}
 
 // /**
 //  * User is logged out, sessioniD is deleted.

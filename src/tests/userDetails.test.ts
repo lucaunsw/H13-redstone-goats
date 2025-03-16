@@ -5,8 +5,8 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
-beforeEach(() => {
-  clearAll();
+beforeEach(async () => {
+  await reqHelper('DELETE', '/v1/clear');
 });
 
 describe('userDetails', () => {
@@ -21,13 +21,13 @@ describe('userDetails', () => {
 
   test('Returns correct values given Valid userId', async () => {
     const tUser = {
-      email: 'me@email.com',
+      email: 'brokenAhEmail@email.com',
       password: 'testpass1',
       nameFirst: 'first',
       nameLast: 'last',
       token: null as unknown as SessionId,
     };
-    tUser.token = userRegister(
+    tUser.token = await userRegister(
       tUser.email,
       tUser.password,
       tUser.nameFirst,
@@ -36,6 +36,10 @@ describe('userDetails', () => {
 
     console.log('The token is: ' + tUser.token);
     const resp = await userDetails(tUser.token);
+    const decoded: any = jwt.verify(tUser.token, process.env.JWT_SECRET as string);
+    console.log('The exp is: ' + decoded.exp);
+    console.log('The userId is: ' + decoded.userId);
+    
 
     expect(resp.body).toStrictEqual({
       user: {
