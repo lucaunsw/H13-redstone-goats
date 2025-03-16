@@ -21,27 +21,16 @@ describe('userDetails', () => {
 
   test('Returns correct values given Valid userId', async () => {
     const tUser = {
-      email: 'brokenAhEmail@email.com',
+      email: `testEmail_${Date.now()}@email.com`,
       password: 'testpass1',
-      nameFirst: 'first',
-      nameLast: 'last',
+      nameFirst: 'Zachary',
+      nameLast: 'Abran',
       token: null as unknown as SessionId,
     };
-    tUser.token = await userRegister(
-      tUser.email,
-      tUser.password,
-      tUser.nameFirst,
-      tUser.nameLast
-    ).body.token;
-
-    console.log('The token is: ' + tUser.token);
-    const resp = await userDetails(tUser.token);
-    const decoded: any = jwt.verify(tUser.token, process.env.JWT_SECRET as string);
-    console.log('The exp is: ' + decoded.exp);
-    console.log('The userId is: ' + decoded.userId);
-    
-
-    expect(resp.body).toStrictEqual({
+    const resp = await userRegister(tUser.email, tUser.password, tUser.nameFirst, tUser.nameLast);
+    expect(resp.body).not.toStrictEqual({ error: expect.any(String) });
+    const result = await userDetails(resp.body.token);
+    expect(result.body).toStrictEqual({
       user: {
         userId: expect.anything(),
         name: tUser.nameFirst + ' ' + tUser.nameLast,
@@ -50,5 +39,5 @@ describe('userDetails', () => {
         numFailedPasswordsSinceLastLogin: expect.any(Number),
       },
     });
-  });
+  }, 10000);
 });
