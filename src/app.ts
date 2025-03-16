@@ -1,6 +1,8 @@
-import { OrderParam, status } from './types';
+import { Order, status } from './types';
 import { generateUBL, userExists } from './helper';
-import { getUser, addOrder, getOrder, updateOrder } from './dataStore'
+import { getUser, addOrder, getOrder, updateOrder, addItem,
+  getItem
+ } from './dataStore'
 
 /**
  * Create an order and produce a UBL document, and return the
@@ -9,10 +11,13 @@ import { getUser, addOrder, getOrder, updateOrder } from './dataStore'
  * @param {OrderParam} order - object containing all the order information
  * @returns {{ orderId: number }} orderId - Unique identifier for an order
  */
-async function orderCreate (order: OrderParam) {
-  const user = await getUser(order.user.userId);
+async function orderCreate (order: Order) {
+  if (!order.buyer.id) {
+    return new Error ('No userId provided');
+  }
+  const user = await getUser(order.buyer.id);
   
-  if (!userExists(order.user.userId, order.user.name)) {
+  if (!userExists(order.buyer.id, order.buyer.name)) {
     throw new Error 
     ('Invalid userId or a different name is registered to userId');
   }
@@ -31,19 +36,27 @@ async function orderCreate (order: OrderParam) {
   for (const item of order.items) {
     if (item.price < 0) {
       throw new Error ('Invalid item price');
+    } else if (!item.id) {
+      throw new Error ('No item Id provided');
     }
   }
 
+  for (const item of order.items) {
+    if (item.id) {
+      const itemId = getItem(item.id);
+      if (!itemId) {
+        addItem(item);
+      }
+    }
+  }
+  
+  const orderId = await addOrder(order);
   order.lastEdited = currDate;
   order.status = status.PENDING;
-  
-  // const orderId = await addOrder(order, order.items);
-  
-  // if (orderId !== null) {
-  //   const UBLDocument = generateUBL(orderId, order);
-  // }
-  // return { orderId };
-  return;
+  if (orderId !== null) {
+    const UBLDocument = generateUBL(orderId, order);
+  }
+  return { orderId };
 }
 
 

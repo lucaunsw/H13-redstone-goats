@@ -26,7 +26,7 @@ function requestOrderCreate(
 
 let userId: number;
 let testName: string;
-let testUser: UserSimple;
+let testBuyer: UserSimple;
 let testSeller: UserSimple;
 let testItem: Item;
 let testBillingDetails: BillingDetails;
@@ -37,7 +37,6 @@ beforeEach(async () => {
   reqHelper('DELETE', '/v1/clear');
   testName = 'Bobby Jones'
 
-  // NOTE: below should correctly extract userId from token (hopefully)
   const token = await userRegister(
     'BobbyJones@gmail.com',
     'cake',
@@ -61,7 +60,7 @@ beforeEach(async () => {
     price: 5,
     description: 'This is soap',
   };
-  testUser = {
+  testBuyer = {
     id: userId,
     name: testName,
     streetName: 'White St',
@@ -69,7 +68,6 @@ beforeEach(async () => {
     postalZone: '2000',
     cbcCode: 'AU',
   };
-  
   testBillingDetails = {
     creditCardNumber: 1000000000000000,
     CVV: 111,
@@ -97,7 +95,8 @@ describe.skip('Test orderCreate route', () => {
     
     const body = {
       items: [testItem],
-      user: {
+      quantities: [1],
+      buyer: {
         userId: invalidUserId,
         name: testName,
         streetName: 'White St',
@@ -105,10 +104,10 @@ describe.skip('Test orderCreate route', () => {
         postalZone: '2000',
         cbcCode: 'AU',
       },
-      seller: testSeller,
       billingDetails: testBillingDetails,
       delivery: testDeliveryDetails,
-      lastEdited: date,
+      totalPrice: 5,
+      createdAt: new Date(),
     };
 
     const response = requestOrderCreate(body);
@@ -116,53 +115,12 @@ describe.skip('Test orderCreate route', () => {
     expect(response.statusCode).toBe(401);
   });
 
-<<<<<<< HEAD
-// let user: {body: { token: SessionId }};
-// let userId: number;
-// let name: string;
-// let user: User;
-// let testItem: Item;
-// let testBillingDetails: BillingDetails;
-// const date = new Date().toISOString().split('T')[0];;
-
-// beforeEach(() => {
-//   // clear function
-//   name = 'Bobby Jones'
-//   userId = userRegister(
-// 	  'BobbyJones@gmail.com',
-// 	  'cake',
-// 	  'Bobby',
-// 	  'Jones}');
-
-//   user = {
-//     userId: userId,
-//     name: name,
-//   };
-//   testItem = {
-//     id: 123,
-//     name: 'soap',
-//     price: 5,
-//     description: 'This is soap',
-//   };
-//   testBillingDetails = {
-//     creditCardNumber: 1000000000000000,
-//     CVV: 111,
-//     expiryDate: date,
-//   };
-// });
-
-
-// describe.skip('Test orderCreate route', () => {
-
-//   test('Error from invalid token', () => {
-//     const invalidUserId = userId + 1; 
-=======
   test('Error from invalid name', () => {
->>>>>>> fcedd1fa2f4ac1395e422dea1ebddfbaa26fab4f
     
     const body = {
       items: [testItem],
-      user: {
+      quantities: [1],
+      buyer: {
         userId: userId,
         name: 'Apple Apple',
         streetName: 'White St',
@@ -170,10 +128,11 @@ describe.skip('Test orderCreate route', () => {
         postalZone: '2000',
         cbcCode: 'AU',
       },
-      seller: testSeller,
       billingDetails: testBillingDetails,
       delivery: testDeliveryDetails,
+      totalPrice: 5,
       lastEdited: date,
+      createdAt: new Date(),
     };
 
     const response = requestOrderCreate(body);
@@ -181,19 +140,46 @@ describe.skip('Test orderCreate route', () => {
     expect(response.statusCode).toBe(401);
   });
 
+  test('Error from invalid total price', () => {
+    const body = {
+      items: [{
+        id: 124,
+        name: 'Toothpaste',
+        seller: testSeller,
+        price: 40,
+        description: 'This is Toothpaste',
+      }],
+      quantities: [1],
+      buyer: testBuyer,
+      seller: testSeller,
+      billingDetails: testBillingDetails,
+      totalPrice: 5,
+      delivery: testDeliveryDetails,
+      lastEdited: date,
+      createdAt: new Date(),
+    }
+    const response = requestOrderCreate(body);
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toStrictEqual({ error: expect.any(String) });
+  });
+
   test('Error from invalid item', () => {
     const body = {
       items: [{
         id: 124,
         name: 'Toothpaste',
+        seller: testSeller,
         price: -2,
         description: 'This is Toothpaste',
       }],
-      user: testUser,
+      quantities: [1],
+      buyer: testBuyer,
       seller: testSeller,
       billingDetails: testBillingDetails,
+      totalPrice: -2,
       delivery: testDeliveryDetails,
       lastEdited: date,
+      createdAt: new Date(),
     }
     const response = requestOrderCreate(body);
     expect(response.statusCode).toBe(400);
@@ -204,15 +190,17 @@ describe.skip('Test orderCreate route', () => {
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
-      user: testUser,
-      seller: testSeller,
+      quantities: [1],
+      buyer: testBuyer,
       billingDetails: {
         creditCardNumber: 100000000000,
         CVV: 111,
         expiryDate: date,
       },
+      totalPrice: 5,
       delivery: testDeliveryDetails,
       lastEdited: date,
+      createdAt: new Date(),
     }
     const response = requestOrderCreate(body);
 
@@ -224,12 +212,13 @@ describe.skip('Test orderCreate route', () => {
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
-      user: testUser,
-      seller: testSeller,
+      quantities: [1],
+      buyer: testBuyer,
       billingDetails: testBillingDetails,
+      totalPrice: 5,
       delivery: {
         streetName: 'White St',
-        citName: 'Sydney',
+        cityName: 'Sydney',
         postalZone: '2000',
         countrySubentity: 'NSW',
         addressLine: '33 White St, Sydney NSW',
@@ -240,6 +229,7 @@ describe.skip('Test orderCreate route', () => {
         endTime: '13:00'
       },
       lastEdited: date,
+      createdAt: new Date(),
     }
     const response = requestOrderCreate(body);
 
@@ -251,12 +241,13 @@ describe.skip('Test orderCreate route', () => {
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
-      user: testUser,
-      seller: testSeller,
+      quantities: [1],
+      buyer: testBuyer,
       billingDetails: testBillingDetails,
+      totalPrice: 5,
       delivery: {
         streetName: 'White St',
-        citName: 'Sydney',
+        cityName: 'Sydney',
         postalZone: '2000',
         countrySubentity: 'NSW',
         addressLine: '33 White St, Sydney NSW',
@@ -267,6 +258,7 @@ describe.skip('Test orderCreate route', () => {
         endTime: '13:00'
       },
       lastEdited: date,
+      createdAt: new Date(),
     }
     const response = requestOrderCreate(body);
 
@@ -278,11 +270,13 @@ describe.skip('Test orderCreate route', () => {
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
-      user: testUser,
-      seller: testSeller,
+      quantities: [1],
+      buyer: testBuyer,
       billingDetails: testBillingDetails,
+      totalPrice: 5,
       delivery: testDeliveryDetails,
       lastEdited: date,
+      createdAt: new Date(),
     }
     const response = requestOrderCreate(body);
 
