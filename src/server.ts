@@ -11,12 +11,12 @@ import dotenv from 'dotenv';
 
 import {
   userRegister,
-  // userLogin,
+  userLogin,
   // userLogout,
   userDetails,
   // userDetailsUpdate,
 } from './user';
-import { addToken, validToken } from "./dataStore";
+import { addToken, clearAll, validToken } from "./dataStore";
 
 const app = express();
 
@@ -111,7 +111,7 @@ app.post('/v1/user/register', async (req: Request, res: Response) => {
   try {
     const { email, password, nameFirst, nameLast } = req.body;
     const result = await userRegister(email, password, nameFirst, nameLast); 
-    const sessionToken = makeJwtToken(result.userId); 
+    const sessionToken = await makeJwtToken(result.userId); 
     res.json(sessionToken);
   } catch (err) {
     if (err instanceof Error) {
@@ -122,12 +122,20 @@ app.post('/v1/user/register', async (req: Request, res: Response) => {
   }
 });
 
-// app.post('/v1/user/login', (req: Request, res: Response) => {
-//   const { email, password } = req.body;
-//   const result = userLogin(email, password);
-
-//   res.json(makeFmtToken(result.userId));
-// });
+app.post('/v1/user/login', async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+    const result = await userLogin(email, password); 
+    const sessionToken = await makeJwtToken(result.userId);
+    res.json(sessionToken);
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(400).json({ error: err.message }); 
+    } else {
+      res.status(400).json({ error: 'An unknown error occurred' }); 
+    }
+  }
+});
 
 app.get('/v1/user/details', async (req: Request, res: Response) => {
   try {
@@ -211,6 +219,10 @@ app.get("/", (req, res) => {
 //     }
 //   }
 // );
+
+app.delete('/v1/clear', async (_: Request, res: Response) => {
+  res.json(await clearAll());
+});
 
 // Custom **error handling** middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

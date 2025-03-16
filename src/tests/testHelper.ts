@@ -45,7 +45,7 @@ export function userRegister<T = { token: SessionId }>(
 }
 
 export function userLogin<T = { token: SessionId }>(em: string, pass: string) {
-  return reqHelper<T>('POST', '/v1/admin/auth/login', {
+  return reqHelper<T>('POST', '/v1/user/login', {
     json: {
       email: em,
       password: pass,

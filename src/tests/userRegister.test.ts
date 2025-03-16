@@ -5,8 +5,8 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
-beforeEach(() => {
-  clearAll();
+beforeEach(async () => {
+  await reqHelper('DELETE', '/v1/clear');
 });
 
 describe('userRegister', () => {
@@ -40,9 +40,10 @@ test('A user successfully registers', async () => {
   const resp = await userRegister(`example@email.com`, `example123`, `firstName`, `lastName`);
   expect(resp.statusCode).toBe(200);
   expect(resp.body).toStrictEqual({ token: expect.any(String) });
-
+  console.log("The token is: " + resp.body.token);
   const decoded = jwt.verify(resp.body.token, process.env.JWT_SECRET as string) as { userId: number };
   expect(typeof decoded.userId).toBe('number');
+  console.log("The userId is: " + decoded.userId);
 });
 
   test('If a user already has an email registered, it should return an error', async () => {
