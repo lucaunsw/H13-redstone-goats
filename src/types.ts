@@ -131,10 +131,8 @@ export interface ItemUpdate {
   quantity: number; 
 }
 
-export interface OrderUpdateData {
+export interface UpdatedData {
   items: ItemUpdate[]; 
-  status?: status; 
-  lastEdited: string;
 }
 
 // Special error handling / other types

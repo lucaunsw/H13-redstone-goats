@@ -231,25 +231,28 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 
 
 app.post('/v1/:userId/order/:orderId/items/change', async (req: Request, res: Response) => {
+  try {
     const { userId, orderId } = req.params;
-    const { updateData } = req.body // request body contains an array of items to update
+    // IF TOKEN ????
+    // const userId = req.body.token;
+    const { items } = req.body;
 
-    // Call function
-    try {
-      const updatedOrder = await orderChange(Number(orderId), Number(items), updateData);
-      res.json(updatedOrder);
+    // Call function, return updated order
+      const updatedOrder = await orderChange(userId, orderId, {items} );
+      res.status(200).json(updatedOrder);
 
     // Error Checking
-    } catch (error) {
-      const e = error as Error;
+    } catch (err) {
+      const e = err as Error;
       let statusCode = 500; // default error code
 
-      if (e.message === "invalid orderId" || e.message === "invalid userId") {
+      if (e.message === "Invalid orderId" || e.message === "Invalid userId") {
         statusCode = 401; 
-      } else (e.message == "order not found") {
+      } else if (e.message == "order not found") {
         statusCode = 400;
+      } else if (e.message.includes("Item with id") || e.message.includes("Invalid quantity")) {
+        statusCode = 422; // note to self, add changes to swagger + documentation
       }
-
       res.status(statusCode).json({ error: e.message });
     };
 });
