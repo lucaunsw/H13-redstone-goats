@@ -1,7 +1,7 @@
 import { Order, status } from './types';
-import { generateUBL, userExists } from './helper';
+import { generateUBL, userExists, validItemList, addItems } from './helper';
 import { getUser, addOrder, getOrder, updateOrder, addItem,
-  getItem
+  getItem, addOrderXML
  } from './dataStore'
 
 /**
@@ -22,39 +22,43 @@ async function orderCreate (order: Order) {
     ('Invalid userId or a different name is registered to userId');
   }
 
+  // Throw error for invalid bank details.
   if (order.billingDetails.creditCardNumber > 9999999999999999 || 
     order.billingDetails.creditCardNumber < 100000000000) {
     throw new Error ('Invalid bank details');
   }
 
+  // Throw error for invalid date selection.
   const currDate = new Date().toISOString().split('T')[0];
   if (order.delivery.startDate < currDate || order.delivery.endDate < currDate
     || order.delivery.startDate > order.delivery.endDate) {
     throw new Error ('Invalid date selection');
   }
 
-  for (const item of order.items) {
-    if (item.price < 0) {
-      throw new Error ('Invalid item price');
-    } else if (!item.id) {
-      throw new Error ('No item Id provided');
-    }
+  // If an invalid amount of item quantities are provided, throw error.
+  if (order.items.length !== order.quantities.length) {
+    throw new Error ('Invalid amount of item quantities provided');
   }
 
-  for (const item of order.items) {
-    if (item.id) {
-      const itemId = getItem(item.id);
-      if (!itemId) {
-        addItem(item);
-      }
-    }
+  // Helper function checks if all items/quantities are valid and returns the 
+  // total price if so.
+  const totalPrice = await validItemList(order);
+  // Throw error if inputted total price is incorrect.
+  if (totalPrice !== order.totalPrice) {
+    throw new Error ('Incorrect total price provided');
   }
-  
+
+  // Helper function adds all items to item datastore.
+  addItems(order);
   const orderId = await addOrder(order);
   order.lastEdited = currDate;
   order.status = status.PENDING;
+
+  // Helper function generates UBl document.
   if (orderId !== null) {
     const UBLDocument = generateUBL(orderId, order);
+    console.log(UBLDocument);
+    addOrderXML(orderId, UBLDocument);
   }
   return { orderId };
 }

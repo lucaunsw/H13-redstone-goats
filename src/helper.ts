@@ -1,5 +1,6 @@
-import { Order } from "./types";
-import { getUser } from './dataStore'
+import { Order, UserSimple } from "./types";
+import { getUser, addItem,
+  getItem } from './dataStore'
 
 const xml2js = require('xml2js');
 
@@ -10,80 +11,89 @@ const xml2js = require('xml2js');
  * @returns { string } UBL document - A string containing the UBL XML document.
  */
 export function generateUBL(orderId: number, order: Order) {
-    const builder = new xml2js.Builder({
-        headless: false,
-        renderOpts: { 'pretty': true }
-    });
-    let total = 0;
-    for (const item of order.items) {
-      total += item.price;
+  // Create a map to keep track of unique sellers.
+  const uniqueSellers = new Map<number, UserSimple>();
+  // Add unique sellers into the map.
+  for (const item of order.items) {
+    if (item.seller.id && !uniqueSellers.has(item.seller.id)) {
+      uniqueSellers.set(item.seller.id, item.seller);
     }
-    const ublOrder = {
-        Order: {
-            $: {
-                xmlns: "urn:oasis:names:specification:ubl:schema:xsd:Order-2",
-                "xmlns:cbc": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
-                "xmlns:cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
-            },
-            "cbc:UBLVersionID": "2.0",
-            "cbc:CustomizationID": "urn:oasis:names:specification:ubl:xpath:Order-2.0:sbs-1.0-draft",
-            "cbc:ID": orderId,
-            "cbc:IssueDate": order.lastEdited,
-            "cac:BuyerCustomerParty": {
-                "cbc:CustomerAssignedAccountID": order.buyer.id,
-                "cac:Party": {
-                    "cac:PartyName": { "cbc:Name": order.buyer.nameFirst + " " + order.buyer.nameLast },
-                    "cac:PostalAddress": {
-                        "cbc:StreetName": order.buyer.streetName,
-                        "cbc:CityName": order.buyer.cityName,
-                        "cbc:PostalZone": order.buyer.postalZone,
-                        "cac:Country": { "cbc:IdentificationCode": order.buyer.cbcCode }
-                    }
+  }
+
+  const builder = new xml2js.Builder({
+      headless: false,
+      renderOpts: { 'pretty': true }
+  });
+  let total = 0;
+  for (const item of order.items) {
+    total += item.price;
+  }
+  const ublOrder = {
+      Order: {
+          $: {
+            xmlns: "urn:oasis:names:specification:ubl:schema:xsd:Order-2",
+            "xmlns:cbc": "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2",
+            "xmlns:cac": "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
+          },
+          "cbc:UBLVersionID": "2.0",
+          "cbc:CustomizationID": "urn:oasis:names:specification:ubl:xpath:Order-2.0:sbs-1.0-draft",
+          "cbc:ID": orderId,
+          "cbc:IssueDate": order.lastEdited,
+          "cac:BuyerCustomerParty": {
+            "cbc:CustomerAssignedAccountID": order.buyer.id,
+            "cac:Party": {
+              "cac:PartyName": { "cbc:Name": order.buyer.name },
+              "cac:PostalAddress": {
+                "cbc:StreetName": order.buyer.streetName,
+                "cbc:CityName": order.buyer.cityName,
+                "cbc:PostalZone": order.buyer.postalZone,
+                "cac:Country": { "cbc:IdentificationCode": order.buyer.cbcCode }
+              }
+            }
+          },
+          "cac:SellerSupplierParty": 
+            Array.from(uniqueSellers.values()).map(seller => ({
+              "cbc:CustomerAssignedAccountID": seller.id,
+              "cac:Party": {
+                "cac:PartyName": { "cbc:Name": seller.name },
+                "cac:PostalAddress": {
+                  "cbc:StreetName": seller.streetName,
+                  "cbc:CityName": seller.cityName,
+                  "cbc:PostalZone": seller.postalZone,
+                  "cac:Country": { "cbc:IdentificationCode": seller.cbcCode }
                 }
-            },
-            "cac:SellerSupplierParty": {
-                "cbc:CustomerAssignedAccountID": order.seller.id,
-                "cac:Party": {
-                    "cac:PartyName": { "cbc:Name": order.seller.name },
-                    "cac:PostalAddress": {
-                        "cbc:StreetName": order.seller.streetName,
-                        "cbc:CityName": order.seller.cityName,
-                        "cbc:PostalZone": order.seller.postalZone,
-                        "cac:Country": { "cbc:IdentificationCode": order.seller.cbcCode }
-                    }
-                }
-            },
-            "cac:Delivery": {
-                "cac:DeliveryAddress": {
-                    "cbc:StreetName": order.delivery.streetName,
-                    "cbc:CityName": order.delivery.cityName,
-                    "cbc:PostalZone": order.delivery.postalZone,
-                    "cbc:CountrySubentity": order.delivery.countrySubentity,
-                    "cac:AddressLine": {
-                        "cbc:Line": order.delivery.addressLine
-                    },
-                    "cac:Country": {
-                        "cbc:IdentificationCode": order.delivery.cbcCode
-                    }
-                },
-                "cac:RequestedDeliveryPeriod": {
-                    "cbc:StartDate": order.delivery.startDate,
-                    "cbc:StartTime": order.delivery.startTime,
-                    "cbc:EndDate": order.delivery.endDate,
-                    "cbc:EndTime": order.delivery.endTime,
-                }
-            },
-            "cac:Item": order.items.map(item => ({
-                "cbc:Description": item.description,
-                "cbc:Name": item.name,
+              },
             })),
-            "cac:AnticipatedMonetaryTotal": {
-              "cbc:PayableAmount": total,
+          "cac:Delivery": {
+            "cac:DeliveryAddress": {
+              "cbc:StreetName": order.delivery.streetName,
+              "cbc:CityName": order.delivery.cityName,
+              "cbc:PostalZone": order.delivery.postalZone,
+              "cbc:CountrySubentity": order.delivery.countrySubentity,
+              "cac:AddressLine": {
+                "cbc:Line": order.delivery.addressLine
+              },
+              "cac:Country": {
+                "cbc:IdentificationCode": order.delivery.cbcCode
+              }
             },
-        }
-    };
-    
-    return builder.buildObject(ublOrder);
+            "cac:RequestedDeliveryPeriod": {
+              "cbc:StartDate": order.delivery.startDate,
+              "cbc:StartTime": order.delivery.startTime,
+              "cbc:EndDate": order.delivery.endDate,
+              "cbc:EndTime": order.delivery.endTime,
+            }
+          },
+          "cac:Item": order.items.map(item => ({
+            "cbc:Description": item.description,
+            "cbc:Name": item.name,
+          })),
+          "cac:AnticipatedMonetaryTotal": {
+            "cbc:PayableAmount": total,
+          },
+      }
+  };
+  return builder.buildObject(ublOrder);
 }
 
 /**
@@ -97,4 +107,50 @@ export async function userExists(userId: number, name: string) {
     return false
   }
   return true;
+}
+
+/**
+ * Helper function to check if a user exists.
+ * @param {Order} order - object containg all the order information.
+ * @returns { number } totalPrice - Total price of the order if the item list is
+ * valid.
+ */
+export async function validItemList(order: Order) {
+  let totalPrice = 0;
+  for (let i = 0; i < order.items.length; i++) {
+    const item = order.items[i];
+    if (!item.id) {
+      throw new Error ('No item Id provided');
+    } 
+    const orderItem = await getItem(item.id);
+    if (orderItem && orderItem.name !== item.name) {
+      throw new Error ('Same item Id is registered to a different item name');
+    }
+
+    if (item.price < 0) {
+      throw new Error ('Invalid item price');
+    } else if (order.quantities[i] <= 0) {
+      throw new Error ('Invalid quantities provided');
+    } else {
+      totalPrice += item.price * order.quantities[i];
+    }
+  }
+  return totalPrice;
+}
+
+/**
+ * Helper function to check if a user exists.
+ * @param {Order} order - object containg all the order information.
+ * @returns nothing.
+ */
+export async function addItems(order: Order) {
+  for (const item of order.items) {
+    if (item.id) {
+      const itemId = await getItem(item.id);
+      if (!itemId) {
+        addItem(item);
+      }
+    }
+  }
+  return;
 }
