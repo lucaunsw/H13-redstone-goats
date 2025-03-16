@@ -1,10 +1,6 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
-<<<<<<< HEAD
 import { orderCreate, orderCancel, orderConfirm, orderChange } from "./app";
-=======
-// import { orderCreate, orderCancel, orderConfirm } from "./app";
->>>>>>> 0bdd2f3958256d1746860772e0ca035558c7c461
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
@@ -234,14 +230,13 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 
-// orderChange
-app.post('/v1/:userId/order/:orderId/items/change', (req: Request, res: Response) => {
+app.post('/v1/:userId/order/:orderId/items/change', async (req: Request, res: Response) => {
     const { userId, orderId } = req.params;
-    const { items } = req.body // expects an array of items to update
+    const { updateData } = req.body // request body contains an array of items to update
 
     // Call function
     try {
-      const updatedOrder = await orderChange(orderId, items);
+      const updatedOrder = await orderChange(Number(orderId), Number(items), updateData);
       res.json(updatedOrder);
 
     // Error Checking
@@ -250,7 +245,9 @@ app.post('/v1/:userId/order/:orderId/items/change', (req: Request, res: Response
       let statusCode = 500; // default error code
 
       if (e.message === "invalid orderId" || e.message === "invalid userId") {
-        statusCode = 401; // Unauthorized
+        statusCode = 401; 
+      } else (e.message == "order not found") {
+        statusCode = 400;
       }
 
       res.status(statusCode).json({ error: e.message });
