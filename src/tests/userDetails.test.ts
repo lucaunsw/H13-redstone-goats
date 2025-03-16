@@ -1,33 +1,36 @@
 import { userRegister, userDetails, reqHelper } from './testHelper';
-import { SessionId } from '../types';
+import { Err, SessionId, ErrKind } from '../types';
+import { clearAll } from '../dataStore';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
 
-beforeEach(() => {
-  reqHelper('DELETE', '/v1/clear');
+beforeEach(async () => {
+  await reqHelper('DELETE', '/v1/clear');
 });
 
-describe.skip('userDetails', () => {
-  test('Returns error given invalid token', () => {
-    expect(userDetails('38178357023').body).toStrictEqual({
-      error: expect.any(String),
-    });
+describe('userDetails', () => {
+  test('Returns error given invalid token', async () => {
+    const invalidToken = '201u3nfoafowjioj'; // Invalid token
+
+    const resp = await userDetails(invalidToken);
+
+    expect(resp.body).toStrictEqual({ error: expect.any(String) });
+    expect(resp.statusCode).toStrictEqual(ErrKind.ENOTOKEN);
   });
 
-  test('Returns correct values given Valid authUserId', () => {
+  test('Returns correct values given Valid userId', async () => {
     const tUser = {
-      email: 'me@email.com',
+      email: `testEmail_${Date.now()}@email.com`,
       password: 'testpass1',
-      nameFirst: 'first',
-      nameLast: 'last',
+      nameFirst: 'Zachary',
+      nameLast: 'Abran',
       token: null as unknown as SessionId,
     };
-    tUser.token = userRegister(
-      tUser.email,
-      tUser.password,
-      tUser.nameFirst,
-      tUser.nameLast
-    ).body.token;
-
-    expect(userDetails(tUser.token).body).toStrictEqual({
+    const resp = await userRegister(tUser.email, tUser.password, tUser.nameFirst, tUser.nameLast);
+    expect(resp.body).not.toStrictEqual({ error: expect.any(String) });
+    const result = await userDetails(resp.body.token);
+    expect(result.body).toStrictEqual({
       user: {
         userId: expect.anything(),
         name: tUser.nameFirst + ' ' + tUser.nameLast,
@@ -36,5 +39,5 @@ describe.skip('userDetails', () => {
         numFailedPasswordsSinceLastLogin: expect.any(Number),
       },
     });
-  });
+  }, 10000);
 });

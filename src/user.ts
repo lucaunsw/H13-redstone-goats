@@ -1,5 +1,5 @@
-import { addUser, getAllUsers } from './dataStore';
-import { Err, ErrKind, UserId, UserData, SessionId, EmptyObj, UserDataSummary } from './types';
+import { addUser, getAllUsers, getUser, updateUser } from './dataStore';
+import { Err, ErrKind, UserId, User, SessionId, EmptyObj, UserSummary } from './types';
 import validator from 'validator';
 
 /**
@@ -35,7 +35,7 @@ export async function userRegister(
   validateName(nameLast, 'last ');
 
   const crypto = require('crypto');
-  const newUser: UserData = {
+  const newUser: User = {
     email: email,
     password: crypto.createHash('sha256').update(password).digest('hex'),
     nameFirst: nameFirst,
@@ -48,43 +48,44 @@ export async function userRegister(
   return { userId: userId };
 }
 
-// /**
-//  * Given a registered user's email and password returns their userId value.
-//  *
-//  * @param {email} - Users email
-//  * @param {password} - Users password
-//  * @return {userId: number} userId - Unique identifier for an
-//  * authenticated user
-//  *
-//  */
-// export function userLogin(
-//   email: string,
-//   password: string
-// ): never | { userId: UserId } {
-//   const store = getData().users;
+/**
+ * Given a registered user's email and password returns their userId value.
+ *
+ * @param {email} - Users email
+ * @param {password} - Users password
+ * @return {userId: number} userId - Unique identifier for an
+ * authenticated user
+ *
+ */
+export async function userLogin(
+  email: string,
+  password: string
+): never | Promise<{ userId: UserId }> {
+  const crypto = require('crypto');
+  
+  // Fetch all users and find the one with the matching email
+  const allUsers = await getAllUsers();
+  const user = allUsers.find((u) => u.email === email);
 
-//   const userEntry = [...store.entries()].find(([_, user]) => user.email === email);
+  if (!user) {
+    throw new Err('Email address does not exist', ErrKind.EINVALID);
+  }
 
-//   if (!userEntry) {
-//     throw new Err('email adress does not exist', ErrKind.EINVALID);
-//   }
+  // Hash the input password and compare with stored password
+  const inputHash = crypto.createHash('sha256').update(password).digest('hex');
+  if (user.password !== inputHash) {
+    user.numFailedPasswordsSinceLastLogin += 1;
+    await updateUser(user); // Update failed login count in DB
+    throw new Err('Password does not match the provided email', ErrKind.EINVALID);
+  }
 
-//   const [userId, user] = userEntry;
+  // Reset failed login attempts and increment successful logins
+  user.numFailedPasswordsSinceLastLogin = 0;
+  user.numSuccessfulLogins += 1;
+  await updateUser(user);
 
-//   const crypto = require('crypto');
-//   const inputHash = crypto.createHash('sha256').update(password).digest('hex');
-//   if (user.password !== inputHash) {
-//     user.numFailedPasswordsSinceLastLogin += 1;
-//     throw new Err('Password does not match the following email', ErrKind.EINVALID);
-//   }
-
-//   user.numFailedPasswordsSinceLastLogin = 0;
-//   user.numSuccessfulLogins += 1;
-//   setData();
-//   return {
-//     userId: userId,
-//   };
-// }
+  return { userId: user.id as number };
+}
 
 // /**
 //  * User is logged out, sessioniD is deleted.
@@ -104,50 +105,36 @@ export async function userRegister(
 //   return {};
 // }
 
+
 /**
- * Check if a password is strong enough. DOES NOT CHECK A USER'S PREV PASSWORDS!
+ * Given admin users userId returns details about user.
  *
- * @param {string} password - the password to validate
- * @returns {boolean | Err} - valid (true) or invalid {error: string} password.
- */
-function validatePassword(password: string, message: string): true | never {
-  if (!/\d/.test(password)) {
-    throw new Err(`${message}password does not contain a number!`, ErrKind.EINVALID);
-  }
-  if (!/[A-Za-z]/.test(password)) {
-    throw new Err(`${message}password does not contain a letter!`, ErrKind.EINVALID);
-  }
-  if (password.length < 8) {
-    throw new Err(`${message}password is less than 8 characters long!`, ErrKind.EINVALID);
-  }
-  return true;
+ * @param   {integers} userId.
+ * @returns {user: {
+* userId: number,
+* name: string,
+* email: string,
+* numSuccessfulLogins: number,
+* numFailedPasswordsSinceLastLogin: number}}
+*/
+export async function userDetails(userId: UserId): Promise<{ user: UserSummary | null }> | never {
+
+ const currentUser = await getUser(userId);
+
+ if (!currentUser) {
+  throw new Err('User not found', ErrKind.EINVALID);
+ }
+
+ return {
+   user: {
+     userId: userId,
+     name: currentUser.nameFirst + ' ' + currentUser.nameLast,
+     email: currentUser.email,
+     numSuccessfulLogins: currentUser.numSuccessfulLogins,
+     numFailedPasswordsSinceLastLogin: currentUser.numFailedPasswordsSinceLastLogin,
+   },
+ };
 }
-
-// /**
-//  * Given admin users userId returns details about user.
-//  *
-//  * @param   {integers} userId.
-//  * @returns {user: {
-// * userId: number,
-// * name: string,
-// * email: string,
-// * numSuccessfulLogins: number,
-// * numFailedPasswordsSinceLastLogin: number}}
-// */
-// export function userDetails(userId: UserId): { user: UserDataSummary } | never {
-//  const store = getData().users;
-
-//  const currentUser = store.get(userId)!;
-//  return {
-//    user: {
-//      userId: userId,
-//      name: currentUser.nameFirst + ' ' + currentUser.nameLast,
-//      email: currentUser.email,
-//      numSuccessfulLogins: currentUser.numSuccessfulLogins,
-//      numFailedPasswordsSinceLastLogin: currentUser.numFailedPasswordsSinceLastLogin,
-//    },
-//  };
-// }
 
 // /**
 // * Given admin users userId and a set of properties,
@@ -208,3 +195,23 @@ function validateName(name: string, message: string): true | never {
 
   return true;
 }
+
+/**
+ * Check if a password is strong enough. DOES NOT CHECK A USER'S PREV PASSWORDS!
+ *
+ * @param {string} password - the password to validate
+ * @returns {boolean | Err} - valid (true) or invalid {error: string} password.
+ */
+function validatePassword(password: string, message: string): true | never {
+  if (!/\d/.test(password)) {
+    throw new Err(`${message}password does not contain a number!`, ErrKind.EINVALID);
+  }
+  if (!/[A-Za-z]/.test(password)) {
+    throw new Err(`${message}password does not contain a letter!`, ErrKind.EINVALID);
+  }
+  if (password.length < 8) {
+    throw new Err(`${message}password is less than 8 characters long!`, ErrKind.EINVALID);
+  }
+  return true;
+}
+

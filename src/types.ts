@@ -4,31 +4,76 @@ export type SessionId = string;
 // Special Helper type as {} is ambiguous
 export type EmptyObj = Record<string, never>;
 
-export interface UserData {
+export interface User { // Used in DB update
   id?: number | null;
   nameFirst: string;
   nameLast: string;
   email: string;
   password: string;
-  //prevPasswords: Set<string>;
+  streetName?: string;
+  cityName?: string;
+  postalZone?: string;
+  cbcCode?: string;
   numSuccessfulLogins: number;
   numFailedPasswordsSinceLastLogin: number;
 }
 
-export interface Item {
-  id: number;
+export interface UserSimple {
+  id?: number | null;
+  name: string,
+  streetName: string,
+  cityName: string,
+  postalZone: string,
+  cbcCode: string
+}
+
+export interface Item { // Used in DB update
+  id?: number | null;
   name: string;
-  price: number;
+  seller: UserSimple;
   description?: string;
+  price: number;
+}
+
+export interface BillingDetails {
+  creditCardNumber: number;
+  CVV: number;
+  expiryDate: string;
+}
+
+export interface DeliveryInstructions {
+  streetName: string;
+  cityName: string;
+  postalZone: string;
+  countrySubentity: string;
+  addressLine: string;
+  cbcCode: string;
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+}
+
+export enum status {
+  PENDING = "pending",
+  CONFIRMED = "confirmed",
+  CANCELLED = "cancelled",
 }
 
 export interface Order {
-  id: number;
-  userId: number;
+  id?: number | null;
+  items: Item[];
+  quantities: number[];
+  buyer: UserSimple;
+  billingDetails: BillingDetails;
+  delivery: DeliveryInstructions;
+  lastEdited?: string;
+  status?: status;
   totalPrice: number;
   createdAt: Date;
 }
 
+/*
 export interface User {
   userId: number;
   totalPrice: number;
@@ -72,17 +117,14 @@ export interface OrderParam {
   items: Item[];
   user: UserParam;
   seller: UserParam;
+  billingDetails: BillingDetails;
+  delivery: deliveryInstructions;
   billingDetails: BillingDetailsParam;
   delivery: DeliveryInstructions;
   lastEdited?: string;
   status?: status;
 }
-
-export interface OrderItem {
-  orderId: number;
-  itemId: number;
-  quantity: number;
-}
+*/
 
 // Not sure if necessary, but response for orderChange function
 export interface OrderChangeResponse {
@@ -101,7 +143,7 @@ export enum ErrKind {
 }
 
 // We don't want this to be extensible
-export type UserDataSummary = {
+export type UserSummary = {
   userId: UserId;
   name: string;
   email: string;
