@@ -223,6 +223,10 @@ export async function addOrder(order: Order): Promise<number | null> {
         const orderId = orderRes.rows[0].id;
 
         for (const index in order.items) {
+            if (order.items[index].id === null) {
+                order.items[index].id = await addItem(order.items[index]);
+            }
+
             await client.query(
                 "INSERT INTO OrderItems (order_id, item_id, quantity) VALUES ($1, $2, $3)",
                 [orderId, order.items[index].id, order.quantities[index]]
@@ -491,10 +495,7 @@ export async function deleteOrderXMLs(orderId: number): Promise<boolean> {
 // Clears all users from DB
 export async function clearUsers(): Promise<boolean> {
     try {
-        const res = await pool.query("SELECT id FROM Users");
-        for (const user of res.rows) {
-            deleteUser(user.id)
-        }
+        await pool.query("DELETE FROM Users");
         return true;
     } catch (err) {
         console.error("Error clearing all users:", err);
@@ -505,10 +506,7 @@ export async function clearUsers(): Promise<boolean> {
 // Clears all tokens from DB
 export async function clearTokens(): Promise<boolean> {
     try {
-        const res = await pool.query("SELECT token FROM Tokens");
-        for (const token of res.rows) {
-            deleteToken(token.token)
-        }
+        await pool.query("DELETE FROM Tokens");
         return true;
     } catch (err) {
         console.error("Error clearing all tokens:", err);
@@ -519,10 +517,7 @@ export async function clearTokens(): Promise<boolean> {
 // Clears all items from DB
 export async function clearItems(): Promise<boolean> {
     try {
-        const res = await pool.query("SELECT id FROM Items");
-        for (const item of res.rows) {
-            deleteItem(item.id)
-        }
+        await pool.query("DELETE FROM Items");
         return true;
     } catch (err) {
         console.error("Error clearing all items:", err);
@@ -532,14 +527,21 @@ export async function clearItems(): Promise<boolean> {
 
 // Clears all orders from DB
 export async function clearOrders(): Promise<boolean> {
+    const client = await pool.connect();
+
     try {
-        const res = await pool.query("SELECT id FROM Orders");
-        for (const order of res.rows) {
-            deleteOrder(order.id);
-            deleteOrderXMLs(order.id);
-        }
+        await client.query("BEGIN");
+
+        await pool.query("DELETE FROM Orders");
+        await pool.query("DELETE FROM OrderItems");
+        await pool.query("DELETE FROM BillingDetails");
+        await pool.query("DELETE FROM DeliveryInstructions");
+        await pool.query("DELETE FROM OrderXMLs");
+
+        await client.query("COMMIT");
         return true;
     } catch (err) {
+        await client.query("ROLLBACK");
         console.error("Error clearing all orders:", err);
         return false;
     }
@@ -547,13 +549,24 @@ export async function clearOrders(): Promise<boolean> {
 
 // Clears everything from DB
 export async function clearAll(): Promise<boolean> {
+    const client = await pool.connect();
+
     try {
-        clearUsers();
-        clearTokens();
-        clearItems();
-        clearOrders();
+        await client.query("BEGIN");
+
+        await pool.query("DELETE FROM Users");
+        await pool.query("DELETE FROM Tokens");
+        await pool.query("DELETE FROM Items");
+        await pool.query("DELETE FROM Orders");
+        await pool.query("DELETE FROM OrderItems");
+        await pool.query("DELETE FROM BillingDetails");
+        await pool.query("DELETE FROM DeliveryInstructions");
+        await pool.query("DELETE FROM OrderXMLs");
+
+        await client.query("COMMIT");
         return true;
     } catch (err) {
+        await client.query("ROLLBACK");
         console.error("Error clearing everything:", err);
         return false;
     }
