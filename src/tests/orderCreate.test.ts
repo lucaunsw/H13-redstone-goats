@@ -41,10 +41,10 @@ beforeEach(async () => {
   testName = 'Bobby Jones'
 
   const token = await userRegister(
-    'BobbyJones@gmail.com',
-    'cake',
-    'Bobby',
-    'Jones}').body.token;
+    'example10@email.com', 
+    'example123', 
+    'firstName', 
+    'lastName').body.token;
   const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
   userId = decoded.userId;
     
