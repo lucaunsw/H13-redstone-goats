@@ -1,13 +1,13 @@
 import { userRegister, reqHelper } from './testHelper';
 import { SessionId } from '../types';
-import { deleteUser, getUser } from '../dataStore';
+import { clearAll } from '../dataStore';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// beforeEach(() => {
-//   reqHelper('DELETE', '/v1/clear');
-// });
+beforeEach(() => {
+  clearAll();
+});
 
 describe('userRegister', () => {
   const tUser = {
@@ -37,16 +37,12 @@ describe('userRegister', () => {
 
   
 test('A user successfully registers', async () => {
-  const resp = await userRegister(`example10@email.com`, `example123`, `firstName`, `lastName`);
-  // console.log('Token:', resp.body.token);
+  const resp = await userRegister(`example@email.com`, `example123`, `firstName`, `lastName`);
   expect(resp.statusCode).toBe(200);
   expect(resp.body).toStrictEqual({ token: expect.any(String) });
 
   const decoded = jwt.verify(resp.body.token, process.env.JWT_SECRET as string) as { userId: number };
-  // console.log('Decoded token:', decoded);
   expect(typeof decoded.userId).toBe('number');
-  // const validUser = await getUser(decoded.userId);
-  // console.log(validUser); 
 });
 
   test('If a user already has an email registered, it should return an error', async () => {
