@@ -62,9 +62,9 @@ export function userLogout<T = EmptyObj>(token: SessionId) {
 }
 
 export function userDetails<T = { user: User }>(token: SessionId) {
-  return reqHelper<T>('GET', '/v2/admin/user/details', {
+  return reqHelper<T>('GET', '/v1/user/details', {
     headers: {
-      token: token,
+      Authorization: `Bearer ${token}`,
     },
   });
 }

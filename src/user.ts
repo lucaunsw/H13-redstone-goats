@@ -1,4 +1,4 @@
-import { addUser, getAllUsers } from './dataStore';
+import { addUser, getAllUsers, getUser } from './dataStore';
 import { Err, ErrKind, UserId, User, SessionId, EmptyObj, UserSummary } from './types';
 import validator from 'validator';
 
@@ -104,50 +104,36 @@ export async function userRegister(
 //   return {};
 // }
 
+
 /**
- * Check if a password is strong enough. DOES NOT CHECK A USER'S PREV PASSWORDS!
+ * Given admin users userId returns details about user.
  *
- * @param {string} password - the password to validate
- * @returns {boolean | Err} - valid (true) or invalid {error: string} password.
- */
-function validatePassword(password: string, message: string): true | never {
-  if (!/\d/.test(password)) {
-    throw new Err(`${message}password does not contain a number!`, ErrKind.EINVALID);
-  }
-  if (!/[A-Za-z]/.test(password)) {
-    throw new Err(`${message}password does not contain a letter!`, ErrKind.EINVALID);
-  }
-  if (password.length < 8) {
-    throw new Err(`${message}password is less than 8 characters long!`, ErrKind.EINVALID);
-  }
-  return true;
+ * @param   {integers} userId.
+ * @returns {user: {
+* userId: number,
+* name: string,
+* email: string,
+* numSuccessfulLogins: number,
+* numFailedPasswordsSinceLastLogin: number}}
+*/
+export async function userDetails(userId: UserId): Promise<{ user: UserSummary | null }> | never {
+
+ const currentUser = await getUser(userId);
+
+ if (!currentUser) {
+  throw new Err('User not found', ErrKind.EINVALID);
+ }
+
+ return {
+   user: {
+     userId: userId,
+     name: currentUser.nameFirst + ' ' + currentUser.nameLast,
+     email: currentUser.email,
+     numSuccessfulLogins: currentUser.numSuccessfulLogins,
+     numFailedPasswordsSinceLastLogin: currentUser.numFailedPasswordsSinceLastLogin,
+   },
+ };
 }
-
-// /**
-//  * Given admin users userId returns details about user.
-//  *
-//  * @param   {integers} userId.
-//  * @returns {user: {
-// * userId: number,
-// * name: string,
-// * email: string,
-// * numSuccessfulLogins: number,
-// * numFailedPasswordsSinceLastLogin: number}}
-// */
-// export function userDetails(userId: UserId): { user: UserSummary } | never {
-//  const store = getData().users;
-
-//  const currentUser = store.get(userId)!;
-//  return {
-//    user: {
-//      userId: userId,
-//      name: currentUser.nameFirst + ' ' + currentUser.nameLast,
-//      email: currentUser.email,
-//      numSuccessfulLogins: currentUser.numSuccessfulLogins,
-//      numFailedPasswordsSinceLastLogin: currentUser.numFailedPasswordsSinceLastLogin,
-//    },
-//  };
-// }
 
 // /**
 // * Given admin users userId and a set of properties,
@@ -208,3 +194,23 @@ function validateName(name: string, message: string): true | never {
 
   return true;
 }
+
+/**
+ * Check if a password is strong enough. DOES NOT CHECK A USER'S PREV PASSWORDS!
+ *
+ * @param {string} password - the password to validate
+ * @returns {boolean | Err} - valid (true) or invalid {error: string} password.
+ */
+function validatePassword(password: string, message: string): true | never {
+  if (!/\d/.test(password)) {
+    throw new Err(`${message}password does not contain a number!`, ErrKind.EINVALID);
+  }
+  if (!/[A-Za-z]/.test(password)) {
+    throw new Err(`${message}password does not contain a letter!`, ErrKind.EINVALID);
+  }
+  if (password.length < 8) {
+    throw new Err(`${message}password is less than 8 characters long!`, ErrKind.EINVALID);
+  }
+  return true;
+}
+

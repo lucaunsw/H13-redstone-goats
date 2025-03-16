@@ -1,6 +1,6 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
-import { orderCreate, orderCancel, orderConfirm } from "./app";
+// import { orderCreate, orderCancel, orderConfirm } from "./app";
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
@@ -13,7 +13,7 @@ import {
   userRegister,
   // userLogin,
   // userLogout,
-  // userDetails,
+  userDetails,
   // userDetailsUpdate,
 } from './user';
 import { addToken, validToken } from "./dataStore";
@@ -31,7 +31,7 @@ app.use(morgan("dev"));
 
 const PORT = parseInt(process.env.PORT || config.port);
 const HOST = process.env.IP || "127.0.0.1";
-const JWT_SECRET = process.env.JWT_SECRET || "redstone_secret";
+const JWT_SECRET = process.env.JWT_SECRET || "r3dSt0nE@Secr3tD00r!";
 
 
 // ===========================================================================
@@ -75,7 +75,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "redstone_secret";
 //Custom middleware for JWT
 app.use((req: Request, res: Response, next: NextFunction) => {
   // Extract the token from the Authorization header
-  const token = req.header('Authorization')?.split(' ')[1]; // Bearer <token>
+  const token = req.header('Authorization')?.split(' ')[1];
 
   if (!token) {
     return next(); // No token provided, continue without interception
@@ -85,13 +85,12 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     // Verify and decode the token
     const decoded: any = jwt.verify(token, JWT_SECRET);
     
-    // Assuming 'userId' is part of the decoded JWT payload
     req.body.token = decoded.userId;  // Attach the userId from JWT payload to the request body
 
     next(); // Continue to the next middleware/route
   } catch (error) {
     // Handle error (invalid or expired token)
-    throw new Err('Token is not valid or expired', ErrKind.ENOTOKEN);
+    res.status(ErrKind.ENOTOKEN).json({ error: 'Token is not valid or expired' });
   }
 });
 
@@ -100,6 +99,7 @@ function makeJwtToken(userId: number): { token: SessionId } {
   const token = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '1h' }); // Token expires in 1 hour
   return { token: token };
 }
+//End of Custome middleware for JWT
 
 // app.post('/v1/user/logout', (req: Request, res: Response) => {
 //   const token = req.body.token ?? req.headers.token;
@@ -129,13 +129,19 @@ app.post('/v1/user/register', async (req: Request, res: Response) => {
 //   res.json(makeFmtToken(result.userId));
 // });
 
-// app.get('/v1/user/details', (req: Request, res: Response) => {
-//   const userId = req.body.token; // INTERCEPTED!!
-//   const result = userDetails(userId);
-
-//   // token interceptor should have handled this for us
-//   res.json(result);
-// });
+app.get('/v1/user/details', async (req: Request, res: Response) => {
+  try {
+    const userId = req.body.token; // INTERCEPTED!!
+    const result = await userDetails(userId);
+    res.json(result);
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(400).json({ error: err.message }); 
+    } else {
+      res.status(400).json({ error: 'An unknown error occurred' }); 
+    }
+  }
+});
 
 // app.put('/v1/user/details/update', (req: Request, res: Response) => {
 //   const { token, email, nameFirst, nameLast } = req.body; // INTERCEPTED!
@@ -148,63 +154,68 @@ app.get("/", (req, res) => {
 });
 
 // route that creates an order 
-app.post("/v1/order/create", (req: Request, res: Response) => {
-  const order = req.body;
-  try {
-    const result = orderCreate(order);
-    res.status(201).json(result);
-  } catch (error) {
-    const e = error as Error;
-    if (e.message === 'Invalid userId or a different name is registered to userId') {
-      res.status(401).json({ error: e.message });
-    } 
-    res.status(400).json({ error: e.message });
-  }
+// app.post("/v1/order/create", (req: Request, res: Response) => {
+//   const order = req.body;
+//   try {
+//     const result = orderCreate(order);
+//     res.status(201).json(result);
+//   } catch (error) {
+//     const e = error as Error;
+//     if (e.message === 'Invalid userId or a different name is registered to userId') {
+//       res.status(401).json({ error: e.message });
+//     } 
+//     res.status(400).json({ error: e.message });
+//   }
+// });
+
+// app.put("/v1/:userId/order/:orderId/cancel", (req: Request, res: Response) => {
+//   try {
+//     const { userId, orderId } = req.params;
+//     const { reason } = req.body;
+
+//     const result = orderCancel(Number(userId), Number(orderId), reason);
+//     res.json(result);
+//   } catch (error) {
+//     let statusCode: number;
+//     const e = error as Error;
+//     if (e.message === "invalid orderId" || e.message === "invalid userId") {
+//       statusCode = 401;
+//     } else if (e.message === "order already cancelled") {
+//       statusCode = 400;
+//     } else {
+//       statusCode = 404;
+//     }
+//     res.status(statusCode).json({ error: e.message });
+//   }
+// });
+
+// app.post(
+//   "/v1/:userId/order/:orderId/confirm",
+//   (req: Request, res: Response) => {
+//     try {
+//       const { userId, orderId } = req.params;
+
+//       const result = orderConfirm(Number(userId), Number(orderId));
+//       res.json(result);
+//     } catch (error) {
+//       let statusCode: number;
+//       const e = error as Error;
+//       if (e.message === "invalid orderId" || e.message === "invalid userId") {
+//         statusCode = 401;
+//       } else if (e.message === "order not found") {
+//         statusCode = 400;
+//       } else {
+//         statusCode = 404;
+//       }
+//       res.status(statusCode).json({ error: e.message });
+//     }
+//   }
+// );
+
+// Custom **error handling** middleware
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  err instanceof Err ? res.status(err.kind.valueOf()).json({ error: err.message }) : next();
 });
-
-app.put("/v1/:userId/order/:orderId/cancel", (req: Request, res: Response) => {
-  try {
-    const { userId, orderId } = req.params;
-    const { reason } = req.body;
-
-    const result = orderCancel(Number(userId), Number(orderId), reason);
-    res.json(result);
-  } catch (error) {
-    let statusCode: number;
-    const e = error as Error;
-    if (e.message === "invalid orderId" || e.message === "invalid userId") {
-      statusCode = 401;
-    } else if (e.message === "order already cancelled") {
-      statusCode = 400;
-    } else {
-      statusCode = 404;
-    }
-    res.status(statusCode).json({ error: e.message });
-  }
-});
-
-app.post(
-  "/v1/:userId/order/:orderId/confirm",
-  (req: Request, res: Response) => {
-    try {
-      const { userId, orderId } = req.params;
-
-      const result = orderConfirm(Number(userId), Number(orderId));
-      res.json(result);
-    } catch (error) {
-      let statusCode: number;
-      const e = error as Error;
-      if (e.message === "invalid orderId" || e.message === "invalid userId") {
-        statusCode = 401;
-      } else if (e.message === "order not found") {
-        statusCode = 400;
-      } else {
-        statusCode = 404;
-      }
-      res.status(statusCode).json({ error: e.message });
-    }
-  }
-);
 
 // ===========================================================================
 // ============================= ROUTES ABOVE ================================
