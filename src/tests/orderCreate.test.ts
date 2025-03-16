@@ -2,6 +2,7 @@ import { userRegister, reqHelper } from './testHelper';
 import { SessionId, Order, UserSimple, 
   Item, BillingDetails, DeliveryInstructions } from '../types';
 import { getPostResponse } from '../wrapper';
+import { clearAll } from '../dataStore';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -10,6 +11,7 @@ const SERVER_URL = `http://127.0.0.1:3200`;
 const TIMEOUT_MS = 20 * 1000;
 
 import request from "sync-request-curl";
+import { clear } from 'console';
 
 function requestOrderCreate(
   body: Order,
@@ -34,7 +36,8 @@ let testDeliveryDetails: DeliveryInstructions;
 const date = new Date().toISOString().split('T')[0];
 
 beforeEach(async () => {
-  reqHelper('DELETE', '/v1/clear');
+  // reqHelper('DELETE', '/v1/clear');
+  clearAll();
   testName = 'Bobby Jones'
 
   const token = await userRegister(
@@ -88,7 +91,7 @@ beforeEach(async () => {
 });
 
 
-describe.skip('Test orderCreate route', () => {
+describe('Test orderCreate route', () => {
 
   test('Error from invalid token', () => {
     const invalidUserId = userId + 1; 
