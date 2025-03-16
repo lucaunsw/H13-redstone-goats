@@ -126,13 +126,15 @@ export interface OrderParam {
 }
 */
 
-// Not sure if necessary, but response for orderChange function
-export interface OrderChangeResponse {
-  orderId: number;               
-  newVersionId: number;         
-  timeLastEdited: number;        
-  reason: string;                
-  versions: number[];
+export interface ItemUpdate {
+  itemId: number;  
+  quantity: number; 
+}
+
+export interface OrderUpdateData {
+  items: ItemUpdate[]; 
+  status?: status; 
+  lastEdited: string;
 }
 
 // Special error handling / other types
