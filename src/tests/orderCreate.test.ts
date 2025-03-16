@@ -186,6 +186,29 @@ describe.skip('Test orderCreate route', () => {
     expect(response.body).toStrictEqual({ error: expect.any(String) });
   });
 
+  test('Error from invalid item (duplicate item ids)', () => {
+    const body = {
+      items: [{
+        id: 123,
+        name: 'Toothpaste',
+        seller: testSeller,
+        price: -2,
+        description: 'This is Toothpaste',
+      }, testItem],
+      quantities: [1],
+      buyer: testBuyer,
+      seller: testSeller,
+      billingDetails: testBillingDetails,
+      totalPrice: -2,
+      delivery: testDeliveryDetails,
+      lastEdited: date,
+      createdAt: new Date(),
+    }
+    const response = requestOrderCreate(body);
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toStrictEqual({ error: expect.any(String) });
+  });
+
   test('Error from invalid bank details', () => {
     const date = new Date().toISOString().split('T')[0];
     const body = {

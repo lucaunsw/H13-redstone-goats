@@ -110,40 +110,49 @@ export async function userExists(userId: number, name: string) {
 }
 
 /**
- * Helper function to check if a user exists.
+ * Helper function to check if the order contains a valid item list and 
+ * calculates the total price if so.
  * @param {Order} order - object containg all the order information.
  * @returns { number } totalPrice - Total price of the order if the item list is
  * valid.
  */
 export async function validItemList(order: Order) {
   let totalPrice = 0;
+  const itemIds = new Set<number>();
   for (let i = 0; i < order.items.length; i++) {
     const item = order.items[i];
+    // Check if each item Id is provided/valid.
     if (!item.id) {
       throw new Error ('No item Id provided');
-    } 
+    } else if (itemIds.has(item.id)) {
+      throw new Error ('Same item Id is registered to a different item name');
+    }
     const orderItem = await getItem(item.id);
     if (orderItem && orderItem.name !== item.name) {
       throw new Error ('Same item Id is registered to a different item name');
     }
 
+    // Check if item price is valid and correct amount of quantities are provided.
     if (item.price < 0) {
       throw new Error ('Invalid item price');
     } else if (order.quantities[i] <= 0) {
       throw new Error ('Invalid quantities provided');
     } else {
+      itemIds.add(item.id);
       totalPrice += item.price * order.quantities[i];
     }
   }
+  // Return total order price.
   return totalPrice;
 }
 
 /**
- * Helper function to check if a user exists.
+ * Helper function to add all order items to the datastore.
  * @param {Order} order - object containg all the order information.
  * @returns nothing.
  */
 export async function addItems(order: Order) {
+  // Add each order Item to the datastore.
   for (const item of order.items) {
     if (item.id) {
       const itemId = await getItem(item.id);
