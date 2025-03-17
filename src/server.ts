@@ -70,7 +70,7 @@ export async function makeFmtToken(userId: number): Promise<{ token: number }> {
   }
   return { token: sessionId };
 }
-END Custom middleware
+// END Custom middleware
 
 //Custom middleware for JWT
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -161,18 +161,20 @@ app.get("/", (req, res) => {
   res.send("Hello, Express with TypeScript!");
 });
 
-route that creates an order 
-app.post("/v1/order/create", (req: Request, res: Response) => {
+// Route that creates an order.
+app.post("/v1/order/create", async (req: Request, res: Response) => {
   const order = req.body;
   try {
-    const result = orderCreate(order);
+    const result = await orderCreate(order);
     res.status(201).json(result);
   } catch (error) {
     const e = error as Error;
-    if (e.message === 'Invalid userId or a different name is registered to userId') {
+    if (e.message === 'Invalid userId or a different name is registered to userId' ||
+      e.message === 'No userId provided') {
       res.status(401).json({ error: e.message });
-    } 
-    res.status(400).json({ error: e.message });
+    } else {
+      res.status(400).json({ error: e.message });
+    }
   }
 });
 
@@ -229,7 +231,6 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   err instanceof Err ? res.status(err.kind.valueOf()).json({ error: err.message }) : next();
 });
 
-
 app.post('/v1/:userId/order/:orderId/items/change', async (req: Request, res: Response) => {
   try {
     const { userId, orderId } = req.params;
@@ -285,10 +286,6 @@ app.post(
 // ============================= ROUTES ABOVE ================================
 // ===========================================================================
 
-// Error Handling
-
-
-// Start server
 const server = app.listen(PORT, HOST, () => {
   console.log(`Server is running on http://${HOST}:${PORT}`);
 });
