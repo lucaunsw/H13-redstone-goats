@@ -49,14 +49,14 @@ async function orderCreate (order: Order) {
 
   // Helper function adds all items to item datastore.
   await addItems(order);
-  const orderId = await addOrder(order);
   order.lastEdited = currDate;
   order.status = status.PENDING;
+  const orderId = await addOrder(order);
 
   // Helper function generates UBl document.
   if (orderId !== null) {
     const UBLDocument = generateUBL(orderId, order);
-    addOrderXML(orderId, UBLDocument);
+    await addOrderXML(orderId, UBLDocument);
   }
   return { orderId };
 }
