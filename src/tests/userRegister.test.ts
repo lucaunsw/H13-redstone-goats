@@ -1,8 +1,12 @@
 import { userRegister, reqHelper } from './testHelper';
 import { SessionId } from '../types';
+import { clearAll } from '../dataStore';
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+dotenv.config();
 
-beforeEach(() => {
-  reqHelper('DELETE', '/v1/clear');
+beforeEach(async () => {
+  await reqHelper('DELETE', '/v1/clear');
 });
 
 describe('userRegister', () => {
@@ -20,30 +24,43 @@ describe('userRegister', () => {
     lName: 'lastTwo',
     token: null as unknown as SessionId,
   };
+  
+  // beforeEach(async () => {
+  //   const resp = await userRegister(
+  //     tUser.email,
+  //     tUser.initpass,
+  //     tUser.fName,
+  //     tUser.lName
+  //   );
+  //   tUser.token = resp.body.token;
+  // });
 
-  beforeEach(() => {
-    tUser.token = userRegister(
-      tUser.email,
-      tUser.initpass,
-      tUser.fName,
-      tUser.lName
-    ).body.token;
+  
+  test('A user successfully registers', async () => {
+    const resp = await userRegister(`testEmail_${Date.now()}@email.com`, `example123`, `firstName`, `lastName`);
+    expect(resp.statusCode).toBe(200);
+    expect(resp.body).toStrictEqual({ token: expect.any(String) });
+    console.log("The token is: " + resp.body.token);
+    const decoded = jwt.verify(resp.body.token, process.env.JWT_SECRET as string) as { userId: number };
+    expect(typeof decoded.userId).toBe('number');
+    console.log("The userId is: " + decoded.userId);
   });
 
-  test('If a user already has an email registered, it should return an error', () => {
-    const resp = userRegister(tUser2.email, tUser2.initpass, tUser2.fName, tUser2.lName);
+  test('If a user already has an email registered, it should return an error', async () => {
+    await userRegister(tUser.email, tUser.initpass, tUser.fName, tUser.lName);
+    const resp2 = await userRegister(tUser2.email, tUser2.initpass, tUser2.fName, tUser2.lName);
+    expect(resp2.statusCode).toBe(400);
+    expect(resp2.body).toStrictEqual({ error: expect.any(String) });
+  });
+
+  test('User enters invalid Email', async () => {
+    const resp = await userRegister('me', tUser2.initpass, tUser2.fName, tUser2.lName);
     expect(resp.statusCode).toBe(400);
     expect(resp.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('User enters invalid Email', () => {
-    const resp = userRegister('me', tUser2.initpass, tUser2.fName, tUser2.lName);
-    expect(resp.statusCode).toBe(400);
-    expect(resp.body).toStrictEqual({ error: expect.any(String) });
-  });
-
-  test('User enters invalid character in first name', () => {
-    const resp = userRegister(
+  test('User enters invalid character in first name', async () => {
+    const resp = await userRegister(
       'testemail1@email.com',
       'ExamplePassword1',
       'John@doe',
@@ -53,8 +70,8 @@ describe('userRegister', () => {
     expect(resp.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('User enters invalid last name', () => {
-    const resp = userRegister(
+  test('User enters invalid last name', async () => {
+    const resp = await userRegister(
       'testemail2@email.com',
       'ExamplePassword2',
       'firstname',
@@ -64,14 +81,14 @@ describe('userRegister', () => {
     expect(resp.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('User enters invalid password length', () => {
-    const resp = userRegister('testemail3@email.com', 'Hi5', 'firstname', 'lastname');
+  test('User enters invalid password length', async () => {
+    const resp = await userRegister('testemail3@email.com', 'Hi5', 'firstname', 'lastname');
     expect(resp.statusCode).toBe(400);
     expect(resp.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('Password does not contain a number', () => {
-    const resp = userRegister(
+  test('Password does not contain a number', async () => {
+    const resp = await userRegister(
       'testemail4@email.com',
       'ExamplePassword',
       'firstname',
@@ -81,8 +98,8 @@ describe('userRegister', () => {
     expect(resp.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('Password does not contain a number', () => {
-    const resp = userRegister(
+  test('Password does not contain a number', async () => {
+    const resp = await userRegister(
       'testemail5@email.com',
       'examplepassword',
       'firstname',
@@ -92,8 +109,8 @@ describe('userRegister', () => {
     expect(resp.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('Password does not contain a letter', () => {
-    const resp = userRegister(
+  test('Password does not contain a letter', async () => {
+    const resp = await userRegister(
       'testemail6@email.com',
       '12345678',
       'firstname',
@@ -103,8 +120,8 @@ describe('userRegister', () => {
     expect(resp.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('User enters invalid name size', () => {
-    const resp = userRegister(
+  test('User enters invalid name size', async () => {
+    const resp = await userRegister(
       'testemail7@email.com',
       'ExamplePassword1',
       'p',
@@ -114,8 +131,8 @@ describe('userRegister', () => {
     expect(resp.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('User enters invalid name size', () => {
-    const resp = userRegister(
+  test('User enters invalid name size', async () => {
+    const resp = await userRegister(
       'testemail8@email.com',
       'ExamplePassword1',
       'aaaaaaaaaaaaaaaaaaaaaaaaa',
