@@ -1,4 +1,4 @@
-import { Order, status } from './types';
+import { Order, status, Item } from './types';
 import { generateUBL, userExists, validItemList, addItems } from './helper';
 import { getUser, addOrder, getOrder, updateOrder, addItem,
   getItem, addOrderXML
@@ -89,9 +89,9 @@ const orderCancel = async (userId: number, orderId: number, reason: string) => {
 };
 
 /**
- * Change an existing order's items and update other fields
+ * Change an existing order's items (not metadata)
  *
- * @param {number} userId - Unique identifier for each user (MAYBE UNECCESSARY?)
+ * @param {number} userId - Unique identifier for each user
  * @param {number} orderId - Unique identifier for an order
  * @param {Array} items - Array containing updated item details (item Id, item quantity)
  * @returns {number} orderId - Unique identifier for an order
@@ -123,30 +123,59 @@ async function orderChange(
   //   ...order,
   //   items: updatedData.items,
   //   quantities: updatedData.items.map(item => item.newQuantity)});
+
   const totalPrice = 200 // Placeholder value
 
   // Set current time for lastEdited:
   const lastEdited = new Date().toISOString();
 
-  // Check for existing item 
+  // Iterate over each item in updatedData object
   for (const item of updatedData.items) {
+    // Check if item exists in DB
     const existingItem = await getItem(item.itemId);
     if (!existingItem) {
-      // Item does not exist in DB, add to DB
-      const newItem = getItem(item.itemId);
-      await addItem(item);
+      // If item does not exist in DB, construct and add to DB
+      const newItem: Item = {
+        id: item.itemId,
+        name: 'Default Name',
+        seller: { id: 1, name: 'Default Seller' },
+        description: 'Default Description', 
+        price: 0, 
+      };
+      await addItem(newItem);
     } // Otherwise, if item exists, update order DB in next step 
+
+    // Check if the item exists in the order
+    const itemIndex = order.items.findIndex(orderItem => orderItem.id === item.itemId);
+
+    if (item.newQuantity === 0) {
+      // If quantity is 0, delete the item from the order
+      if (itemIndex !== -1) {
+        order.items.splice(itemIndex, 1);
+        order.quantities.splice(itemIndex, 1);
+      }
+
+    } else if (itemIndex !== -1) {
+      // If the item exists in the order, update its quantity
+      if (order.quantities[itemIndex] !== item.newQuantity) {
+        order.quantities[itemIndex] = item.newQuantity;
+      }
+
+    } else {
+      // If the item doesn't exist in the order, add it
+      order.items.push({ id: item.itemId, name: 'Default Name', seller: { id: 1, name: 'Default Seller' }, description: 'Default Description', price: 0 });
+      order.quantities.push(item.newQuantity);
+    }
   }
+
+  // Recalculate total price
+
 
   // Prepare updated order object
   const updatedOrder: Order = {
     ...order,
-    items: updatedData.items.map(item => ({
-      id: item.itemId, 
-      price: item.price,
-      quantity: item.newQuantity // Updated field!
-    })),
-    quantities: updatedData.items.map(item => item.newQuantity), // Updated field!
+    items: order.items, // Updated
+    quantities: order.quantities, // Updated
     totalPrice: totalPrice,  // Updated field!
     lastEdited: lastEdited,  // Updated field!
     status: order.status,  
@@ -167,8 +196,6 @@ async function orderChange(
   // Return updated orderId
   return updatedOrderId;
 }
-
-export { orderCreate, orderCancel, orderChange };
 
 const orderConfirm = async (userId: number, orderId: number) => {
     // const user = await getUser(userId);
