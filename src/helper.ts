@@ -103,7 +103,7 @@ export function generateUBL(orderId: number, order: Order) {
  */
 export async function userExists(userId: number, name: string) {
   const user = await getUser(userId);
-  if (user === null || `${user.nameFirst} ${user.nameLast}` !== name) {
+  if (!user || `${user.nameFirst} ${user.nameLast}` !== name) {
     return false
   }
   return true;
@@ -126,10 +126,15 @@ export async function validItemList(order: Order) {
       throw new Error ('No item Id provided');
     } else if (itemIds.has(item.id)) {
       throw new Error ('Same item Id is registered to a different item name');
-    }
+    } else if (!item.seller.id) {
+      throw new Error ('No seller Id provided');
+    } 
     const orderItem = await getItem(item.id);
     if (orderItem && orderItem.name !== item.name) {
       throw new Error ('Same item Id is registered to a different item name');
+    }
+    if (!userExists(item.seller.id, item.seller.name)) {
+      throw new Error ('Invalid seller details');
     }
 
     // Check if item price is valid and correct amount of quantities are provided.
@@ -156,8 +161,8 @@ export async function addItems(order: Order) {
   for (const item of order.items) {
     if (item.id) {
       const itemId = await getItem(item.id);
-      if (!itemId) {
-        addItem(item);
+      if (itemId == null) {
+        await addItem(item);
       }
     }
   }

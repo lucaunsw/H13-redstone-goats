@@ -13,11 +13,10 @@ import { getUser, addOrder, getOrder, updateOrder, addItem,
  */
 async function orderCreate (order: Order) {
   if (!order.buyer.id) {
-    return new Error ('No userId provided');
+    throw new Error ('No userId provided');
   }
-  const user = await getUser(order.buyer.id);
-  
-  if (!userExists(order.buyer.id, order.buyer.name)) {
+  const user = await userExists(order.buyer.id, order.buyer.name);
+  if (!user) {
     throw new Error 
     ('Invalid userId or a different name is registered to userId');
   }
@@ -49,7 +48,7 @@ async function orderCreate (order: Order) {
   }
 
   // Helper function adds all items to item datastore.
-  addItems(order);
+  await addItems(order);
   const orderId = await addOrder(order);
   order.lastEdited = currDate;
   order.status = status.PENDING;
@@ -57,7 +56,6 @@ async function orderCreate (order: Order) {
   // Helper function generates UBl document.
   if (orderId !== null) {
     const UBLDocument = generateUBL(orderId, order);
-    console.log(UBLDocument);
     addOrderXML(orderId, UBLDocument);
   }
   return { orderId };

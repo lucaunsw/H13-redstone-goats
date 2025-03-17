@@ -17,7 +17,7 @@ export function reqHelper<BodyTyp>(
 ): Omit<Response, 'body'> & { body: BodyTyp } {
   const res = request(method, `${url}:${port}${route}`, {
     ...options,
-    timeout: 10000,
+    timeout: 15000,
   });
   return { ...res, body: JSON.parse(res.body.toString()) };
 }
@@ -45,7 +45,7 @@ export function userRegister<T = { token: SessionId }>(
 }
 
 export function userLogin<T = { token: SessionId }>(em: string, pass: string) {
-  return reqHelper<T>('POST', '/v1/admin/auth/login', {
+  return reqHelper<T>('POST', '/v1/user/login', {
     json: {
       email: em,
       password: pass,
@@ -62,9 +62,9 @@ export function userLogout<T = EmptyObj>(token: SessionId) {
 }
 
 export function userDetails<T = { user: User }>(token: SessionId) {
-  return reqHelper<T>('GET', '/v2/admin/user/details', {
+  return reqHelper<T>('GET', '/v1/user/details', {
     headers: {
-      token: token,
+      Authorization: `Bearer ${token}`,
     },
   });
 }

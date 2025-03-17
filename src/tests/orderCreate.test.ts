@@ -13,7 +13,7 @@ const TIMEOUT_MS = 20 * 1000;
 import request from "sync-request-curl";
 import { clear } from 'console';
 
-function requestOrderCreate(
+async function requestOrderCreate(
   body: Order,
 ) {
   const res = request("POST", SERVER_URL + `/v1/order/create`, {
@@ -36,20 +36,26 @@ let testDeliveryDetails: DeliveryInstructions;
 const date = new Date().toISOString().split('T')[0];
 
 beforeEach(async () => {
-  // reqHelper('DELETE', '/v1/clear');
-  clearAll();
+  await reqHelper('DELETE', '/v1/clear');
   testName = 'Bobby Jones'
 
   const token = await userRegister(
     'example10@email.com', 
     'example123', 
-    'firstName', 
-    'lastName').body.token;
+    'Bobby', 
+    'Jones').body.token;
   const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
   userId = decoded.userId;
-    
+
+  const sellerToken = await userRegister(
+    'example20@email.com', 
+    'example123', 
+    'Test', 
+    'Seller').body.token;
+  const sellerId = (jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number }).userId;
+
   testSeller = {
-    id: 1,
+    id: sellerId,
     name: 'Test Seller',
     streetName: 'Yellow St',
     cityName: 'Brisbane',
@@ -93,7 +99,7 @@ beforeEach(async () => {
 
 describe('Test orderCreate route', () => {
 
-  test('Error from invalid token', () => {
+  test('Error from invalid token', async () => {
     const invalidUserId = userId + 1; 
     
     const body = {
@@ -113,12 +119,12 @@ describe('Test orderCreate route', () => {
       createdAt: new Date(),
     };
 
-    const response = requestOrderCreate(body);
-
+    const response = await requestOrderCreate(body);
     expect(response.statusCode).toBe(401);
+    expect(response.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('Error from invalid name', () => {
+  test('Error from invalid name', async () => {
     
     const body = {
       items: [testItem],
@@ -138,12 +144,12 @@ describe('Test orderCreate route', () => {
       createdAt: new Date(),
     };
 
-    const response = requestOrderCreate(body);
-
+    const response = await requestOrderCreate(body);
     expect(response.statusCode).toBe(401);
+    expect(response.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('Error from invalid total price', () => {
+  test('Error from invalid total price', async () => {
     const body = {
       items: [{
         id: 124,
@@ -161,12 +167,12 @@ describe('Test orderCreate route', () => {
       lastEdited: date,
       createdAt: new Date(),
     }
-    const response = requestOrderCreate(body);
+    const response = await requestOrderCreate(body);
     expect(response.statusCode).toBe(400);
     expect(response.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('Error from invalid item', () => {
+  test('Error from invalid item', async () => {
     const body = {
       items: [{
         id: 124,
@@ -184,42 +190,42 @@ describe('Test orderCreate route', () => {
       lastEdited: date,
       createdAt: new Date(),
     }
-    const response = requestOrderCreate(body);
+    const response = await requestOrderCreate(body);
     expect(response.statusCode).toBe(400);
     expect(response.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('Error from invalid item (duplicate item ids)', () => {
+  test('Error from invalid item (duplicate item ids)', async () => {
     const body = {
       items: [{
         id: 123,
         name: 'Toothpaste',
         seller: testSeller,
-        price: -2,
+        price: 5,
         description: 'This is Toothpaste',
       }, testItem],
-      quantities: [1],
+      quantities: [1,1],
       buyer: testBuyer,
       seller: testSeller,
       billingDetails: testBillingDetails,
-      totalPrice: -2,
+      totalPrice: 10,
       delivery: testDeliveryDetails,
       lastEdited: date,
       createdAt: new Date(),
     }
-    const response = requestOrderCreate(body);
+    const response = await requestOrderCreate(body);
     expect(response.statusCode).toBe(400);
     expect(response.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('Error from invalid bank details', () => {
+  test('Error from invalid bank details', async () => {
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
       quantities: [1],
       buyer: testBuyer,
       billingDetails: {
-        creditCardNumber: 100000000000,
+        creditCardNumber: 100000000000000000,
         CVV: 111,
         expiryDate: date,
       },
@@ -228,13 +234,12 @@ describe('Test orderCreate route', () => {
       lastEdited: date,
       createdAt: new Date(),
     }
-    const response = requestOrderCreate(body);
-
+    const response = await requestOrderCreate(body);
     expect(response.statusCode).toBe(400);
     expect(response.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('Error from invalid delivery date (start date is before current date)', () => {
+  test('Error from invalid delivery date (start date is before current date)', async () => {
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
@@ -257,13 +262,12 @@ describe('Test orderCreate route', () => {
       lastEdited: date,
       createdAt: new Date(),
     }
-    const response = requestOrderCreate(body);
-
+    const response = await requestOrderCreate(body);
     expect(response.statusCode).toBe(400);
     expect(response.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('Error from invalid delivery date (end date is before start date)', () => {
+  test('Error from invalid delivery date (end date is before start date)', async () => {
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
@@ -286,13 +290,12 @@ describe('Test orderCreate route', () => {
       lastEdited: date,
       createdAt: new Date(),
     }
-    const response = requestOrderCreate(body);
-
+    const response = await requestOrderCreate(body);
     expect(response.statusCode).toBe(400);
     expect(response.body).toStrictEqual({ error: expect.any(String) });
-  });
+  }); 
 
-  test('Success case: Returns orderId', () => {
+  test('Success case: Returns orderId', async () => {
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
@@ -304,11 +307,8 @@ describe('Test orderCreate route', () => {
       lastEdited: date,
       createdAt: new Date(),
     }
-    const response = requestOrderCreate(body);
-
+    const response = await requestOrderCreate(body);
     expect(response.statusCode).toBe(201);
     expect(response.body).toStrictEqual({ orderId: expect.any(Number) });
   });
-
-  
 });
