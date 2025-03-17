@@ -73,7 +73,7 @@ export interface Order {
   createdAt: Date;
 }
 
-/*
+
 export interface User {
   userId: number;
   totalPrice: number;
@@ -129,7 +129,17 @@ export interface OrderParam {
 export interface ItemUpdate {
   itemId: number;  
   quantity: number; 
+  name?: string;
+  price?: number;
 }
+
+/*   id?: number | null;
+  name: string;
+  seller: UserSimple;
+  description?: string;
+  price: number; 
+  
+  */
 
 export interface UpdatedData {
   items: ItemUpdate[]; 
