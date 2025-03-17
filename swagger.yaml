@@ -328,8 +328,6 @@ definitions:
           type: number
       user:
         $ref: "#/definitions/UserParam"
-      seller:
-        $ref: "#/definitions/UserParam"
       billingDetails:
         $ref: "#/definitions/BillingDetailsParam"
       delivery:
@@ -423,6 +421,10 @@ definitions:
         type: number
       quantity:
         type: integer
+      seller:
+        type: object
+        $ref: "#/definitions/UserParam"
+      
   User:
     type: object
     properties:

@@ -18,7 +18,7 @@ CREATE TABLE Tokens (
 );
 
 CREATE TABLE Items (
-    id          SERIAL PRIMARY KEY,
+    id          INTEGER NOT NULL,
     name        TEXT NOT NULL,
     seller_id   INTEGER NOT NULL REFERENCES Users(id),
     description TEXT,

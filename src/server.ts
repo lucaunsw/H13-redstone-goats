@@ -1,6 +1,6 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
-// import { orderCreate, orderCancel, orderConfirm } from "./app";
+import { orderCreate, orderCancel, orderConfirm } from "./app";
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
@@ -161,20 +161,22 @@ app.get("/", (req, res) => {
   res.send("Hello, Express with TypeScript!");
 });
 
-// route that creates an order 
-// app.post("/v1/order/create", (req: Request, res: Response) => {
-//   const order = req.body;
-//   try {
-//     const result = orderCreate(order);
-//     res.status(201).json(result);
-//   } catch (error) {
-//     const e = error as Error;
-//     if (e.message === 'Invalid userId or a different name is registered to userId') {
-//       res.status(401).json({ error: e.message });
-//     } 
-//     res.status(400).json({ error: e.message });
-//   }
-// });
+// Route that creates an order.
+app.post("/v1/order/create", async (req: Request, res: Response) => {
+  const order = req.body;
+  try {
+    const result = await orderCreate(order);
+    res.status(201).json(result);
+  } catch (error) {
+    const e = error as Error;
+    if (e.message === 'Invalid userId or a different name is registered to userId' ||
+      e.message === 'No userId provided') {
+      res.status(401).json({ error: e.message });
+    } else {
+      res.status(400).json({ error: e.message });
+    }
+  }
+});
 
 // app.put("/v1/:userId/order/:orderId/cancel", (req: Request, res: Response) => {
 //   try {

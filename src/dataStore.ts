@@ -154,8 +154,8 @@ export async function deleteToken(token: string): Promise<boolean> {
 // Adds item to DB, returns its ID
 export async function addItem(item: Item): Promise<number> {
     const res = await pool.query(
-        "INSERT INTO Items (name, seller_id, description, price) VALUES ($1, $2, $3, $4) RETURNING id",
-        [item.name, item.seller.id, item.description, item.price]
+        "INSERT INTO Items (id, name, seller_id, description, price) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+        [item.id, item.name, item.seller.id, item.description, item.price]
     );
     return res.rows[0].id;
 }
@@ -216,7 +216,7 @@ export async function addOrder(order: Order): Promise<number | null> {
         const orderRes = await client.query(
             `INSERT INTO Orders
                     (buyer_id, billing_id, delivery_id, last_edited, status, total_price, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
             [order.buyer.id, billingRes.rows[0].id, deliveryRes.rows[0].id,
              order.lastEdited, order.status, order.totalPrice, order.createdAt]
         );
@@ -554,15 +554,15 @@ export async function clearAll(): Promise<boolean> {
     try {
         await client.query("BEGIN");
 
-        await pool.query("DELETE FROM Users");
-        await pool.query("DELETE FROM Tokens");
-        await pool.query("DELETE FROM Items");
-        await pool.query("DELETE FROM Orders");
         await pool.query("DELETE FROM OrderItems");
+
+        await pool.query("DELETE FROM Items");
+        await pool.query("DELETE FROM OrderXMLs");
+        await pool.query("DELETE FROM Orders");
         await pool.query("DELETE FROM BillingDetails");
         await pool.query("DELETE FROM DeliveryInstructions");
-        await pool.query("DELETE FROM OrderXMLs");
-
+        await pool.query("DELETE FROM Users");
+        await pool.query("DELETE FROM Tokens");
         await client.query("COMMIT");
         return true;
     } catch (err) {

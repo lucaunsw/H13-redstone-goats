@@ -17,7 +17,7 @@ export function reqHelper<BodyTyp>(
 ): Omit<Response, 'body'> & { body: BodyTyp } {
   const res = request(method, `${url}:${port}${route}`, {
     ...options,
-    timeout: 10000,
+    timeout: 15000,
   });
   return { ...res, body: JSON.parse(res.body.toString()) };
 }

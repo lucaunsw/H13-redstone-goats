@@ -1,50 +1,65 @@
-// import { OrderParam, status } from './types';
-import { generateUBL, userExists } from './helper';
-import { getUser, addOrder, getOrder, updateOrder } from './dataStore'
+import { Order, status } from './types';
+import { generateUBL, userExists, validItemList, addItems } from './helper';
+import { getUser, addOrder, getOrder, updateOrder, addItem,
+  getItem, addOrderXML
+ } from './dataStore'
 
-// /**
-//  * Create an order and produce a UBL document, and return the
-//  * orderId value
-//  *
-//  * @param {OrderParam} order - object containing all the order information
-//  * @returns {{ orderId: number }} orderId - Unique identifier for an order
-//  */
-// async function orderCreate (order: OrderParam) {
-//   const user = await getUser(order.user.userId);
-  
-//   if (!userExists(order.user.userId, order.user.name)) {
-//     throw new Error 
-//     ('Invalid userId or a different name is registered to userId');
-//   }
+/**
+ * Create an order and produce a UBL document, and return the
+ * orderId value
+ *
+ * @param {OrderParam} order - object containing all the order information
+ * @returns {{ orderId: number }} orderId - Unique identifier for an order
+ */
+async function orderCreate (order: Order) {
+  if (!order.buyer.id) {
+    throw new Error ('No userId provided');
+  }
+  const user = await userExists(order.buyer.id, order.buyer.name);
+  if (!user) {
+    throw new Error 
+    ('Invalid userId or a different name is registered to userId');
+  }
 
-//   if (order.billingDetails.creditCardNumber > 9999999999999999 || 
-//     order.billingDetails.creditCardNumber < 100000000000) {
-//     throw new Error ('Invalid bank details');
-//   }
+  // Throw error for invalid bank details.
+  if (order.billingDetails.creditCardNumber > 9999999999999999 || 
+    order.billingDetails.creditCardNumber < 100000000000) {
+    throw new Error ('Invalid bank details');
+  }
 
-//   const currDate = new Date().toISOString().split('T')[0];
-//   if (order.delivery.startDate < currDate || order.delivery.endDate < currDate
-//     || order.delivery.startDate > order.delivery.endDate) {
-//     throw new Error ('Invalid date selection');
-//   }
+  // Throw error for invalid date selection.
+  const currDate = new Date().toISOString().split('T')[0];
+  if (order.delivery.startDate < currDate || order.delivery.endDate < currDate
+    || order.delivery.startDate > order.delivery.endDate) {
+    throw new Error ('Invalid date selection');
+  }
 
-//   for (const item of order.items) {
-//     if (item.price < 0) {
-//       throw new Error ('Invalid item price');
-//     }
-//   }
+  // If an invalid amount of item quantities are provided, throw error.
+  if (order.items.length !== order.quantities.length) {
+    throw new Error ('Invalid amount of item quantities provided');
+  }
 
-//   order.lastEdited = currDate;
-//   order.status = status.PENDING;
-  
-//   // const orderId = await addOrder(order, order.items);
-  
-//   // if (orderId !== null) {
-//   //   const UBLDocument = generateUBL(orderId, order);
-//   // }
-//   // return { orderId };
-//   return;
-// }
+  // Helper function checks if all items/quantities are valid and returns the 
+  // total price if so.
+  const totalPrice = await validItemList(order);
+  // Throw error if inputted total price is incorrect.
+  if (totalPrice !== order.totalPrice) {
+    throw new Error ('Incorrect total price provided');
+  }
+
+  // Helper function adds all items to item datastore.
+  await addItems(order);
+  order.lastEdited = currDate;
+  order.status = status.PENDING;
+  const orderId = await addOrder(order);
+
+  // Helper function generates UBl document.
+  if (orderId !== null) {
+    const UBLDocument = generateUBL(orderId, order);
+    await addOrderXML(orderId, UBLDocument);
+  }
+  return { orderId };
+}
 
 
 const orderCancel = async (userId: number, orderId: number, reason: string) => {
@@ -97,4 +112,4 @@ const orderConfirm = async (userId: number, orderId: number) => {
     // return {};
 };
 
-// export { orderCreate, orderCancel, orderConfirm };
+export { orderCreate, orderCancel, orderConfirm };
