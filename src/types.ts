@@ -124,7 +124,6 @@ export interface OrderParam {
   lastEdited?: string;
   status?: status;
 }
-*/
 
 export interface ItemUpdate {
   itemId: number;  
