@@ -1,4 +1,4 @@
-import { Order, status, Item } from './types';
+import { Order, status, Item, UserSimple } from './types';
 import { generateUBL, userExists, validItemList, addItems } from './helper';
 import { getUser, addOrder, getOrder, updateOrder, addItem,
   getItem, addOrderXML
@@ -101,7 +101,14 @@ async function orderChange(
   userId: number, 
   orderId: number, 
   updatedData: {
-    items: Array<{ itemId: number, newQuantity: number }>;
+    items: Array<{ 
+      itemId: number; 
+      newQuantity: number;
+      name: string;
+      seller: UserSimple;
+      description: string;
+      price: number
+    }>;
   }
 ): Promise<any> { 
 
@@ -129,57 +136,41 @@ async function orderChange(
   // Set current time for lastEdited:
   const lastEdited = new Date().toISOString();
 
-  // Iterate over each item in updatedData object
+  // MODIFY ITEMS LOCALLY - Since orderUpdate db function updates all at once. must handle insertion/deleetion
+  // logic prior to db push
+
+  // Iterate over the provided updated items
   for (const item of updatedData.items) {
-    // Check if item exists in DB
-    const existingItem = await getItem(item.itemId);
-    if (!existingItem) {
-      // If item does not exist in DB, construct and add to DB
-      const newItem: Item = {
-        id: item.itemId,
-        name: 'Default Name',
-        seller: { id: 1, name: 'Default Seller' },
-        description: 'Default Description', 
-        price: 0, 
-      };
-      await addItem(newItem);
-    } // Otherwise, if item exists, update order DB in next step 
-
-    // Check if the item exists in the order
     const itemIndex = order.items.findIndex(orderItem => orderItem.id === item.itemId);
-
-    if (item.newQuantity === 0) {
-      // If quantity is 0, delete the item from the order
-      if (itemIndex !== -1) {
-        order.items.splice(itemIndex, 1);
-        order.quantities.splice(itemIndex, 1);
-      }
-
-    } else if (itemIndex !== -1) {
-      // If the item exists in the order, update its quantity
-      if (order.quantities[itemIndex] !== item.newQuantity) {
+    const existingItem = await getItem(item.itemId);
+    if (existingItem) {
+      // If item exists and quantity is > 0, update quantity
+      if (item.newQuantity > 0) {
         order.quantities[itemIndex] = item.newQuantity;
-      }
 
+      // If item exists and quantity is = 0, remove item
+      } else if (item.newQuantity === 0) {
+        order.items.splice(itemIndex, 1); 
+        order.quantities.splice(itemIndex, 1); 
+      } 
+      // If item does not exist, add new item to order
     } else {
-      // If the item doesn't exist in the order, add it
-      order.items.push({ id: item.itemId, name: 'Default Name', seller: { id: 1, name: 'Default Seller' }, description: 'Default Description', price: 0 });
+      order.items.push({ 
+        id: item.itemId, 
+        name: item.name,
+        seller: item.seller, 
+        description: item.description,
+        price: item.price 
+      });
       order.quantities.push(item.newQuantity);
     }
   }
 
-  // Recalculate total price
-
-
-  // Prepare updated order object
-  const updatedOrder: Order = {
+  // Create updatedOrder object to parse into db function
+  const updatedOrder = {
     ...order,
-    items: order.items, // Updated
-    quantities: order.quantities, // Updated
-    totalPrice: totalPrice,  // Updated field!
-    lastEdited: lastEdited,  // Updated field!
-    status: order.status,  
-    createdAt: order.createdAt
+    lastEdited,
+    totalPrice,
   };
 
   // Update order in one go woohoo
