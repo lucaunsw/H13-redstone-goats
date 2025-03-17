@@ -39,38 +39,38 @@ const JWT_SECRET = process.env.JWT_SECRET || "r3dSt0nE@Secr3tD00r!";
 // ===========================================================================
 
 // Custom middleware
-// app.use(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-//   const token = req.query.token ?? req.body.token ?? req.headers.token;
+app.use(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const token = req.query.token ?? req.body.token ?? req.headers.token;
 
-//   if (token === undefined) {
-//     return next(); 
-//   }
+  if (token === undefined) {
+    return next(); 
+  }
 
-//   try {
-//     const isValid = await validToken(Number(token)); 
+  try {
+    const isValid = await validToken(Number(token)); 
 
-//     if (!isValid) {
-//       res.status(401).json({ error: 'Token does not refer to a valid, logged-in session' });
-//       return; 
-//     }
+    if (!isValid) {
+      res.status(401).json({ error: 'Token does not refer to a valid, logged-in session' });
+      return; 
+    }
 
-//     req.body.token = Number(token);
-//     return next();
-//   } catch (err) {
-//     res.status(500).json({ error: 'Server error while validating session' });
-//     return; 
-//   }
-// });
+    req.body.token = Number(token);
+    return next();
+  } catch (err) {
+    res.status(500).json({ error: 'Server error while validating session' });
+    return; 
+  }
+});
 
-// export async function makeFmtToken(userId: number): Promise<{ token: number }> {
-//   const sessionId = Math.floor(Math.random() * 1000000); // Generate a numeric session ID
-//   const success = await addToken(sessionId, userId);
-//   if (!success) {
-//     throw new Error('Failed to create session');
-//   }
-//   return { token: sessionId };
-// }
-// END Custom middleware
+export async function makeFmtToken(userId: number): Promise<{ token: number }> {
+  const sessionId = Math.floor(Math.random() * 1000000); // Generate a numeric session ID
+  const success = await addToken(sessionId, userId);
+  if (!success) {
+    throw new Error('Failed to create session');
+  }
+  return { token: sessionId };
+}
+END Custom middleware
 
 //Custom middleware for JWT
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -101,11 +101,11 @@ function makeJwtToken(userId: number): { token: SessionId } {
 }
 //End of Custome middleware for JWT
 
-// app.post('/v1/user/logout', (req: Request, res: Response) => {
-//   const token = req.body.token ?? req.headers.token;
-//   const result = userLogout(token);
-//   res.json(result);
-// });
+app.post('/v1/user/logout', (req: Request, res: Response) => {
+  const token = req.body.token ?? req.headers.token;
+  const result = userLogout(token);
+  res.json(result);
+});
 
 app.post('/v1/user/register', async (req: Request, res: Response) => {
   try {
@@ -151,74 +151,74 @@ app.get('/v1/user/details', async (req: Request, res: Response) => {
   }
 });
 
-// app.put('/v1/user/details/update', (req: Request, res: Response) => {
-//   const { token, email, nameFirst, nameLast } = req.body; // INTERCEPTED!
-//   const result = userDetailsUpdate(token, email, nameFirst, nameLast);
-//   res.json(result);
-// });
+app.put('/v1/user/details/update', (req: Request, res: Response) => {
+  const { token, email, nameFirst, nameLast } = req.body; // INTERCEPTED!
+  const result = userDetailsUpdate(token, email, nameFirst, nameLast);
+  res.json(result);
+});
 
 app.get("/", (req, res) => {
   res.send("Hello, Express with TypeScript!");
 });
 
-// route that creates an order 
-// app.post("/v1/order/create", (req: Request, res: Response) => {
-//   const order = req.body;
-//   try {
-//     const result = orderCreate(order);
-//     res.status(201).json(result);
-//   } catch (error) {
-//     const e = error as Error;
-//     if (e.message === 'Invalid userId or a different name is registered to userId') {
-//       res.status(401).json({ error: e.message });
-//     } 
-//     res.status(400).json({ error: e.message });
-//   }
-// });
+route that creates an order 
+app.post("/v1/order/create", (req: Request, res: Response) => {
+  const order = req.body;
+  try {
+    const result = orderCreate(order);
+    res.status(201).json(result);
+  } catch (error) {
+    const e = error as Error;
+    if (e.message === 'Invalid userId or a different name is registered to userId') {
+      res.status(401).json({ error: e.message });
+    } 
+    res.status(400).json({ error: e.message });
+  }
+});
 
-// app.put("/v1/:userId/order/:orderId/cancel", (req: Request, res: Response) => {
-//   try {
-//     const { userId, orderId } = req.params;
-//     const { reason } = req.body;
+app.put("/v1/:userId/order/:orderId/cancel", (req: Request, res: Response) => {
+  try {
+    const { userId, orderId } = req.params;
+    const { reason } = req.body;
 
-//     const result = orderCancel(Number(userId), Number(orderId), reason);
-//     res.json(result);
-//   } catch (error) {
-//     let statusCode: number;
-//     const e = error as Error;
-//     if (e.message === "invalid orderId" || e.message === "invalid userId") {
-//       statusCode = 401;
-//     } else if (e.message === "order already cancelled") {
-//       statusCode = 400;
-//     } else {
-//       statusCode = 404;
-//     }
-//     res.status(statusCode).json({ error: e.message });
-//   }
-// });
+    const result = orderCancel(Number(userId), Number(orderId), reason);
+    res.json(result);
+  } catch (error) {
+    let statusCode: number;
+    const e = error as Error;
+    if (e.message === "invalid orderId" || e.message === "invalid userId") {
+      statusCode = 401;
+    } else if (e.message === "order already cancelled") {
+      statusCode = 400;
+    } else {
+      statusCode = 404;
+    }
+    res.status(statusCode).json({ error: e.message });
+  }
+});
 
-// app.post(
-//   "/v1/:userId/order/:orderId/confirm",
-//   (req: Request, res: Response) => {
-//     try {
-//       const { userId, orderId } = req.params;
+app.post(
+  "/v1/:userId/order/:orderId/confirm",
+  (req: Request, res: Response) => {
+    try {
+      const { userId, orderId } = req.params;
 
-//       const result = orderConfirm(Number(userId), Number(orderId));
-//       res.json(result);
-//     } catch (error) {
-//       let statusCode: number;
-//       const e = error as Error;
-//       if (e.message === "invalid orderId" || e.message === "invalid userId") {
-//         statusCode = 401;
-//       } else if (e.message === "order not found") {
-//         statusCode = 400;
-//       } else {
-//         statusCode = 404;
-//       }
-//       res.status(statusCode).json({ error: e.message });
-//     }
-//   }
-// );
+      const result = orderConfirm(Number(userId), Number(orderId));
+      res.json(result);
+    } catch (error) {
+      let statusCode: number;
+      const e = error as Error;
+      if (e.message === "invalid orderId" || e.message === "invalid userId") {
+        statusCode = 401;
+      } else if (e.message === "order not found") {
+        statusCode = 400;
+      } else {
+        statusCode = 404;
+      }
+      res.status(statusCode).json({ error: e.message });
+    }
+  }
+);
 
 app.delete('/v1/clear', async (_: Request, res: Response) => {
   res.json(await clearAll());
