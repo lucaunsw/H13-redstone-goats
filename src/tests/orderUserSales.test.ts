@@ -25,10 +25,12 @@ async function requestOrderUserSales(
 }
 
 let sellerId: number;
+let seller2Id: number;
 let testName: string;
 let testBuyer: UserSimple;
 let testSeller: UserSimple;
-let testItem: Item;
+let testItem1: Item;
+let testItem2: Item;
 let testBillingDetails: BillingDetails;
 let testDeliveryDetails: DeliveryInstructions;
 const date = new Date().toISOString().split('T')[0];
@@ -52,21 +54,35 @@ beforeEach(async () => {
     'Jones').body.token;
   sellerId = (jwt.verify(sellerToken, process.env.JWT_SECRET as string) as { userId: number }).userId;
 
+  const seller2Token = await userRegister(
+    'example30@email.com', 
+    'example123', 
+    'Cake', 
+    'Man').body.token;
+  seller2Id = (jwt.verify(seller2Token, process.env.JWT_SECRET as string) as { userId: number }).userId;
+
   testSeller = {
     id: sellerId,
-    name: 'Test Seller',
+    name: 'Bobby Jones',
     streetName: 'Yellow St',
     cityName: 'Brisbane',
     postalZone: '4000',
     cbcCode: 'AU'
   };
-  testItem = {
+  testItem1 = {
     id: 123,
     name: 'soap',
     seller: testSeller,
     price: 5,
     description: 'This is soap',
   };
+  testItem2 = {
+    id: 124,
+    name: 'Table',
+    seller: testSeller,
+    price: 80,
+    description: 'This is a table',
+  }
   testBuyer = {
     id: userId,
     name: testName,
@@ -96,9 +112,28 @@ beforeEach(async () => {
 
 describe.skip('Order user sales send', () => {
 
-  test('Success case', async () => {
+  test('Error from invalid sellerId', async () => {
+    const response = await requestOrderUserSales(true, true, true, sellerId + 1);
+    expect(response.statusCode).toBe(401);
+    expect(response.body).toStrictEqual({ error: expect.any(String) });
+  });
+
+  test('Error from invalid input', async () => {
+    const response = await requestOrderUserSales(false, false, false, sellerId);
+    expect(response.statusCode).toBe(400);
+    expect(response.body).toStrictEqual({ error: expect.any(String) });
+  });
+
+  test('Sucess case with no sales', async () => {
+    const response = await requestOrderUserSales(true, true, true, seller2Id);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toStrictEqual({ sales: [], CSVurl: expect.any(String) });
+  });
+
+  test('Success case with multiple sales', async () => {
     const response = await requestOrderUserSales(true, true, true, sellerId);
     expect(response.statusCode).toBe(200);
+    expect(response.body).toStrictEqual({ sales: [], CSVurl: expect.any(String) });
   });
 
   

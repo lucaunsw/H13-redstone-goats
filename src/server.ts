@@ -1,6 +1,6 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
-import { orderCreate, orderCancel, orderConfirm } from "./app";
+import { orderCreate, orderCancel, orderConfirm, orderUserSales } from "./app";
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
@@ -171,6 +171,25 @@ app.post("/v1/order/create", async (req: Request, res: Response) => {
     const e = error as Error;
     if (e.message === 'Invalid userId or a different name is registered to userId' ||
       e.message === 'No userId provided') {
+      res.status(401).json({ error: e.message });
+    } else {
+      res.status(400).json({ error: e.message });
+    }
+  }
+});
+
+// Route that returns user sales data.
+app.post("/v1/order/:userId/sales", async (req: Request, res: Response) => {
+  const userId = parseInt(req.path);
+  const csv = req.query.csv === "true";
+  const json = req.query.json === "true";
+  const pdf = req.query.pdf === "true";
+  try {
+    const result = await orderUserSales(csv, json, pdf, userId);
+    res.status(200).json(result);
+  } catch (error) {
+    const e = error as Error;
+    if (e.message === 'Invalid sellerId') {
       res.status(401).json({ error: e.message });
     } else {
       res.status(400).json({ error: e.message });
