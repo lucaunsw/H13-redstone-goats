@@ -124,6 +124,8 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
     throw new Error ('Invalid sellerId');
   }
 
+  
+
   return;
 }
 
