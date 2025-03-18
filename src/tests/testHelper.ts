@@ -54,9 +54,9 @@ export function userLogin<T = { token: SessionId }>(em: string, pass: string) {
 }
 
 export function userLogout<T = EmptyObj>(token: SessionId) {
-  return reqHelper<T>('POST', '/v2/admin/auth/logout', {
+  return reqHelper<T>('POST', '/v1/user/logout', {
     headers: {
-      token: token,
+      Authorization: `Bearer ${token}`,
     },
   });
 }
@@ -75,7 +75,7 @@ export function userDetailsUpdate<T = EmptyObj>(
   nF: string,
   nL: string
 ) {
-  return reqHelper<T>('PUT', '/v2/admin/user/details', {
+  return reqHelper<T>('PUT', '/v1/user/details', {
     headers: {
       token: tok,
     },
