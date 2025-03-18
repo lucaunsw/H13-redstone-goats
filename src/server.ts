@@ -5,7 +5,6 @@ import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
 import { ErrKind, SessionId, UserId, Err } from './types';
-import { randomUUID } from 'crypto';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv'; 
 import { createClient } from 'redis';
@@ -22,8 +21,23 @@ import { addToken, clearAll, validToken } from "./dataStore";
 const app = express();
 
 // Redis client for blacklisted tokens
-export const redisClient = createClient();
+
+export const redisClient = createClient({
+    username: 'default',
+    password: 'j7euyZefqwLnIUNtINB8xYORmtm0reRo',
+    socket: {
+        host: 'redis-13657.c326.us-east-1-3.ec2.redns.redis-cloud.com',
+        port: 13657
+    }
+});
+
+redisClient.on('error', err => console.log('Redis Client Error', err));
+
 redisClient.connect();
+
+redisClient.set('foo', 'bar');
+const result = redisClient.get('foo');
+console.log(result)  // >>> bar
 
 // Middleware to parse JSON body
 app.use(express.json());
@@ -55,7 +69,7 @@ const jwtMiddleware = async (req: Request, res: Response, next: NextFunction): P
     // Check if token is blacklisted in Redis
     const isBlacklisted = await redisClient.get(`blacklist_${token}`);
     if (isBlacklisted) {
-      res.status(401).json({ error: 'Token is blacklisted. Please log in again.' });  // Send response and exit
+      res.status(ErrKind.ENOTOKEN).json({ error: 'Token is blacklisted. Please log in again.' });  // Send response and exit
       return 
     }
 
@@ -65,7 +79,7 @@ const jwtMiddleware = async (req: Request, res: Response, next: NextFunction): P
 
     next(); // Continue to the next middleware/route
   } catch (error) {
-    res.status(401).json({ error: 'Token is not valid or expired' });  // Send response and exit
+    res.status(ErrKind.ENOTOKEN).json({ error: 'Token is not valid or expired' });  // Send response and exit
     return 
   }
 };
@@ -94,9 +108,9 @@ app.post('/v1/user/register', async (req: Request, res: Response) => {
     res.json(sessionToken);
   } catch (err) {
     if (err instanceof Error) {
-      res.status(400).json({ error: err.message }); 
+      res.status(ErrKind.EINVALID).json({ error: err.message }); 
     } else {
-      res.status(400).json({ error: 'An unknown error occurred' }); 
+      res.status(ErrKind.EINVALID).json({ error: 'An unknown error occurred' }); 
     }
   }
 });
@@ -109,9 +123,9 @@ app.post('/v1/user/login', async (req: Request, res: Response) => {
     res.json(sessionToken);
   } catch (err) {
     if (err instanceof Error) {
-      res.status(400).json({ error: err.message }); 
+      res.status(ErrKind.EINVALID).json({ error: err.message }); 
     } else {
-      res.status(400).json({ error: 'An unknown error occurred' }); 
+      res.status(ErrKind.EINVALID).json({ error: 'An unknown error occurred' }); 
     }
   }
 });
@@ -123,9 +137,9 @@ app.get('/v1/user/details', async (req: Request, res: Response) => {
     res.json(result);
   } catch (err) {
     if (err instanceof Error) {
-      res.status(400).json({ error: err.message }); 
+      res.status(ErrKind.EINVALID).json({ error: err.message }); 
     } else {
-      res.status(400).json({ error: 'An unknown error occurred' }); 
+      res.status(ErrKind.EINVALID).json({ error: 'An unknown error occurred' }); 
     }
   }
 });
@@ -150,9 +164,9 @@ app.post("/v1/order/create", async (req: Request, res: Response) => {
     const e = error as Error;
     if (e.message === 'Invalid userId or a different name is registered to userId' ||
       e.message === 'No userId provided') {
-      res.status(401).json({ error: e.message });
+      res.status(ErrKind.ENOTOKEN).json({ error: e.message });
     } else {
-      res.status(400).json({ error: e.message });
+      res.status(ErrKind.EINVALID).json({ error: e.message });
     }
   }
 });
