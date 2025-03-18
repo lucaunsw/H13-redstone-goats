@@ -8,17 +8,22 @@ import { ErrKind, SessionId, UserId, Err } from './types';
 import { randomUUID } from 'crypto';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv'; 
+import { createClient } from 'redis';
 
 import {
   userRegister,
   userLogin,
-  // userLogout,
+  userLogout,
   userDetails,
   // userDetailsUpdate,
 } from './user';
 import { addToken, clearAll, validToken } from "./dataStore";
 
 const app = express();
+
+// Redis client for blacklisted tokens
+export const redisClient = createClient();
+redisClient.connect();
 
 // Middleware to parse JSON body
 app.use(express.json());
@@ -38,61 +43,35 @@ const JWT_SECRET = process.env.JWT_SECRET || "r3dSt0nE@Secr3tD00r!";
 // ============================= ROUTES BELOW ================================
 // ===========================================================================
 
-// Custom middleware
-// app.use(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-//   const token = req.query.token ?? req.body.token ?? req.headers.token;
-
-//   if (token === undefined) {
-//     return next(); 
-//   }
-
-//   try {
-//     const isValid = await validToken(Number(token)); 
-
-//     if (!isValid) {
-//       res.status(401).json({ error: 'Token does not refer to a valid, logged-in session' });
-//       return; 
-//     }
-
-//     req.body.token = Number(token);
-//     return next();
-//   } catch (err) {
-//     res.status(500).json({ error: 'Server error while validating session' });
-//     return; 
-//   }
-// });
-
-// export async function makeFmtToken(userId: number): Promise<{ token: number }> {
-//   const sessionId = Math.floor(Math.random() * 1000000); // Generate a numeric session ID
-//   const success = await addToken(sessionId, userId);
-//   if (!success) {
-//     throw new Error('Failed to create session');
-//   }
-//   return { token: sessionId };
-// }
-// END Custom middleware
-
 //Custom middleware for JWT
-app.use((req: Request, res: Response, next: NextFunction) => {
-  // Extract the token from the Authorization header
-  const token = req.header('Authorization')?.split(' ')[1];
-
-  if (!token) {
-    return next(); // No token provided, continue without interception
-  }
-
+const jwtMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
+    const token = req.header('Authorization')?.split(' ')[1];
+
+    if (!token) {
+      return next(); // No token, continue
+    }
+
+    // Check if token is blacklisted in Redis
+    const isBlacklisted = await redisClient.get(`blacklist_${token}`);
+    if (isBlacklisted) {
+      res.status(401).json({ error: 'Token is blacklisted. Please log in again.' });  // Send response and exit
+      return 
+    }
+
     // Verify and decode the token
     const decoded: any = jwt.verify(token, JWT_SECRET);
-    
-    req.body.token = decoded.userId;  // Attach the userId from JWT payload to the request body
+    req.body.token = decoded.userId; // Attach userId from JWT payload
 
     next(); // Continue to the next middleware/route
   } catch (error) {
-    // Handle error (invalid or expired token)
-    res.status(ErrKind.ENOTOKEN).json({ error: 'Token is not valid or expired' });
+    res.status(401).json({ error: 'Token is not valid or expired' });  // Send response and exit
+    return 
   }
-});
+};
+
+// Apply middleware correctly
+app.use(jwtMiddleware);
 
 // Function for generating JWT 
 function makeJwtToken(userId: number): { token: SessionId } {
@@ -101,11 +80,11 @@ function makeJwtToken(userId: number): { token: SessionId } {
 }
 //End of Custome middleware for JWT
 
-// app.post('/v1/user/logout', (req: Request, res: Response) => {
-//   const token = req.body.token ?? req.headers.token;
-//   const result = userLogout(token);
-//   res.json(result);
-// });
+app.post('/v1/user/logout', async (req: Request, res: Response) => {
+  const token = req.header('Authorization')?.split(' ')[1];  
+  const result = await userLogout(token);
+  res.json(result);
+});
 
 app.post('/v1/user/register', async (req: Request, res: Response) => {
   try {
