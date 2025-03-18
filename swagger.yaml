@@ -63,6 +63,12 @@ paths:
                 type: integer
         400:
           description: Bad request from client.
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
           
   /v1/user/login:
     post:
@@ -91,13 +97,61 @@ paths:
                 type: integer
         400:
           description: Bad request from client
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
         401:
           description: Token is unauthorized/invalid
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
   /v1/user/logout:
     post:
       summary: Logout an existing user
-      description: Logout a user who has an active session.
+      description: Logout a user by blacklisting the JWT token.
+      tags:
+        - "User Functions"
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              Token:
+                type: string
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+        400:
+          description: Bad request from client
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
+        401:
+          description: Token is unauthorized/invalid
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
+  /v1/user/details:
+    get:
+      summary: Gets a user's details
+      description: Retrieve the details about a specific user
       tags:
         - "User Functions"
       parameters:
@@ -114,10 +168,74 @@ paths:
           description: Success
           schema:
             type: object
+            properties:
+              userId:
+                type: integer
+              name:
+                type: string
+              email:
+                type: string
+              numSuccessfulLogins: 
+                type: integer
+              numFailedPasswordsSinceLastLogin:
+                type: integer
         400:
           description: Bad request from client
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
         401:
           description: Token is unauthorized/invalid
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
+    put:
+      summary: Updates a user's details
+      description: Change the current user details
+      tags:
+        - "User Functions"
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              userId:
+                type: integer
+              email:
+                type: string
+              nameFirst:
+                type: string
+              nameLast:
+                type: string
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+        400:
+          description: Bad request from client
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
+        401:
+          description: Token is unauthorized/invalid
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
   /v1/order/create:
     post:
@@ -145,8 +263,20 @@ paths:
                 type: integer
         400:
           description: Bad request from client e.g invalid bank details, invalid order date
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
         401:
           description: Token is unauthorized/invalid or a different name is registered to the userId.
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
   /v1/{userId}/order/{orderId}/change:
     put:
@@ -176,8 +306,20 @@ paths:
           description: Order updated
         400:
           description: Bad request from client e.g invalid bank details, invalid order date
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
         401:
           description: Token is unauthorized/invalid or a different name is registered to the userId.
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
   /v1/{userId}/order/{orderId}/cancel:
     put:
@@ -218,8 +360,20 @@ paths:
                 type: string
         400:
           description: Unknown orderId
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
         404:
           description: Order not found.
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
   /v1/order/{orderId}/confirm:
     put:
@@ -240,8 +394,20 @@ paths:
             type: object
         400:
           description: OrderId missing or invalid
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
         404:
           description: Order not found
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
   /v1/{userId}/order/history:
     post:
@@ -263,6 +429,12 @@ paths:
             $ref: "#/definitions/OrderHistory"
         400:
           description: UserId missing or invalid
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
   /v1/{userId}/order/recommendation:
     get:
@@ -311,6 +483,12 @@ paths:
             $ref: "#/definitions/SalesData"
         400:
           description: UserId missing or invalid
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
 definitions:
   OrderRequest:
