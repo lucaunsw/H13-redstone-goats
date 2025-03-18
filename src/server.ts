@@ -189,7 +189,7 @@ app.post("/v1/order/:userId/sales", async (req: Request, res: Response) => {
     res.status(200).json(result);
   } catch (error) {
     const e = error as Error;
-    if (e.message === 'Invalid sellerId') {
+    if (e.message === 'Invalid sellerId' || e.message === 'No sellerId provided') {
       res.status(401).json({ error: e.message });
     } else {
       res.status(400).json({ error: e.message });

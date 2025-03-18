@@ -13,7 +13,7 @@ const TIMEOUT_MS = 20 * 1000;
 import request from "sync-request-curl";
 import { clear } from 'console';
 
-async function requestOrderCreate(
+export async function requestOrderCreate(
   body: Order,
 ) {
   const res = request("POST", SERVER_URL + `/v1/order/create`, {

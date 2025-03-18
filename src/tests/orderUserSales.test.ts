@@ -2,6 +2,7 @@
 import { userRegister, reqHelper } from './testHelper';
 import { SessionId, Order, UserSimple, 
   Item, BillingDetails, DeliveryInstructions } from '../types';
+import { requestOrderCreate } from './orderCreate.test';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -124,16 +125,69 @@ describe.skip('Order user sales send', () => {
     expect(response.body).toStrictEqual({ error: expect.any(String) });
   });
 
-  test('Sucess case with no sales', async () => {
+  test.skip('Displays no sales when order could not be created', async () => {
+    const date = new Date().toISOString().split('T')[0];
+    const body = {
+      items: [testItem1, testItem2],
+      quantities: [1],
+      buyer: testBuyer,
+      billingDetails: testBillingDetails,
+      totalPrice: 85,
+      delivery: testDeliveryDetails,
+      lastEdited: date,
+      createdAt: new Date(),
+    }
+    requestOrderCreate(body);
+    const response = await requestOrderUserSales(true, true, true, sellerId);
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toStrictEqual({ sales: [], CSVurl: expect.any(String) });
+  });
+
+  test.skip('Sucess case with no sales', async () => {
+    const date = new Date().toISOString().split('T')[0];
+    const body = {
+      items: [testItem1, testItem2],
+      quantities: [1, 1],
+      buyer: testBuyer,
+      billingDetails: testBillingDetails,
+      totalPrice: 85,
+      delivery: testDeliveryDetails,
+      lastEdited: date,
+      createdAt: new Date(),
+    }
+    requestOrderCreate(body);
     const response = await requestOrderUserSales(true, true, true, seller2Id);
     expect(response.statusCode).toBe(200);
     expect(response.body).toStrictEqual({ sales: [], CSVurl: expect.any(String) });
   });
 
-  test('Success case with multiple sales', async () => {
+  test.skip('Success case with multiple sales', async () => {
+    const date = new Date().toISOString().split('T')[0];
+    const body = {
+      items: [testItem1, testItem2],
+      quantities: [2, 1],
+      buyer: testBuyer,
+      billingDetails: testBillingDetails,
+      totalPrice: 90,
+      delivery: testDeliveryDetails,
+      lastEdited: date,
+      createdAt: new Date(),
+    }
+    requestOrderCreate(body);
     const response = await requestOrderUserSales(true, true, true, sellerId);
     expect(response.statusCode).toBe(200);
-    expect(response.body).toStrictEqual({ sales: [], CSVurl: expect.any(String) });
+    expect(response.body).toStrictEqual({ sales: 
+      [{
+        id: 123,
+        name: 'soap',
+        price: 5,
+        quantity: 2,
+      }, {
+        id: 124,
+        name: 'table',
+        price: 80,
+        quantity: 1,
+      }], CSVurl: expect.any(String) });
   });
 
   

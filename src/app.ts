@@ -112,8 +112,19 @@ const orderConfirm = async (userId: number, orderId: number) => {
     // return {};
 };
 
-function orderUserSales(CSV: boolean, JSON: boolean, PDF: boolean, userId: number) {
+async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerId: number) {
+  if (!csv && !json && !pdf) {
+    throw new Error ('At least one data option should be selected');
+  }
+  if (!sellerId) {
+    throw new Error ('No sellerId provided');
+  }
+  const seller = await getUser(sellerId);
+  if (!seller) {
+    throw new Error ('Invalid sellerId');
+  }
 
+  return;
 }
 
 export { orderCreate, orderCancel, orderConfirm, orderUserSales };
