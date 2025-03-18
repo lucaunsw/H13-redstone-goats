@@ -110,14 +110,14 @@ export async function updateUser(user: User): Promise<boolean> {
     if (user.id === null) return false;
     const res = await pool.query(
         `UPDATE Users
-        SET name_first = $1, name_last = $2, email = $3, password = $4, street_name = $5,
-        city_name = $6, postal_zone = $7, cbc_code = $8, num_successful_logins = $9,
-        num_failed_passwords_since_last_login = $10 WHERE id = $11 RETURNING id`,
+         SET name_first = $1, name_last = $2, email = $3, password = $4, street_name = $5,
+             city_name = $6, postal_zone = $7, cbc_code = $8, num_successful_logins = $9,
+             num_failed_passwords_since_last_login = $10 WHERE id = $11`,
         [user.nameFirst, user.nameLast, user.email, user.password, user.streetName,
          user.cityName, user.postalZone, user.cbcCode, user.numSuccessfulLogins,
          user.numFailedPasswordsSinceLastLogin, user.id]
     );
-    return (res.rows.length > 0);
+    return (res.rowCount !== 0);
 }
 
 // Deletes user from DB, returns true if successful
@@ -262,7 +262,6 @@ export async function addOrder(order: Order): Promise<number | null> {
         
         order.status = order.status ?? status.PENDING;
         order.lastEdited = order.lastEdited ?? new Date().toISOString();
-        order.createdAt = order.createdAt ?? new Date().toISOString();
         const orderRes = await client.query(
             `INSERT INTO Orders
                     (buyer_id, billing_id, delivery_id, last_edited, status, total_price, created_at)
@@ -281,7 +280,7 @@ export async function addOrder(order: Order): Promise<number | null> {
 
             await client.query(
                 "INSERT INTO OrderItems (order_id, item_id, quantity) VALUES ($1, $2, $3)",
-                [orderId, order.items[index].id, order.quantities[index]]
+                [orderId, order.items[index].id, order.quantities[index] ?? 1]
             );
         }
 
@@ -369,7 +368,8 @@ export async function getOrder(orderId: number): Promise<Order | null> {
         lastEdited: order.last_edited,
         status: order.status,
         totalPrice: order.total_price,
-        createdAt: order.created_at
+        createdAt: order.created_at,
+        orderXMLId: order.order_xml_id
     };
     return orderResult;
 }
@@ -404,7 +404,7 @@ export async function updateOrder(order: Order): Promise<boolean> {
              WHERE id = (SELECT billing_id FROM Orders WHERE id = $4)`,
             [billingDetails.creditCardNumber, billingDetails.CVV, billingDetails.expiryDate, order.id]
         );
-        if (billingRes.rows.length === 0) throw new Error("Billing update failed");
+        if (billingRes.rowCount === 0) throw new Error("Billing update failed");
 
 
         const delivery = order.delivery;
@@ -418,7 +418,7 @@ export async function updateOrder(order: Order): Promise<boolean> {
              delivery.countrySubentity, delivery.addressLine, delivery.cbcCode,
              delivery.startDate, delivery.startTime, delivery.endDate, delivery.endTime, order.id]
         );
-        if (deliveryRes.rows.length === 0) throw new Error("Delivery update failed");
+        if (deliveryRes.rowCount === 0) throw new Error("Delivery update failed");
 
         const orderRes = await client.query(
             `UPDATE Orders 
@@ -431,7 +431,7 @@ export async function updateOrder(order: Order): Promise<boolean> {
         for (let index = 0; index < order.items.length; index++) {
             await client.query(
                 "INSERT INTO OrderItems (order_id, item_id, quantity) VALUES ($1, $2, $3)",
-                [order.id, order.items[index].id, order.quantities[index]]
+                [order.id, order.items[index].id, order.quantities[index] ?? 1]
             );
         }
 
@@ -482,20 +482,22 @@ export async function addOrderXML(orderId: number, xmlContent: string): Promise<
     const res = await pool.query(
         "INSERT INTO OrderXMLs (order_id, xml_content) VALUES ($1, $2) returning id", [orderId, xmlContent]
     );
-    return res.rows[0].id;
+    const orderXMLId = res.rows[0].id
+
+    await pool.query("UPDATE Orders SET order_xml_id = $1 WHERE id = $2", [orderXMLId, orderId]);
+    return orderXMLId;
 }
 
 // Fetches order XML from DB
 export async function getOrderXML(orderXMLId: number): Promise<string | null> {
-    const res = await pool.query("SELECT xml_content FROM OrderXMLs WHERE id = $", [orderXMLId]);
+    const res = await pool.query("SELECT xml_content FROM OrderXMLs WHERE id = $1", [orderXMLId]);
     return (res.rows.length > 0) ? res.rows[0].xml_content : null;
 }
 
 // Fetches latest XML of a particular order from DB
 export async function getLatestOrderXML(orderId: number): Promise<string | null> {
     const res = await pool.query(
-        `SELECT xml_content FROM OrderXMLs WHERE order_id = $1
-        ORDER BY created_at DESC LIMIT 1`, [orderId]
+        "SELECT xml_content FROM OrderXMLs WHERE order_id = $1 ORDER BY created_at DESC LIMIT 1", [orderId]
     );
     return (res.rows.length > 0) ? res.rows[0].xml_content : null;
 }
