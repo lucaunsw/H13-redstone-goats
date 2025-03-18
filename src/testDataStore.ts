@@ -1,4 +1,4 @@
-import { addItem, addOrder, addToken, addUser, clearAll, deleteItem, deleteOrder, deleteToken, deleteUser, getAllUsers, getItem, getOrder, getOrdersByUser, getUser, updateOrder, updateUser, validToken } from "./dataStore";
+import { addItem, addOrder, addToken, addUser, clearAll, deleteItem, deleteOrder, deleteToken, deleteUser, getAllUsers, getItem, getOrder, getOrdersByBuyer, getUser, updateOrder, updateUser, validToken } from "./dataStore";
 import { Item, Order, User } from "./types";
 
 // Adds and runs tests on a user with 2 items, and 2 orders
