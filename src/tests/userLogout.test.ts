@@ -4,10 +4,10 @@ import {
   reqHelper,
   userLogout,
 } from './testHelper';
-import { SessionId } from '../types';
+import { ErrKind, SessionId } from '../types';
 
-beforeEach(() => {
-  reqHelper('DELETE', '/v1/clear');
+beforeEach(async () => {
+  await reqHelper('DELETE', '/v1/clear');
 });
 
 describe('userLogout', () => {
@@ -19,8 +19,8 @@ describe('userLogout', () => {
     token: null as unknown as SessionId,
   };
 
-  beforeEach(() => {
-    tUser.token = userRegister(
+  beforeEach(async () => {
+    tUser.token = await userRegister(
       tUser.email,
       tUser.initpass,
       tUser.fName,
@@ -28,21 +28,23 @@ describe('userLogout', () => {
     ).body.token;
   });
 
-  test('A sucessful logout', () => {
-    const resp = userLogout(tUser.token);
+  test('A sucessful logout', async () => {
+    const resp = await userLogout(tUser.token);
     expect(resp.body).toStrictEqual({});
     expect(resp.statusCode).toBe(200);
   });
 
   test('test logout with incorrect token', () => {
-    const resp = userLogout(tUser.token + 1);
+    const invalidToken = '201u3nfoafowjioj'; // Invalid token
+
+    const resp = userLogout(invalidToken);
     expect(resp.body).toStrictEqual({
       error: expect.any(String),
     });
-    expect(resp.statusCode).toBe(401);
+    expect(resp.statusCode).toBe(ErrKind.ENOTOKEN);
   });
 
-  test('can still login with token-did not delete sessionId', () => {
+  test('test if token got blacklisted after logout', () => {
     const resp = userLogout(tUser.token);
     const check = userDetails(tUser.token).body;
     expect(check).toStrictEqual({
