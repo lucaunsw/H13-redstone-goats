@@ -56,7 +56,7 @@ const HOST = process.env.IP || "127.0.0.1";
 const JWT_SECRET = process.env.JWT_SECRET || "r3dSt0nE@Secr3tD00r!";
 
 // Create path to swagger document.
-const swaggerDocument = YAML.load(path.join(__dirname, '../public/swagger.yaml'));
+const swaggerDocument = YAML.load(path.join(__dirname, '../swagger.yaml'));
 
 // Route to serve swagger file.
 app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
