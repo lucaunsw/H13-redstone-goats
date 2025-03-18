@@ -18,7 +18,7 @@ export interface User { // Used in DB update
   numFailedPasswordsSinceLastLogin: number;
 }
 
-export interface UserSimple {
+export interface UserSimple { // Used in DB update
   id?: number | null;
   name: string,
   streetName: string,
@@ -35,13 +35,21 @@ export interface Item { // Used in DB update
   price: number;
 }
 
-export interface BillingDetails {
+export interface ItemSales { // Used in DB update
+  id: number;
+  name: string;
+  description?: string;
+  price: number;
+  amountSold: number;
+}
+
+export interface BillingDetails { // Used in DB update
   creditCardNumber: number;
   CVV: number;
   expiryDate: string;
 }
 
-export interface DeliveryInstructions {
+export interface DeliveryInstructions { // Used in DB update
   streetName: string;
   cityName: string;
   postalZone: string;

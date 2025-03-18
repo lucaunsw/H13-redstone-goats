@@ -1,5 +1,5 @@
 import pool from "./db";
-import { User, Item, Order, BillingDetails, DeliveryInstructions, UserSimple } from "./types";
+import { User, Item, Order, BillingDetails, DeliveryInstructions, UserSimple, status, ItemSales } from "./types";
 
 /**
  *     Database interaction functions for users, tokens, items, and orders.
@@ -9,10 +9,11 @@ import { User, Item, Order, BillingDetails, DeliveryInstructions, UserSimple } f
  * -----------------------------------------------------------------------------
  * TOKEN FUNCTIONS: addToken, validToken, deleteToken
  * -----------------------------------------------------------------------------
- *  ITEM FUNCTIONS: addItem, getItem, deleteItem
+ *  ITEM FUNCTIONS: addItem, getItem, getItemsBySeller, getItemSellerSales,
+ *                  deleteItem
  * -----------------------------------------------------------------------------
- * ORDER FUNCTIONS: addOrder, getOrder, getOrdersByUser, updateOrder, 
- *                  deleteOrder, addOrderXML, getLatestOrderXML,
+ * ORDER FUNCTIONS: addOrder, getOrder, getOrdersByBuyer, updateOrder, 
+ *                  deleteOrder, addOrderXML, getOrderXML, getLatestOrderXML,
  *                  getAllOrderXMLs, deleteOrderXMLs
  * -----------------------------------------------------------------------------
  * CLEAR FUNCTIONS: clearUsers, clearTokens, clearItems, clearOrders, clearAll
@@ -24,6 +25,8 @@ import { User, Item, Order, BillingDetails, DeliveryInstructions, UserSimple } f
 
 // Adds user to DB, returns their ID
 export async function addUser(user: User): Promise<number> {
+    user.numSuccessfulLogins = user.numSuccessfulLogins ?? 0;
+    user.numFailedPasswordsSinceLastLogin = user.numFailedPasswordsSinceLastLogin ?? 0;
     const res = await pool.query(
         `INSERT INTO Users
          (name_first, name_last, email, password, street_name, city_name,
@@ -38,6 +41,7 @@ export async function addUser(user: User): Promise<number> {
 
 // Fetches user from DB
 export async function getUser(userId: number): Promise<User | null> {
+    
     const res = await pool.query("SELECT * FROM Users WHERE id = $1", [userId]);
     if (res.rows.length === 0) return null;
 
@@ -103,6 +107,7 @@ export async function getAllUsers(): Promise<User[]> {
 
 // Updates DB fields of a user, returns true if successful
 export async function updateUser(user: User): Promise<boolean> {
+    if (user.id === null) return false;
     const res = await pool.query(
         `UPDATE Users
         SET name_first = $1, name_last = $2, email = $3, password = $4, street_name = $5,
@@ -152,12 +157,12 @@ export async function deleteToken(token: string): Promise<boolean> {
 ////////////////////////////////////////////////////////////////////////////////
 
 // Adds item to DB, returns its ID
-export async function addItem(item: Item): Promise<number> {
+export async function addItem(item: Item): Promise<number | null> {
     const res = await pool.query(
         "INSERT INTO Items (id, name, seller_id, description, price) VALUES ($1, $2, $3, $4, $5) RETURNING id",
         [item.id, item.name, item.seller.id, item.description, item.price]
     );
-    return res.rows[0].id;
+    return (res.rows.length > 0) ? res.rows[0].id : null;;
 }
 
 // Fetches item from DB
@@ -171,12 +176,52 @@ export async function getItem(itemId: number): Promise<Item | null> {
 
     const itemResult: Item = {
         id: item.id,
-        name: item.name_first,
+        name: item.name,
         seller: sellerResult,
         description: item.description,
         price: item.price,
     };
     return itemResult;
+}
+
+// Fetches all items sold by a particular user from DB
+export async function getItemsBySeller(sellerId: number): Promise<Item[]> {
+    const itemRes = await pool.query("SELECT id FROM Items WHERE seller_id = $1", [sellerId]);
+    const items = itemRes.rows;
+    if (items.length === 0) return [];
+    
+    const itemResults: Item[] = [];
+    for (const item of items) {
+        const itemResult = await getItem(item.id);
+        if (itemResult === null) return [];
+        itemResults.push(itemResult);
+    }
+    return itemResults;
+}
+
+// Fetches total amount sold for all items sold by a particular user from DB
+export async function getItemSellerSales(sellerId: number): Promise<ItemSales[]> {
+    const itemRes = await pool.query(
+        `SELECT i.id, i.name, i.description, i.price, COALESCE(SUM(oi.quantity), 0) AS amount_sold
+         FROM Items i LEFT JOIN OrderItems oi ON oi.item_id = i.id
+         WHERE i.seller_id = $1 GROUP BY i.id, i.name, i.description, i.price`, [sellerId]
+    );
+    const items = itemRes.rows;
+    if (items.length === 0) return [];
+
+    const itemResults: ItemSales[] = [];
+    for (const item of items) {
+        const itemResult: ItemSales = {
+            id: item.id,
+            name: item.name,
+            description: item.description,
+            price: item.price,
+            amountSold: item.amount_sold
+        };
+
+        itemResults.push(itemResult);
+    }
+    return itemResults;
 }
 
 // Deletes item from DB, returns true if successful
@@ -198,7 +243,8 @@ export async function addOrder(order: Order): Promise<number | null> {
 
         const billingDetails = order.billingDetails;
         const billingRes = await client.query(
-            "INSERT INTO BillingDetails (credit_card_no, cvv, expiry_date) VALUES ($1, $2, $3) RETURNING id",
+            `INSERT INTO BillingDetails (credit_card_no, cvv, expiry_date)
+             VALUES ($1::BIGINT, $2::INTEGER, $3::TEXT) RETURNING id`,
             [billingDetails.creditCardNumber, billingDetails.CVV, billingDetails.expiryDate]
         );
 
@@ -213,6 +259,10 @@ export async function addOrder(order: Order): Promise<number | null> {
              delivery.startDate, delivery.startTime, delivery.endDate, delivery.endTime]
         );
 
+        
+        order.status = order.status ?? status.PENDING;
+        order.lastEdited = order.lastEdited ?? new Date().toISOString();
+        order.createdAt = order.createdAt ?? new Date().toISOString();
         const orderRes = await client.query(
             `INSERT INTO Orders
                     (buyer_id, billing_id, delivery_id, last_edited, status, total_price, created_at)
@@ -222,9 +272,11 @@ export async function addOrder(order: Order): Promise<number | null> {
         );
         const orderId = orderRes.rows[0].id;
 
-        for (const index in order.items) {
+        for (let index = 0; index < order.items.length; index++) {
             if (order.items[index].id === null) {
-                order.items[index].id = await addItem(order.items[index]);
+                const itemId = await addItem(order.items[index]);
+                if (itemId === null) throw new Error("Failed to insert item");
+                order.items[index].id = itemId;
             }
 
             await client.query(
@@ -251,19 +303,19 @@ export async function getOrder(orderId: number): Promise<Order | null> {
     const order = orderRes.rows[0];
 
     const itemRes = await pool.query(
-        `SELECT i.id, i.name, i.seller, i.description, i.price, oi.quantity FROM OrderItems oi
+        `SELECT i.id, i.name, i.seller_id, i.description, i.price, oi.quantity FROM OrderItems oi
          JOIN Items i ON oi.item_id = i.id WHERE oi.order_id = $1`, [orderId]
     );
 
     const itemResults: Item[] = [];
     const quantityResults: number[] = [];
     for (const item of itemRes.rows) {
-        const sellerResult = await getUserSimple(item.seller);
+        const sellerResult = await getUserSimple(item.seller_id);
         if (sellerResult === null) return null;
 
         const itemResult: Item = {
             id: item.id,
-            name: item.name_first,
+            name: item.name,
             seller: sellerResult,
             description: item.description,
             price: item.price,
@@ -273,7 +325,7 @@ export async function getOrder(orderId: number): Promise<Order | null> {
         quantityResults.push(item.quantity);
     }
 
-    const buyerResult = await getUserSimple(order.user);
+    const buyerResult = await getUserSimple(order.buyer_id);
     if (buyerResult === null) return null;
 
     const billingRes = await pool.query(
@@ -322,9 +374,9 @@ export async function getOrder(orderId: number): Promise<Order | null> {
     return orderResult;
 }
 
-// Fetches all orders by a particular user from DB
-export async function getOrdersByUser(userId: number): Promise<Order[]> {
-    const orderRes = await pool.query("SELECT id FROM Orders WHERE buyer_id = $1", [userId]);
+// Fetches all orders bought by a particular user from DB
+export async function getOrdersByBuyer(buyerId: number): Promise<Order[]> {
+    const orderRes = await pool.query("SELECT id FROM Orders WHERE buyer_id = $1", [buyerId]);
     const orders = orderRes.rows;
     if (orders.length === 0) return [];
 
@@ -338,7 +390,8 @@ export async function getOrdersByUser(userId: number): Promise<Order[]> {
 }
 
 // Updates DB fields of an order, returns true if successful
-export async function updateOrder(orderId: number, order: Order): Promise<boolean> {
+export async function updateOrder(order: Order): Promise<boolean> {
+    if (order.id === null) return false;
     const client = await pool.connect();
 
     try {
@@ -349,12 +402,13 @@ export async function updateOrder(orderId: number, order: Order): Promise<boolea
             `UPDATE BillingDetails 
              SET credit_card_no = $1, cvv = $2, expiry_date = $3 
              WHERE id = (SELECT billing_id FROM Orders WHERE id = $4)`,
-            [billingDetails.creditCardNumber, billingDetails.CVV, billingDetails.expiryDate, orderId]
+            [billingDetails.creditCardNumber, billingDetails.CVV, billingDetails.expiryDate, order.id]
         );
+        if (billingRes.rows.length === 0) throw new Error("Billing update failed");
 
 
         const delivery = order.delivery;
-        await client.query(
+        const deliveryRes = await client.query(
             `UPDATE DeliveryInstructions 
              SET street_name = $1, city_name = $2, postal_zone = $3, 
                  country_subentity = $4, address_line = $5, cbc_code = $6, 
@@ -362,20 +416,22 @@ export async function updateOrder(orderId: number, order: Order): Promise<boolea
              WHERE id = (SELECT delivery_id FROM Orders WHERE id = $11)`,
             [delivery.streetName, delivery.cityName, delivery.postalZone,
              delivery.countrySubentity, delivery.addressLine, delivery.cbcCode,
-             delivery.startDate, delivery.startTime, delivery.endDate, delivery.endTime, orderId]
+             delivery.startDate, delivery.startTime, delivery.endDate, delivery.endTime, order.id]
         );
+        if (deliveryRes.rows.length === 0) throw new Error("Delivery update failed");
 
-        await client.query(
+        const orderRes = await client.query(
             `UPDATE Orders 
              SET buyer_id = $1, last_edited = $2, status = $3, total_price = $4 WHERE id = $5`,
-            [order.buyer.id, order.lastEdited, order.status, order.totalPrice, orderId]
+            [order.buyer.id, order.lastEdited, order.status, order.totalPrice, order.id]
         );
+        if (orderRes.rowCount === 0) throw new Error("Overview update failed");
 
-        await client.query("DELETE FROM OrderItems WHERE order_id = $1", [orderId]);
-        for (const index in order.items) {
+        await client.query("DELETE FROM OrderItems WHERE order_id = $1", [order.id]);
+        for (let index = 0; index < order.items.length; index++) {
             await client.query(
                 "INSERT INTO OrderItems (order_id, item_id, quantity) VALUES ($1, $2, $3)",
-                [orderId, order.items[index].id, order.quantities[index]]
+                [order.id, order.items[index].id, order.quantities[index]]
             );
         }
 
@@ -396,24 +452,18 @@ export async function deleteOrder(orderId: number): Promise<boolean> {
 
     try {
         await client.query("BEGIN");
+               
+        const idsRes = await client.query("SELECT billing_id, delivery_id FROM Orders WHERE id = $1", [orderId]);
+        if (idsRes.rows.length === 0) throw new Error("Order processing failed");
+        const { billingId, deliveryId } = idsRes.rows[0];
         
-        const orderRes = await client.query("DELETE FROM Orders WHERE id = $1", [orderId]);
-
         await client.query("DELETE FROM OrderItems WHERE order_id = $1", [orderId]);
-
-        const res = await client.query("SELECT billing_id, delivery_id FROM Orders WHERE id = $1", [orderId]);
-
-        if (res.rows.length === 0) {
-            await client.query("ROLLBACK");
-            return false;
-        }
-        const { billingId, deliveryId } = res.rows[0];
-        
+        await client.query("DELETE FROM Orders WHERE id = $1", [orderId]);
         await client.query("DELETE FROM BillingDetails WHERE id = $1", [billingId]);
         await client.query("DELETE FROM DeliveryInstructions WHERE id = $1", [deliveryId]);
 
         await client.query("COMMIT");
-        return (orderRes.rows.length > 0);
+        return true;
     } catch (err) {
         await client.query("ROLLBACK");
         console.error("Error deleting order:", err);
@@ -427,59 +477,37 @@ export async function deleteOrder(orderId: number): Promise<boolean> {
 ///////////////////////////// ORDER XML FUNCTIONS //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-// Adds order XML to DB, returns true if successful
-export async function addOrderXML(orderId: number, xmlContent: string): Promise<boolean> {
-    const client = await pool.connect();
+// Adds order XML to DB, returns its id
+export async function addOrderXML(orderId: number, xmlContent: string): Promise<number> {
+    const res = await pool.query(
+        "INSERT INTO OrderXMLs (order_id, xml_content) VALUES ($1, $2) returning id", [orderId, xmlContent]
+    );
+    return res.rows[0].id;
+}
 
-    try {
-        await client.query(
-            "INSERT INTO OrderXMLs (order_id, xml_content) VALUES ($1, $2)", [orderId, xmlContent]
-        );
-        return true; // Insert successful
-    } catch (err) {
-        console.error("Error adding order XML:", err);
-        return false; // Insert failed
-    } finally {
-        client.release();
-    }
+// Fetches order XML from DB
+export async function getOrderXML(orderXMLId: number): Promise<string | null> {
+    const res = await pool.query("SELECT xml_content FROM OrderXMLs WHERE id = $", [orderXMLId]);
+    return (res.rows.length > 0) ? res.rows[0].xml_content : null;
 }
 
 // Fetches latest XML of a particular order from DB
 export async function getLatestOrderXML(orderId: number): Promise<string | null> {
-    const client = await pool.connect();
-
-    try {
-        const res = await client.query(
-            `SELECT xml_content FROM OrderXMLs WHERE order_id = $1
-            ORDER BY created_at DESC LIMIT 1`, [orderId]
-        );
-
-        if (res.rows.length === 0) return null; // No XML found
-
-        return res.rows[0].xml_content;
-    } catch (err) {
-        console.error("Error fetching latest order XML:", err);
-        return null;
-    } finally {
-        client.release();
-    }
+    const res = await pool.query(
+        `SELECT xml_content FROM OrderXMLs WHERE order_id = $1
+        ORDER BY created_at DESC LIMIT 1`, [orderId]
+    );
+    return (res.rows.length > 0) ? res.rows[0].xml_content : null;
 }
 
 // Fetches all XMLs of a particular order from DB, from newest to oldest
 export async function getAllOrderXMLs(orderId: number): Promise<string[]> {
     const client = await pool.connect();
 
-    try {
-        const res = await client.query(
-            `SELECT xml_content FROM OrderXMLs WHERE order_id = $1 ORDER BY created_at DESC`, [orderId]
-        );
-        return res.rows.map(row => row.xml_content);
-    } catch (err) {
-        console.error("Error fetching all order XMLs:", err);
-        return [];
-    } finally {
-        client.release();
-    }
+    const res = await client.query(
+        `SELECT xml_content FROM OrderXMLs WHERE order_id = $1 ORDER BY created_at DESC`, [orderId]
+    );
+    return (res.rows.length > 0) ? res.rows.map(row => row.xml_content) : [];
 }
 
 // Deletes all XMLs of a particular order from DB, returns true if successful
@@ -494,35 +522,20 @@ export async function deleteOrderXMLs(orderId: number): Promise<boolean> {
 
 // Clears all users from DB
 export async function clearUsers(): Promise<boolean> {
-    try {
-        await pool.query("DELETE FROM Users");
-        return true;
-    } catch (err) {
-        console.error("Error clearing all users:", err);
-        return false;
-    }
+    const res = await pool.query("DELETE FROM Users RETURNING *");
+    return (res.rows.length > 0);
 }
 
 // Clears all tokens from DB
 export async function clearTokens(): Promise<boolean> {
-    try {
-        await pool.query("DELETE FROM Tokens");
-        return true;
-    } catch (err) {
-        console.error("Error clearing all tokens:", err);
-        return false;
-    }
+    const res = await pool.query("DELETE FROM Tokens RETURNING *");
+    return (res.rows.length > 0);
 }
 
 // Clears all items from DB
 export async function clearItems(): Promise<boolean> {
-    try {
-        await pool.query("DELETE FROM Items");
-        return true;
-    } catch (err) {
-        console.error("Error clearing all items:", err);
-        return false;
-    }
+    const res = await pool.query("DELETE FROM Items RETURNING *");
+    return (res.rows.length > 0);
 }
 
 // Clears all orders from DB
