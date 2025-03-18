@@ -16,10 +16,6 @@ tags:
     description: Routes accessible and usable by the buyer party.
   - name: "Seller Routes"
     description: Routes accessible and usable by the seller party.
-  # - name: "Version 3"
-  #   description: Routes written in sprint 3
-  # - name: "Version 4"
-  #   description: Routes written in sprint 4
   - name: "Test Functions"
     description: Routes used for tests.
 
@@ -288,7 +284,7 @@ paths:
   /v1/order/{userId}/sales:
     get:
       summary: Send sales analytics data.
-      description: Sends analytical data to the product distributor. 
+      description: Sends analytical data to the product distributor, with different options for data format. 
       tags:
         - "Seller Routes"
       parameters:
@@ -480,6 +476,15 @@ definitions:
       sales:
         type: array
         items:
-          $ref: "#/definitions/Item"
+          type: object
+          properties:
+            id:
+              type: number
+            name:
+              type: string
+            price:
+              type: number
+            quantity:
+              type: integer
       CSVurl:
         type: string
