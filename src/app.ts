@@ -63,28 +63,29 @@ async function orderCreate (order: Order) {
 
 
 const orderCancel = async (userId: number, orderId: number, reason: string) => {
-    // // Check if userId and orderId are valid
-    // const user = await getUser(userId);
-    // if (!user) {
-    //     throw new Error("invalid userId");
-    // }
-    // const orderData = await getOrder(orderId);
-    // if (!orderData) {
-    //     throw new Error("invalid orderId");
-    // }
+    // Check if userId and orderId are valid
+    const user = await getUser(userId);
+    if (!user) {
+        throw new Error("invalid userId");
+    }
+    const orderData = await getOrder(orderId);
+    if (!orderData) {
+        throw new Error("invalid orderId");
+    }
+    console.log(orderData);
     // const { order, items } = orderData;
 
-    // if (order.status === status.CANCELLED) {
-    //     throw new Error("order already cancelled");
-    // }
-    // order.status = status.CANCELLED;
+    if (orderData.status === status.CANCELLED) {
+        throw new Error("order already cancelled");
+    }
+    orderData.status = status.CANCELLED;
 
-    // const updateSuccess = await updateOrder(order, items);
-    // if (!updateSuccess) {
-    //     throw new Error("failed to update order status to cancelled");
-    // }
+    const updateSuccess = await updateOrder(orderId, orderData);
+    if (!updateSuccess) {
+        throw new Error("failed to update order status to cancelled");
+    }
 
-    // return { reason };
+    return { reason };
 };
 
 
