@@ -90,42 +90,6 @@ export default (req: VercelRequest, res: VercelResponse) => {
 // ============================= ROUTES BELOW ================================
 // ===========================================================================
 
-
-// Custom middleware
-app.use(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  const token = req.query.token ?? req.body.token ?? req.headers.token;
-
-  if (token === undefined) {
-    return next(); 
-  }
-
-  try {
-    const isValid = await validToken(Number(token)); 
-
-    if (!isValid) {
-      res.status(401).json({ error: 'Token does not refer to a valid, logged-in session' });
-      return; 
-    }
-
-    req.body.token = Number(token);
-    return next();
-  } catch (err) {
-    res.status(500).json({ error: 'Server error while validating session' });
-    return; 
-  }
-});
-
-export async function makeFmtToken(userId: number): Promise<{ token: number }> {
-  const sessionId = Math.floor(Math.random() * 1000000); // Generate a numeric session ID
-  const success = await addToken(sessionId, userId);
-  if (!success) {
-    throw new Error('Failed to create session');
-  }
-  return { token: sessionId };
-}
-// END Custom middleware
-
-
 //Custom middleware for JWT
 const jwtMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -213,11 +177,11 @@ app.get('/v1/user/details', async (req: Request, res: Response) => {
   }
 });
 
-app.put('/v1/user/details/update', (req: Request, res: Response) => {
-  const { token, email, nameFirst, nameLast } = req.body; // INTERCEPTED!
-  const result = userDetailsUpdate(token, email, nameFirst, nameLast);
-  res.json(result);
-});
+// app.put('/v1/user/details/update', (req: Request, res: Response) => {
+//   const { token, email, nameFirst, nameLast } = req.body; // INTERCEPTED!
+//   const result = userDetailsUpdate(token, email, nameFirst, nameLast);
+//   res.json(result);
+// });
 
 app.get("/", (req, res) => {
   res.send("Order creation API is currently in development");
@@ -283,29 +247,18 @@ app.post("/v1/:userId/order/:orderId/confirm", async (req: Request, res: Respons
   }
 );
 
-app.delete('/v1/clear', async (_: Request, res: Response) => {
-  res.json(await clearAll());
-});
-
-// Custom **error handling** middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  err instanceof Err ? res.status(err.kind.valueOf()).json({ error: err.message }) : next();
-});
-
 app.put('/v1/:userId/order/:orderId/items/change', async (req: Request, res: Response) => {
   try {
     const { userId, orderId } = req.params;
-    // IF TOKEN ????
-    // const userId = req.body.token;
-    const { items } = req.body;
+    const updatedData = req.body;
 
     // Call function, return updated order
-      const updatedOrder = await orderChange(userId, orderId, {items} );
-      res.status(200).json(updatedOrder);
+      const updatedOrder = await orderChange(Number(userId), Number(orderId), updatedData );
+      res.json(updatedOrder);
 
     // Error Checking
-    } catch (err) {
-      const e = err as Error;
+    } catch (error) {
+      const e = error as Error;
       let statusCode = 500; // default error code
 
       if (e.message === "Invalid orderId" || e.message === "Invalid userId") {
@@ -319,29 +272,14 @@ app.put('/v1/:userId/order/:orderId/items/change', async (req: Request, res: Res
     };
 });
 
-app.post(
-  "/v1/:userId/order/:orderId/confirm",
-  (req: Request, res: Response) => {
-    try {
-      const { userId, orderId } = req.params;
+app.delete('/v1/clear', async (_: Request, res: Response) => {
+  res.json(await clearAll());
+});
 
-      const result = orderConfirm(Number(userId), Number(orderId));
-      res.json(result);
-    } catch (error) {
-      let statusCode: number;
-      const e = error as Error;
-      if (e.message === "invalid orderId" || e.message === "invalid userId") {
-        statusCode = 401;
-      } else if (e.message === "order not found") {
-        statusCode = 400;
-      } else {
-        statusCode = 404;
-      }
-      res.status(statusCode).json({ error: e.message });
-    }
-  }
-);
-
+// Custom **error handling** middleware
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  err instanceof Err ? res.status(err.kind.valueOf()).json({ error: err.message }) : next();
+});
 
 // ===========================================================================
 // ============================= ROUTES ABOVE ================================
