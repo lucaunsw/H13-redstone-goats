@@ -204,25 +204,6 @@ app.post("/v1/order/create", async (req: Request, res: Response) => {
   }
 });
 
-// Route that returns user sales data.
-app.post("/v1/order/:userId/sales", async (req: Request, res: Response) => {
-  const userId = parseInt(req.params.userId);
-  const csv = req.query.csv === "true";
-  const json = req.query.json === "true";
-  const pdf = req.query.pdf === "true";
-  try {
-    const result = await orderUserSales(csv, json, pdf, userId);
-    res.status(200).json(result);
-  } catch (error) {
-    const e = error as Error;
-    if (e.message === 'Invalid sellerId' || e.message === 'No sellerId provided') {
-      res.status(401).json({ error: e.message });
-    } else {
-      res.status(400).json({ error: e.message });
-    }
-  }
-});
-
 app.put("/v1/:userId/order/:orderId/cancel", async (req: Request, res: Response) => {
   try {
     const { userId, orderId } = req.params;
@@ -264,6 +245,25 @@ app.post("/v1/:userId/order/:orderId/confirm", async (req: Request, res: Respons
     }
   }
 );
+
+// Route that returns user sales data.
+app.post("/v1/order/:userId/sales", async (req: Request, res: Response) => {
+  const userId = parseInt(req.params.userId);
+  const csv = req.query.csv === "true";
+  const json = req.query.json === "true";
+  const pdf = req.query.pdf === "true";
+  try {
+    const result = await orderUserSales(csv, json, pdf, userId);
+    res.status(200).json(result);
+  } catch (error) {
+    const e = error as Error;
+    if (e.message === 'Invalid sellerId' || e.message === 'No sellerId provided') {
+      res.status(401).json({ error: e.message });
+    } else {
+      res.status(400).json({ error: e.message });
+    }
+  }
+});
 
 app.delete('/v1/clear', async (_: Request, res: Response) => {
   res.json(await clearAll());

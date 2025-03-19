@@ -120,10 +120,14 @@ describe('Order user sales send', () => {
     await requestOrderCreate(body);
     const response = await requestOrderUserSales(true, true, true, sellerId);
     expect(response.statusCode).toBe(200);
-    expect(response.body).toStrictEqual({ sales: [], CSVurl: expect.any(String) });
+    expect(response.body).toStrictEqual({ 
+      sales: [], 
+      CSVurl: expect.any(String), 
+      PDFurl: expect.any(String),
+    });
   });
 
-  test('Sucess case with no sales, with no csv', async () => {
+  test('Sucess case with no sales, with no csv, no pdf', async () => {
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem1, testItem2],
@@ -136,9 +140,11 @@ describe('Order user sales send', () => {
       createdAt: new Date(),
     }
     requestOrderCreate(body);
-    const response = await requestOrderUserSales(false, true, true, seller2Id);
+    const response = await requestOrderUserSales(false, true, false, seller2Id);
     expect(response.statusCode).toBe(200);
-    expect(response.body).toStrictEqual({ sales: []});
+    expect(response.body).toStrictEqual({ 
+      sales: [],
+    });
   });
 
   test('Success case with multiple sales', async () => {
@@ -156,22 +162,27 @@ describe('Order user sales send', () => {
     await requestOrderCreate(body);
     const response = await requestOrderUserSales(true, true, true, sellerId);
     expect(response.statusCode).toBe(200);
-    expect(response.body).toStrictEqual({ sales: 
-      [{
-        id: 123,
-        name: 'Soap',
-        description: 'This is soap',
-        price: 5,
-        amountSold: 2,
-      }, {
-        id: 124,
-        name: 'Table',
-        description: 'This is a table',
-        price: 80,
-        amountSold: 1,
-      }], CSVurl: expect.any(String) });
+    expect(response.body).toStrictEqual({ 
+      sales: [
+        {
+          id: 123,
+          name: 'Soap',
+          description: 'This is soap',
+          price: 5,
+          amountSold: 2,
+        }, 
+        {
+          id: 124,
+          name: 'Table',
+          description: 'This is a table',
+          price: 80,
+          amountSold: 1,
+        }
+      ], 
+      CSVurl: expect.any(String), 
+      PDFurl: expect.any(String), 
+    });
   });
-
   
 });
 

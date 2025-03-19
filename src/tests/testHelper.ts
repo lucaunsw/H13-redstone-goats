@@ -92,7 +92,7 @@ export async function requestOrderCreate(
 ) {
   const res = request("POST", `${url}:${port}/v1/order/create`, {
     json: body,
-    timeout: 20 * 1000,
+    timeout: 60 * 1000,
   });
   return {
     body: JSON.parse(res.body.toString()),
