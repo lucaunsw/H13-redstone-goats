@@ -47,14 +47,15 @@ CREATE TABLE DeliveryInstructions (
 );
 
 CREATE TABLE Orders (
-    id          SERIAL PRIMARY KEY,
-    buyer_id    INTEGER NOT NULL REFERENCES Users(id),
-    billing_id  INTEGER NOT NULL REFERENCES BillingDetails(id),
-    delivery_id INTEGER NOT NULL REFERENCES DeliveryInstructions(id),
-    last_edited TIMESTAMP DEFAULT CURRENT_TIMESTAMP  NOT NULL,
-    status      TEXT CHECK (status IN ('pending', 'confirmed', 'cancelled')), -- Enum-like constraint
-    total_price DECIMAL(10,2) NOT NULL,
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+    id           SERIAL PRIMARY KEY,
+    buyer_id     INTEGER NOT NULL REFERENCES Users(id),
+    billing_id   INTEGER NOT NULL REFERENCES BillingDetails(id),
+    delivery_id  INTEGER NOT NULL REFERENCES DeliveryInstructions(id),
+    last_edited  TIMESTAMP DEFAULT CURRENT_TIMESTAMP  NOT NULL,
+    status       TEXT CHECK (status IN ('pending', 'confirmed', 'cancelled')), -- Enum-like constraint
+    total_price  DECIMAL(10,2) NOT NULL,
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    order_xml_id INTEGER REFERENCES OrderXMLs(id)
 );
 
 CREATE TABLE OrderItems (
