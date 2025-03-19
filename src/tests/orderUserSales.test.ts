@@ -6,9 +6,8 @@ import { SessionId, Order, UserSimple,
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
-
+import { clear } from 'console';
 import request from "sync-request-curl";
-import test from 'node:test';
 
 let sellerId: number;
 let seller2Id: number;
@@ -121,8 +120,7 @@ describe('Order user sales send', () => {
       createdAt: new Date(),
     }
     await requestOrderCreate(body);
-    console.log('seller1 Id:', sellerId);
-    const response = await requestOrderUserSales(false, true, true, sellerId);
+    const response = await requestOrderUserSales(true, true, true, sellerId);
     expect(response.statusCode).toBe(200);
     expect(response.body).toStrictEqual({ sales: [], CSVurl: expect.any(String) });
   });
@@ -142,7 +140,7 @@ describe('Order user sales send', () => {
     requestOrderCreate(body);
     const response = await requestOrderUserSales(false, true, true, seller2Id);
     expect(response.statusCode).toBe(200);
-    expect(response.body).toStrictEqual({ sales: [], CSVurl: expect.any(String) });
+    expect(response.body).toStrictEqual({ sales: []});
   });
 
   test('Success case with multiple sales', async () => {

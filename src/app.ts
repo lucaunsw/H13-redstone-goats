@@ -3,7 +3,7 @@ import { generateUBL, userExists, validItemList, addItems } from './helper';
 import { getUser, addOrder, getOrder, updateOrder, addItem,
   getItem, addOrderXML,getItemSellerSales
  } from './dataStore'
-import { writeFile } from 'fs/promises';
+ import fs from 'fs';
 import { stringify } from 'csv-stringify/sync';
 import path from 'path';
 
@@ -125,7 +125,6 @@ const orderConfirm = async (userId: number, orderId: number) => {
  * returnBody - an object which can contain: the csv url, json body for sales info.
  */
 async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerId: number) {
-  console.log(sellerId);
   if (!csv && !json && !pdf) {
     throw new Error ('At least one data option should be selected');
   }
@@ -150,20 +149,25 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
   if (json) {
     returnBody.sales = sales;
   }
-    
-  // if (csv) {
-  //   // Convert sales data from json body to a csv-format string.
-  //   const csvString = stringify(sales, {
-  //     header: true,
-  //     columns: ['id', 'name', 'description', 'price', 'amountSold'],
-  //   });
-  //   // Create the path to the csv file
-  //   const filePath = path.join(__dirname, 'sales_reports', `sales_${sellerId}.csv`);
-  //   // Fill the csv with sales info.
-  //   await writeFile(filePath, csvString, 'utf-8');
-  //   // Return csv url into body.
-  //   returnBody.CSVurl = `/sales_reports/sales_${sellerId}.csv`;
-  // }
+  
+  if (csv) {
+    // Convert sales data from json body to a csv-format string.
+    const csvString = stringify(sales, {
+      header: true,
+      columns: ['id', 'name', 'description', 'price', 'amountSold'],
+    });
+    // Create the path to the csv file
+    const dirPath = path.join(__dirname, 'sales_reports');
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath);
+    }
+    const filePath = path.join(dirPath, `sales_${sellerId}.csv`);
+
+    // Fill the csv with sales info.
+    fs.writeFileSync(filePath, csvString);
+    // Return csv url into body.
+    returnBody.CSVurl = `/sales_reports/sales_${sellerId}.csv`;
+  }
 
   return returnBody;
 }
