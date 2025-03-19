@@ -4,7 +4,7 @@ export type SessionId = string;
 // Special Helper type as {} is ambiguous
 export type EmptyObj = Record<string, never>;
 
-export interface User { // Used in DB update
+export interface User {
   id?: number | null;
   nameFirst: string;
   nameLast: string;
@@ -18,7 +18,7 @@ export interface User { // Used in DB update
   numFailedPasswordsSinceLastLogin: number;
 }
 
-export interface UserSimple { // Used in DB update
+export interface UserSimple {
   id?: number | null;
   name: string,
   streetName: string,
@@ -27,7 +27,7 @@ export interface UserSimple { // Used in DB update
   cbcCode: string
 }
 
-export interface Item { // Used in DB update
+export interface Item {
   id?: number | null;
   name: string;
   seller: UserSimple;
@@ -35,7 +35,7 @@ export interface Item { // Used in DB update
   price: number;
 }
 
-export interface ItemSales { // Used in DB update
+export interface ItemSales {
   id: number;
   name: string;
   description?: string;
@@ -43,13 +43,13 @@ export interface ItemSales { // Used in DB update
   amountSold: number;
 }
 
-export interface BillingDetails { // Used in DB update
-  creditCardNumber: number;
+export interface BillingDetails {
+  creditCardNumber: string;
   CVV: number;
   expiryDate: string;
 }
 
-export interface DeliveryInstructions { // Used in DB update
+export interface DeliveryInstructions {
   streetName: string;
   cityName: string;
   postalZone: string;
@@ -81,59 +81,6 @@ export interface Order {
   createdAt: Date;
   orderXMLId?: number;
 }
-
-/*
-export interface User {
-  userId: number;
-  totalPrice: number;
-}
-
-export interface UserParam {
-  userId: number;
-  name: string;
-  streetName: string;
-  cityName: string;
-  postalZone: string;
-  cbcCode: string;
-}
-
-export interface BillingDetailsParam {
-  creditCardNumber: number;
-  CVV: number;
-  expiryDate: string;
-}
-
-export interface DeliveryInstructions {
-  streetName: string;
-  citName: string;
-  postalZone: string;
-  countrySubentity: string;
-  addressLine: string;
-  cbcCode: string;
-  startDate: string;
-  startTime: string;
-  endDate: string;
-  endTime: string;
-}
-
-export enum status {
-  PENDING = "pending",
-  CONFIRMED = "confirmed",
-  CANCELLED = "cancelled",
-}
-
-export interface OrderParam {
-  items: Item[];
-  user: UserParam;
-  seller: UserParam;
-  billingDetails: BillingDetails;
-  delivery: deliveryInstructions;
-  billingDetails: BillingDetailsParam;
-  delivery: DeliveryInstructions;
-  lastEdited?: string;
-  status?: status;
-}
-*/
 
 // Special error handling / other types
 export enum ErrKind {

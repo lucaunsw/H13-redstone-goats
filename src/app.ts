@@ -26,9 +26,10 @@ async function orderCreate (order: Order) {
     ('Invalid userId or a different name is registered to userId');
   }
 
-  // Throw error for invalid bank details.
-  if (order.billingDetails.creditCardNumber > 9999999999999999 || 
-    order.billingDetails.creditCardNumber < 100000000000) {
+  // Throw error for invalid bank details
+  if (order.billingDetails.creditCardNumber.length < 12 ||
+      order.billingDetails.creditCardNumber.length > 16 ||
+      !/^[0-9]+$/.test(order.billingDetails.creditCardNumber)) {
     throw new Error ('Invalid bank details');
   }
 

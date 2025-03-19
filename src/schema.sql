@@ -27,7 +27,7 @@ CREATE TABLE Items (
 
 CREATE TABLE BillingDetails (
     id             SERIAL PRIMARY KEY,
-    credit_card_no BIGINT NOT NULL,
+    credit_card_no TEXT NOT NULL,
     cvv            INTEGER NOT NULL CHECK (cvv BETWEEN 100 AND 999), -- Ensures a valid CVV
     expiry_date    TEXT NOT NULL
 );
