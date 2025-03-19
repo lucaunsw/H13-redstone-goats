@@ -220,7 +220,7 @@ app.put('/v1/user/details/update', (req: Request, res: Response) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Hello, Express with TypeScript!");
+  res.send("Order creation API is currently in development");
 });
 
 // Route that creates an order.
@@ -240,12 +240,20 @@ app.post("/v1/order/create", async (req: Request, res: Response) => {
   }
 });
 
+<<<<<<< HEAD
 app.put("/v1/:userId/order/:orderId/cancel", (req: Request, res: Response) => {
+=======
+app.put("/v1/:userId/order/:orderId/cancel", async (req: Request, res: Response) => {
+>>>>>>> 5bfb8932146c0c833bd555bec0cab3a5b7a2fb5f
   try {
     const { userId, orderId } = req.params;
     const { reason } = req.body;
 
+<<<<<<< HEAD
     const result = orderCancel(Number(userId), Number(orderId), reason);
+=======
+    const result = await orderCancel(Number(userId), Number(orderId), reason);
+>>>>>>> 5bfb8932146c0c833bd555bec0cab3a5b7a2fb5f
     res.json(result);
   } catch (error) {
     let statusCode: number;
@@ -261,6 +269,7 @@ app.put("/v1/:userId/order/:orderId/cancel", (req: Request, res: Response) => {
   }
 });
 
+<<<<<<< HEAD
 app.post(
   "/v1/:userId/order/:orderId/confirm",
   (req: Request, res: Response) => {
@@ -268,13 +277,24 @@ app.post(
       const { userId, orderId } = req.params;
 
       const result = orderConfirm(Number(userId), Number(orderId));
+=======
+app.post("/v1/:userId/order/:orderId/confirm", async (req: Request, res: Response) => {
+    try {
+      const { userId, orderId } = req.params;
+
+      const result = await orderConfirm(Number(userId), Number(orderId));
+>>>>>>> 5bfb8932146c0c833bd555bec0cab3a5b7a2fb5f
       res.json(result);
     } catch (error) {
       let statusCode: number;
       const e = error as Error;
       if (e.message === "invalid orderId" || e.message === "invalid userId") {
         statusCode = 401;
+<<<<<<< HEAD
       } else if (e.message === "order not found") {
+=======
+      } else if (e.message === "order has been cancelled") {
+>>>>>>> 5bfb8932146c0c833bd555bec0cab3a5b7a2fb5f
         statusCode = 400;
       } else {
         statusCode = 404;
