@@ -1,8 +1,11 @@
 import { Order, status } from './types';
 import { generateUBL, userExists, validItemList, addItems } from './helper';
 import { getUser, addOrder, getOrder, updateOrder, addItem,
-  getItem, addOrderXML
+  getItem, addOrderXML,getItemSellerSales
  } from './dataStore'
+import { writeFile } from 'fs/promises';
+import { stringify } from 'csv-stringify/sync';
+import path from 'path';
 
 /**
  * Create an order and produce a UBL document, and return the
@@ -112,7 +115,17 @@ const orderConfirm = async (userId: number, orderId: number) => {
     // return {};
 };
 
+/** Seller route to return sales information to the seller.
+ *
+ * @param {boolean} csv - boolean to state if the csv data option is desired.
+ * @param {boolean} json - boolean to state if the json data option is desired.
+ * @param {boolean} pdf - boolean to state if the pdf data option is desired.
+ * @param {number} sellId - Unique identifier for a seller.
+ * @returns { sales?: any[]; CSVurl?: string } 
+ * returnBody - an object which can contain: the csv url, json body for sales info.
+ */
 async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerId: number) {
+  console.log(sellerId);
   if (!csv && !json && !pdf) {
     throw new Error ('At least one data option should be selected');
   }
@@ -120,13 +133,39 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
     throw new Error ('No sellerId provided');
   }
   const seller = await getUser(sellerId);
+  
   if (!seller) {
     throw new Error ('Invalid sellerId');
   }
 
-  
+  let returnBody: { sales?: any[]; CSVurl?: string } = {};
 
-  return;
+  const sales = await getItemSellerSales(sellerId);
+  // Convert sales information to type number.
+  for (const item of sales) {
+    item.amountSold = Number(item.amountSold);
+    item.price = Number(item.price);
+  }
+
+  if (json) {
+    returnBody.sales = sales;
+  }
+    
+  // if (csv) {
+  //   // Convert sales data from json body to a csv-format string.
+  //   const csvString = stringify(sales, {
+  //     header: true,
+  //     columns: ['id', 'name', 'description', 'price', 'amountSold'],
+  //   });
+  //   // Create the path to the csv file
+  //   const filePath = path.join(__dirname, 'sales_reports', `sales_${sellerId}.csv`);
+  //   // Fill the csv with sales info.
+  //   await writeFile(filePath, csvString, 'utf-8');
+  //   // Return csv url into body.
+  //   returnBody.CSVurl = `/sales_reports/sales_${sellerId}.csv`;
+  // }
+
+  return returnBody;
 }
 
 export { orderCreate, orderCancel, orderConfirm, orderUserSales };

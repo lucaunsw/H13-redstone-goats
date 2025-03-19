@@ -206,7 +206,7 @@ app.post("/v1/order/create", async (req: Request, res: Response) => {
 
 // Route that returns user sales data.
 app.post("/v1/order/:userId/sales", async (req: Request, res: Response) => {
-  const userId = parseInt(req.path);
+  const userId = parseInt(req.params.userId);
   const csv = req.query.csv === "true";
   const json = req.query.json === "true";
   const pdf = req.query.pdf === "true";
