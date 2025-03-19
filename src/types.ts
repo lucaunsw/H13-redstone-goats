@@ -79,6 +79,7 @@ export interface Order {
   status?: status;
   totalPrice: number;
   createdAt: Date;
+  orderXMLId?: number; // <-- here!
 }
 
 /*
