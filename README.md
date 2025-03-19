@@ -2,12 +2,30 @@
 **✨ 💖  SENG2021 💖  ✨**
 
 # API 
-Our team was assigned the Order Creation API. This Github Repository includes all the features for user authentication and order creation. 
+Our team was assigned the Order Creation API. This Github Repository includes all the features for User Authentication and Order Creation. 
 
 # Deployment
 This Github Repository is deployed on a fork that is linked to a Vercel deployment. Each push to the main branch will produce a new production deployment.
+
 **Deploy Link:** https://h13-redstone-goats.vercel.app/
+
 **Deploy Swagger Link:** https://h13-redstone-goats.vercel.app/swagger/
+
+# API Content
+
+**Expected Input:** User, Payment, and Delivery data.
+
+  - Buyer and Seller Personal Information (Name, Phone, Email, ID, Address, Item Order, User ID.)
+
+  - Payment Information (Credit Card details, Bank Account details.)
+
+  - Delivery Information (Postal Code, Location.)
+
+  - Product Type (Item, Product ID, Size, Quantity, Description.)
+
+**Expected Output:** Successful Order Placement.
+
+  - A standardised UBL order document: based on the provided data (UBL XML document).
 
 # Style
 Our team will follow a few style conventions regarding general code, branch naming etc.
