@@ -4,7 +4,7 @@ import { HttpVerb, Options, Response } from 'sync-request-curl/dist/cjs/types';
 import {
   EmptyObj,
   SessionId,
-  User,
+  User, Order, 
 } from '../types';
 
 const port = config.port;
@@ -85,4 +85,30 @@ export function userDetailsUpdate<T = EmptyObj>(
       nameLast: nL,
     },
   });
+}
+
+export async function requestOrderCreate(
+  body: Order,
+) {
+  const res = request("POST", `${url}:${port}/v1/order/create`, {
+    json: body,
+    timeout: 60 * 1000,
+  });
+  return {
+    body: JSON.parse(res.body.toString()),
+    statusCode: res.statusCode,
+  };
+}
+
+export async function requestOrderUserSales(
+  csv: boolean, json: boolean, pdf: boolean, userId: number
+) {
+  const res = request("POST", `${url}:${port}/v1/order/${userId}/sales`, {
+    qs: { csv, json, pdf },
+    timeout: 20 * 1000,
+  });
+  return {
+    body: JSON.parse(res.body.toString()),
+    statusCode: res.statusCode,
+  };
 }

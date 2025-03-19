@@ -1,9 +1,13 @@
-import { Order, status } from './types';
+import { ItemSales, Order, status } from './types';
 import { generateUBL, userExists, validItemList, addItems } from './helper';
-import { getUser, addOrder, getOrder, updateOrder, addItem,
-  getItem, addOrderXML,
-  getOrderXML
+import { getUser, addOrder, getOrder, updateOrder, 
+  addOrderXML,
+  getOrderXML, getItemSellerSales
  } from './dataStore'
+ import fs from 'fs';
+import { stringify } from 'csv-stringify/sync';
+import path from 'path';
+import PDFDocument from "pdfkit";
 
 /**
  * Create an order and produce a UBL document, and return the
@@ -117,4 +121,98 @@ const orderConfirm = async (userId: number, orderId: number) => {
     return { UBL };
 };
 
-export { orderCreate, orderCancel, orderConfirm };
+/** Seller route to return sales information to the seller.
+ *
+ * @param {boolean} csv - boolean to state if the csv data option is desired.
+ * @param {boolean} json - boolean to state if the json data option is desired.
+ * @param {boolean} pdf - boolean to state if the pdf data option is desired.
+ * @param {number} sellId - Unique identifier for a seller.
+ * @returns { sales?: ItemSales[]; CSVurl?: string; PDFurl?: string } 
+ * returnBody - an object which can contain: the csv url, json body, pdf for sales info.
+ */
+async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerId: number) {
+  if (!csv && !json && !pdf) {
+    throw new Error ('At least one data option should be selected');
+  }
+  if (!sellerId) {
+    throw new Error ('No sellerId provided');
+  }
+  const seller = await getUser(sellerId);
+  
+  if (!seller) {
+    throw new Error ('Invalid sellerId');
+  }
+
+  const returnBody: { sales?: ItemSales[]; CSVurl?: string
+    ; PDFurl?: string } = {};
+
+  const sales = await getItemSellerSales(sellerId);
+  // Convert sales information to type number.
+  for (const item of sales) {
+    item.amountSold = Number(item.amountSold);
+    item.price = Number(item.price);
+  }
+
+  // Create path to sales_report csv directory.
+  const CSVdirPath = path.join(__dirname, 'sales_reports_csv');
+  if (!fs.existsSync(CSVdirPath)) {
+    fs.mkdirSync(CSVdirPath);
+  }
+
+  // Create path to sales_report pdf directory.
+  const PDFdirPath = path.join(__dirname, 'sales_reports_pdf');
+  if (!fs.existsSync(PDFdirPath)) {
+    fs.mkdirSync(PDFdirPath);
+  }
+
+  if (json) {
+    returnBody.sales = sales;
+  }
+  
+  if (csv) {
+    // Convert sales data from json body to a csv-format string.
+    const csvString = stringify(sales, {
+      header: true,
+      columns: ['id', 'name', 'description', 'price', 'amountSold'],
+    });
+    // Create the path to the csv file
+    const filePath = path.join(CSVdirPath, `sales_${sellerId}.csv`);
+
+    // Fill the csv with sales info.
+    fs.writeFileSync(filePath, csvString);
+    // Place CSV url into body.
+    returnBody.CSVurl = `/sales_reports_csv/sales_${sellerId}.csv`;
+  }
+
+  if (pdf) {
+    // Create the new PDF document
+    const doc = new PDFDocument();
+
+    // Create the path to the csv file
+    const filePath = path.join(PDFdirPath, `sales_${sellerId}.pdf`);
+
+    const writeStream = fs.createWriteStream(filePath);
+    doc.pipe(writeStream);
+
+    // Add title
+    doc.fontSize(20).text("Sales Report", { align: "center" });
+    doc.moveDown();
+
+    // Add sales data to pdf.
+    for (const item of sales) {
+      doc.fontSize(14).text(`ID: ${item.id}`);
+      doc.text(`Name: ${item.name}`);
+      doc.text(`Description: ${item.description}`);
+      doc.text(`Price: $${item.price}`);
+      doc.text(`Amount Sold: ${item.amountSold}`);
+      doc.moveDown();
+    }
+    doc.end();
+    // Place PDF url inside body.
+    returnBody.PDFurl = `/sales_reports_pdf/sales_${sellerId}.pdf`;
+  }
+
+  return returnBody;
+}
+
+export { orderCreate, orderCancel, orderConfirm, orderUserSales };

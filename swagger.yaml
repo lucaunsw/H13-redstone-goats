@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   title: Redstone Goats Order API
-  description: API for creating and managing orders with UBL XML document generation. State diagram is available at https://ibb.co/gZnRGDpQ.
+  description: API for creating and managing orders with UBL XML document generation. State diagram is available at https://ibb.co/21H16g4J.
   version: 1.0.0
   
 host: "h13-redstone-goats.vercel.app" 
@@ -10,13 +10,13 @@ schemes:
   - https
 
 tags:
-  - name: "User Functions"
+  - name: "User Routes"
     description: Routes for user account handling
   - name: "Buyer Routes"
     description: Routes accessible and usable by the buyer party.
   - name: "Seller Routes"
     description: Routes accessible and usable by the seller party.
-  - name: "Test Functions"
+  - name: "Test Routes"
     description: Routes used for tests.
 
 paths:
@@ -25,7 +25,7 @@ paths:
       summary: Reset state of application back to the initial state.
       description: Clear all user, order etc. details.
       tags:
-        - "Test Functions"
+        - "Test Routes"
       responses:
         200: 
           description: Sucess
@@ -37,7 +37,7 @@ paths:
       summary: Register a new user.
       description: Registers a new user and returns the userId.
       tags:
-        - "User Functions"
+        - "User Routes"
       parameters:
         - in: body
           name: body
@@ -75,7 +75,7 @@ paths:
       summary: Login an existing user
       description: Authenticate a user with email and password.
       tags:
-        - "User Functions"
+        - "User Routes"
       parameters:
         - in: body
           name: body
@@ -117,7 +117,7 @@ paths:
       summary: Logout an existing user
       description: Logout a user by blacklisting the JWT token.
       tags:
-        - "User Functions"
+        - "User Routes"
       parameters:
         - in: body
           name: body
@@ -153,7 +153,7 @@ paths:
       summary: Gets a user's details
       description: Retrieve the details about a specific user
       tags:
-        - "User Functions"
+        - "User Routes"
       parameters:
         - in: body
           name: body
@@ -199,7 +199,7 @@ paths:
       summary: Updates a user's details
       description: Change the current user details
       tags:
-        - "User Functions"
+        - "User Routes"
       parameters:
         - in: body
           name: body
@@ -455,7 +455,7 @@ paths:
 
   /v1/order/{userId}/sales:
     get:
-      summary: Send sales analytics data.
+      summary: Send sales analytics data to the seller.
       description: Sends analytical data to the product distributor, with different options for data format. 
       tags:
         - "Seller Routes"
@@ -660,9 +660,13 @@ definitions:
               type: number
             name:
               type: string
+            description:
+              type: string
             price:
               type: number
-            quantity:
+            amountSold:
               type: integer
       CSVurl:
+        type: string
+      PDFurl:
         type: string
