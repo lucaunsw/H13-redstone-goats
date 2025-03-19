@@ -7,7 +7,6 @@ dotenv.config();
 import { SessionId, UserSimple, Item, BillingDetails, DeliveryInstructions, Order } from '../types';
 import { reqHelper, userRegister } from "./testHelper";
 import { getLatestOrderXML, getOrder} from "../dataStore";
-import { orderCreate } from "../app";
 
 // CONSTANTS 
 const SERVER_URL = `http://127.0.0.1:3200`;
@@ -15,30 +14,36 @@ const TIMEOUT_MS = 20 * 1000;
 
 // HTTP REQUEST FUNCTION 
 
-// Generic Put Requesr
-function orderChangePutRequest(  
-    body: { 
-        updatedData: { 
-            items: Array<{ 
-                itemId: number, 
-                newQuantity: number, 
-                name: string, 
-                seller: UserSimple, 
-                description: string, 
-                price: number 
-            }> 
-        } 
-    }) {
+// Generic Put Request
+// function orderChangePutRequest(  
+//     route: string,
+//     body: { 
+//         updatedData: { 
+//             items: Array<{ 
+//                 itemId: number, 
+//                 newQuantity: number, 
+//                 name: string, 
+//                 seller: UserSimple, 
+//                 description: string, 
+//                 price: number 
+//             }> 
+//         } 
+//     }) {
     
-    const res = request("PUT", SERVER_URL + '/v1/${userId}/order/${orderId}/cancel', {
-      json: body,
-      timeout: TIMEOUT_MS,
-    });
-    return {
-      body: JSON.parse(res.body.toString()),
-      statusCode: res.statusCode,
-    };
-}
+//     const res = request("PUT", SERVER_URL + route, {
+//       json: body,
+//       timeout: TIMEOUT_MS,
+//     });
+
+//     // DEBUG
+//     console.log('HTTP REQUEST FUNCTION: Change Response Body', res.body.toString());
+//     console.log('HTTP REQUEST FUNCTION: Change Status Code', res.statusCode);
+
+//     return {
+//       body: JSON.parse(res.body.toString()),
+//       statusCode: res.statusCode,
+//     };
+// }
 
 // OrderCreate
 async function orderCreatePutRequest( body: Order,) {
@@ -46,6 +51,9 @@ async function orderCreatePutRequest( body: Order,) {
       json: body,
       timeout: TIMEOUT_MS,
     });
+
+    //console.log('HTTP REQUEST FUNCTION: Create Response Body:', res.body.toString());
+
     return {
       body: JSON.parse(res.body.toString()),
       statusCode: res.statusCode,
@@ -74,7 +82,7 @@ beforeEach(async() => {
 // Setup test values
 beforeEach(async() => {
 
-    console.log('PRE SETUP!')
+    //console.log('PRE SETUP!')
 
     // REGISTER TEST BUYER TOKEN
     const buyerToken = await userRegister(
@@ -85,7 +93,7 @@ beforeEach(async() => {
       const decodedBuyer = jwt.verify(buyerToken, process.env.JWT_SECRET as string) as { userId: number };
       testBuyerId = decodedBuyer.userId;
 
-      console.log('Test Buyer has been created', testBuyerId);
+    console.log('PRE-TEST: Test Buyer has been created', testBuyerId);
 
     // REGISTER TEST SELLER TOKEN
     const sellerToken = await userRegister(
@@ -96,7 +104,7 @@ beforeEach(async() => {
         const decodedSeller = jwt.verify(sellerToken, process.env.JWT_SECRET as string) as { userId: number };
         testSellerId = decodedSeller.userId
 
-        console.log('Test Seller has been created', testSellerId);
+       console.log('PRE-TEST: Test Seller has been created', testSellerId);
 
     // TEST BUYER DETAILS
       testBuyer = {
@@ -168,61 +176,120 @@ beforeEach(async() => {
         createdAt: new Date(),
     }
 
-    console.log('PRE SETUP!')
+    //console.log('PRE SETUP!')
 
 })
 
-console.log('MIDDLE OF NOWHERE')
+//console.log('MIDDLE OF NOWHERE')
 
 ///////////////////////////////////////////////////////////////////////////
-describe.only('SUCCESS', () => {
 
-    let changeTestParam: { 
-        userId: UserSimple, 
-        orderId: number, 
-        updatedData: { items: Array<{ itemId: number, newQuantity: number, name: string, seller: UserSimple, description: string, price: number }> }
-    };
-    let orderId: number;
 
-    beforeAll(async () => {
+
+describe('SUCCESS', () => {
+
+    test('Order Create - Tests for correct successful return type', async () => {
         // Valid order create
         const CreateResponse = await orderCreatePutRequest(orderCreateTestParam);
-        orderId = CreateResponse.body.orderId;
+        const orderId = CreateResponse.body.orderId;
+        console.log('First, order create body is:',CreateResponse.body);
+        console.log('First, order create orderId is:',orderId);
 
         // Expect success status code, correct body
         expect(CreateResponse.statusCode).toBe(201);
         expect(CreateResponse.body).toStrictEqual({ orderId: expect.any(Number) });
-        // console.log(CreateResponse);
-
-        // Successful order change
-        changeTestParam = {
-            userId: testBuyer, orderId: orderId, updatedData: {
-                items: [
-                    {itemId: 1, 
-                    newQuantity: 3,
-                    name: 'TestItem1',
-                    seller: testSeller,
-                    description: 'TestDescription1',
-                    price: 100}
-                ] 
-            }        
-        }    
-    });
-
-    test('Tests for correct successful return type', async () => {
-        const changeResponse = await orderChangePutRequest(changeTestParam);
-        
-        // Expect success status code, correct body
-        expect(changeResponse.statusCode).toBe(201);
-        expect(changeResponse.body).toStrictEqual({ orderId: expect.any(Number) });
-
-        console.log(changeResponse);
+        console.log('CreateResponse is:', CreateResponse);
     })
 
-    test('', async () => {
+    test('Order Change', async () => {
+        // Valid order create
+        const CreateResponse = await orderCreatePutRequest(orderCreateTestParam);
+        const orderId = CreateResponse.body.orderId;
+        console.log('Second, order create orderId is:',orderId)
+
+                // Expect success status code, correct body
+                expect(CreateResponse.statusCode).toBe(201);
+                expect(CreateResponse.body).toStrictEqual({ orderId: expect.any(Number) });
+                console.log('CreateResponse is:', CreateResponse);
+
+        // // Successful order change
+        // const changeTestParam = {
+        //     userId: testBuyer, orderId: orderId, updatedData: {
+        //         items: [
+        //             {itemId: 1, 
+        //             newQuantity: 3,
+        //             name: 'TestItem1',
+        //             seller: testSeller,
+        //             description: 'TestDescription1',
+        //             price: 100}
+        //         ] 
+        //     }        
+        // }    
+        // const changeResponse = await orderChangePutRequest(`/v1/${testBuyerId}/order/${orderId}/change`,changeTestParam);
         
+        // // Expect success status code, correct body
+        // expect(changeResponse.statusCode).toBe(201);
+        // expect(changeResponse.body).toStrictEqual({ orderId: expect.any(Number) });
+
+        // console.log('changeResponse is:', changeResponse);
     })
 })
+
+
+
+
+
+
+
+
+// describe.only('SUCCESS', () => {
+
+//     let changeTestParam: { 
+//         userId: UserSimple, 
+//         orderId: number, 
+//         updatedData: { items: Array<{ itemId: number, newQuantity: number, name: string, seller: UserSimple, description: string, price: number }> }
+//     };
+//     let orderId: number;
+
+//     beforeAll(async () => {
+//         // Valid order create
+//         const CreateResponse = await orderCreatePutRequest(orderCreateTestParam);
+//         orderId = CreateResponse.body.orderId;
+
+//         // Expect success status code, correct body
+//         expect(CreateResponse.statusCode).toBe(201);
+//         expect(CreateResponse.body).toStrictEqual({ orderId: expect.any(Number) });
+//         // console.log(CreateResponse);
+
+//         // Successful order change
+//         changeTestParam = {
+//             userId: testBuyer, orderId: orderId, updatedData: {
+//                 items: [
+//                     {itemId: 1, 
+//                     newQuantity: 3,
+//                     name: 'TestItem1',
+//                     seller: testSeller,
+//                     description: 'TestDescription1',
+//                     price: 100}
+//                 ] 
+//             }        
+//         }    
+//     });
+
+//     test('Tests for correct successful return type', async () => {
+//         const changeResponse = await orderChangePutRequest(changeTestParam);
+        
+//         // Expect success status code, correct body
+//         expect(changeResponse.statusCode).toBe(201);
+//         expect(changeResponse.body).toStrictEqual({ orderId: expect.any(Number) });
+
+//         console.log(changeResponse);
+//     })
+
+//     test('', async () => {
+        
+//     })
+// })
 
 
 
