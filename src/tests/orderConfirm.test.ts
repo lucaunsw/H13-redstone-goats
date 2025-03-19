@@ -3,11 +3,22 @@ const SERVER_URL = `http://127.0.0.1:3200`;
 const TIMEOUT_MS = 20 * 1000;
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { BillingDetails, DeliveryInstructions, Item, Order, UserSimple } from "../types";
+import { reqHelper, userRegister } from "./testHelper";
 dotenv.config();
 
-beforeEach(() => {
-  // Clear database
-})
+async function requestOrderCreate(
+  body: Order,
+) {
+  const res = request("POST", SERVER_URL + `/v1/order/create`, {
+    json: body,
+    timeout: TIMEOUT_MS,
+  });
+  return {
+    body: JSON.parse(res.body.toString()),
+    statusCode: res.statusCode,
+  };
+}
 
 export function getPostResponse(
     route: string,
@@ -24,53 +35,171 @@ export function getPostResponse(
     };
   }
 
-  describe.skip("tests for orderConfirm", () => {
-    test("should confirm an order successfully", () => {
-      const registerRes = getPostResponse("/v1/user/register", {
-        email: "test@example.com",
-        password: "securepassword123!",
-        nameFirst: "Bruce",
-        nameLast: "Wayne",
-      });
-      const token = registerRes.body.token;
-      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
-      const userId = decoded.userId;
+  function getPutResponse(route: string, body: { [key: string]: unknown }) {
+    const res = request("PUT", SERVER_URL + route, {
+      json: body,
+      timeout: TIMEOUT_MS,
+    });
+    return {
+      body: JSON.parse(res.body.toString()),
+      statusCode: res.statusCode,
+    };
+  }
 
-      const createOrderRes = getPostResponse(`/v1/${userId}/order/create`, {
-        items: [
-          { productId: "123ABC", name: "Laptop", price: 1000, quantity: 1 },
-        ],
-      });
-      const orderId = createOrderRes.body.orderId;
+  ////////////////////////////////////////////////////////////////////////////////
+  
+  let userId: number;
+  let testName: string;
+  let testBuyer: UserSimple;
+  let testSeller: UserSimple;
+  let testItem: Item;
+  let testBillingDetails: BillingDetails;
+  let testDeliveryDetails: DeliveryInstructions;
+  const date = new Date().toISOString().split('T')[0];
+  
+  beforeEach(async () => {
+    await reqHelper('DELETE', '/v1/clear');
+    testName = 'Bobby Jones'
+  
+    const token = await userRegister(
+      'example10@email.com', 
+      'example123', 
+      'Bobby', 
+      'Jones').body.token;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
+    userId = decoded.userId;
+  
+    const sellerToken = await userRegister(
+      'example20@email.com', 
+      'example123', 
+      'Test', 
+      'Seller').body.token;
+    const sellerId = (jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number }).userId;
+  
+    testSeller = {
+      id: sellerId,
+      name: 'Test Seller',
+      streetName: 'Yellow St',
+      cityName: 'Brisbane',
+      postalZone: '4000',
+      cbcCode: 'AU'
+    };
+    testItem = {
+      id: 123,
+      name: 'soap',
+      seller: testSeller,
+      price: 5,
+      description: 'This is soap',
+    };
+    testBuyer = {
+      id: userId,
+      name: testName,
+      streetName: 'White St',
+      cityName: 'Sydney',
+      postalZone: '2000',
+      cbcCode: 'AU',
+    };
+    testBillingDetails = {
+      creditCardNumber: 1000000000000000,
+      CVV: 111,
+      expiryDate: date,
+    };
+    testDeliveryDetails = {
+      streetName: 'White St',
+      cityName: 'Sydney',
+      postalZone: '2000',
+      countrySubentity: 'NSW',
+      addressLine: '33 White St, Sydney NSW',
+      cbcCode: 'AU',
+      startDate: new Date(2025, 9, 5).toISOString().split('T')[0],
+      startTime: '13:00',
+      endDate: new Date(2025, 9, 10).toISOString().split('T')[0],
+      endTime: '13:00'
+    }
+  });
 
-      const confirmRes = getPostResponse(`/v1/${userId}/order/${orderId}/confirm`, {});
+  describe("tests for orderConfirm", () => {
+    test("Should confirm an order successfully", async () => {
+      const date = new Date().toISOString().split('T')[0];
+      const body = {
+        items: [testItem],
+        quantities: [1],
+        buyer: testBuyer,
+        billingDetails: testBillingDetails,
+        totalPrice: 5,
+        delivery: testDeliveryDetails,
+        lastEdited: date,
+        createdAt: new Date(),
+      }
+      const response = await requestOrderCreate(body);
+      const orderId = response.body.orderId;
+
+      const confirmRes = await getPostResponse(`/v1/${userId}/order/${orderId}/confirm`, {});
       expect(confirmRes.statusCode).toBe(200);
-      expect(confirmRes.body).toStrictEqual({});
-    });
+      expect(confirmRes.body).toStrictEqual({ UBL: expect.any(String) });
+    }, 25000);
 
-    test("should return 400 if order is not found", () => {
-      const registerRes = getPostResponse("/v1/user/register", {
-        email: "test@example.com",
-        password: "securepassword123!",
-        nameFirst: "Bruce",
-        nameLast: "Wayne",
-      });
-      const token = registerRes.body.token;
-      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
-      const userId = decoded.userId;
-      const invalidOrderId = "invalid-order-id";
+    test("Should return 401 for invalid orderId", async () => {
+      const date = new Date().toISOString().split('T')[0];
+      const body = {
+        items: [testItem],
+        quantities: [1],
+        buyer: testBuyer,
+        billingDetails: testBillingDetails,
+        totalPrice: 5,
+        delivery: testDeliveryDetails,
+        lastEdited: date,
+        createdAt: new Date(),
+      }
+      const response = await requestOrderCreate(body);
+      const orderId = response.body.orderId;
       
-      const res = getPostResponse(`/v1/${userId}/order/${invalidOrderId}/confirm`, {});
-      expect(res.statusCode).toBe(400);
-      expect(res.body).toStrictEqual({ error: "invalid orderId" });
-    });
-
-    test("should return 401 for invalid userId", () => {
-      const invalidUserId = "invalid-user";
-      const orderId = "valid-order-id";
-
-      const res = getPostResponse(`/v1/${invalidUserId}/order/${orderId}/confirm`, {});
+      const res = await getPostResponse(`/v1/${userId}/order/${orderId + 1000000}/confirm`, {});
       expect(res.statusCode).toBe(401);
-      expect(res.body).toStrictEqual({ error: "invalid userId" });
+      expect(res.body).toStrictEqual({ error: expect.any(String) });
     });
+
+    test("Should return 401 for invalid userId", async () => {
+      const date = new Date().toISOString().split('T')[0];
+      const body = {
+        items: [testItem],
+        quantities: [1],
+        buyer: testBuyer,
+        billingDetails: testBillingDetails,
+        totalPrice: 5,
+        delivery: testDeliveryDetails,
+        lastEdited: date,
+        createdAt: new Date(),
+      }
+      const response = await requestOrderCreate(body);
+      const orderId = response.body.orderId;
+
+      const res = await getPostResponse(`/v1/${userId + 1000000}/order/${orderId}/confirm`, {});
+      expect(res.statusCode).toBe(401);
+      expect(res.body).toStrictEqual({ error: expect.any(String) });
+    });
+
+    test("Should return 400 since order is cancelled", async () => {
+      const date = new Date().toISOString().split('T')[0];
+      const body = {
+        items: [testItem],
+        quantities: [1],
+        buyer: testBuyer,
+        billingDetails: testBillingDetails,
+        totalPrice: 5,
+        delivery: testDeliveryDetails,
+        lastEdited: date,
+        createdAt: new Date(),
+      }
+      const response = await requestOrderCreate(body);
+      const orderId = response.body.orderId;
+
+      await getPutResponse(`/v1/${userId}/order/${orderId}/cancel`, {
+        reason: "Changed my mind",
+      });
+      const res = await getPostResponse(`/v1/${userId}/order/${orderId}/confirm`, {});
+      console.log(res);
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toStrictEqual({ error: expect.any(String) });
+    }, 15000);
   });
