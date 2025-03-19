@@ -101,7 +101,7 @@ beforeEach(async () => {
     cbcCode: 'AU',
   };
   testBillingDetails = {
-    creditCardNumber: 1000000000000000,
+    creditCardNumber: "1000000000000000",
     CVV: 111,
     expiryDate: date,
   };

@@ -75,7 +75,7 @@ describe('Order user sales send', () => {
       cbcCode: 'AU',
     };
     testBillingDetails = {
-      creditCardNumber: 1000000000000000,
+      creditCardNumber: "1000000000000000",
       CVV: 111,
       expiryDate: date,
     };
