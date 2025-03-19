@@ -1,13 +1,11 @@
 
 import { userRegister, reqHelper, 
   requestOrderCreate, requestOrderUserSales } from './testHelper';
-import { SessionId, Order, UserSimple, 
+import { UserSimple, 
   Item, BillingDetails, DeliveryInstructions } from '../types';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
-import { clear } from 'console';
-import request from "sync-request-curl";
 
 let sellerId: number;
 let seller2Id: number;

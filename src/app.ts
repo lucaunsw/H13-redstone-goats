@@ -1,7 +1,7 @@
-import { Order, status } from './types';
+import { ItemSales, Order, status } from './types';
 import { generateUBL, userExists, validItemList, addItems } from './helper';
-import { getUser, addOrder, getOrder, updateOrder, addItem,
-  getItem, addOrderXML,
+import { getUser, addOrder, getOrder, updateOrder, 
+  addOrderXML,
   getOrderXML, getItemSellerSales
  } from './dataStore'
  import fs from 'fs';
@@ -126,7 +126,7 @@ const orderConfirm = async (userId: number, orderId: number) => {
  * @param {boolean} json - boolean to state if the json data option is desired.
  * @param {boolean} pdf - boolean to state if the pdf data option is desired.
  * @param {number} sellId - Unique identifier for a seller.
- * @returns { sales?: any[]; CSVurl?: string } 
+ * @returns { sales?: ItemSales[]; CSVurl?: string } 
  * returnBody - an object which can contain: the csv url, json body for sales info.
  */
 async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerId: number) {
@@ -142,7 +142,7 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
     throw new Error ('Invalid sellerId');
   }
 
-  let returnBody: { sales?: any[]; CSVurl?: string } = {};
+  const returnBody: { sales?: ItemSales[]; CSVurl?: string } = {};
 
   const sales = await getItemSellerSales(sellerId);
   // Convert sales information to type number.

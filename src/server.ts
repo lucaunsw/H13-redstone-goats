@@ -4,7 +4,7 @@ import { orderCreate, orderCancel, orderConfirm, orderUserSales } from "./app";
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
-import { ErrKind, SessionId, UserId, Err } from './types';
+import { ErrKind, SessionId, Err } from './types';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv'; 
 import { createClient } from 'redis';
@@ -204,7 +204,6 @@ app.post("/v1/order/create", async (req: Request, res: Response) => {
   }
 });
 
-<<<<<<< HEAD
 // Route that returns user sales data.
 app.post("/v1/order/:userId/sales", async (req: Request, res: Response) => {
   const userId = parseInt(req.params.userId);
@@ -224,16 +223,10 @@ app.post("/v1/order/:userId/sales", async (req: Request, res: Response) => {
   }
 });
 
-// app.put("/v1/:userId/order/:orderId/cancel", (req: Request, res: Response) => {
-//   try {
-//     const { userId, orderId } = req.params;
-//     const { reason } = req.body;
-=======
 app.put("/v1/:userId/order/:orderId/cancel", async (req: Request, res: Response) => {
   try {
     const { userId, orderId } = req.params;
     const { reason } = req.body;
->>>>>>> 5ff75db9da764f58f9a0c3bbaafcf76364e2d8e2
 
     const result = await orderCancel(Number(userId), Number(orderId), reason);
     res.json(result);
