@@ -90,7 +90,7 @@ export default (req: VercelRequest, res: VercelResponse) => {
 // ============================= ROUTES BELOW ================================
 // ===========================================================================
 
-<<<<<<< HEAD
+
 // Custom middleware
 app.use(async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const token = req.query.token ?? req.body.token ?? req.headers.token;
@@ -125,8 +125,7 @@ export async function makeFmtToken(userId: number): Promise<{ token: number }> {
 }
 // END Custom middleware
 
-=======
->>>>>>> aa608b3335b9e1ff5b15c389b197ad0afedb0c49
+
 //Custom middleware for JWT
 const jwtMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -164,15 +163,9 @@ function makeJwtToken(userId: number): { token: SessionId } {
 }
 //End of Custom middleware for JWT
 
-<<<<<<< HEAD
-app.post('/v1/user/logout', (req: Request, res: Response) => {
-  const token = req.body.token ?? req.headers.token;
-  const result = userLogout(token);
-=======
 app.post('/v1/user/logout', async (req: Request, res: Response) => {
   const token = req.header('Authorization')?.split(' ')[1];  
   const result = await userLogout(token);
->>>>>>> aa608b3335b9e1ff5b15c389b197ad0afedb0c49
   res.json(result);
 });
 
@@ -300,7 +293,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   err instanceof Err ? res.status(err.kind.valueOf()).json({ error: err.message }) : next();
 });
 
-app.post('/v1/:userId/order/:orderId/items/change', async (req: Request, res: Response) => {
+app.put('/v1/:userId/order/:orderId/items/change', async (req: Request, res: Response) => {
   try {
     const { userId, orderId } = req.params;
     // IF TOKEN ????
