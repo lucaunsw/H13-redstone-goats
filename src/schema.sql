@@ -18,7 +18,7 @@ CREATE TABLE Tokens (
 );
 
 CREATE TABLE Items (
-    id          INTEGER NOT NULL,
+    id          INTEGER PRIMARY KEY,
     name        TEXT NOT NULL,
     seller_id   INTEGER NOT NULL REFERENCES Users(id),
     description TEXT,
@@ -55,7 +55,7 @@ CREATE TABLE Orders (
     status       TEXT CHECK (status IN ('pending', 'confirmed', 'cancelled')), -- Enum-like constraint
     total_price  DECIMAL(10,2) NOT NULL,
     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    order_xml_id INTEGER REFERENCES OrderXMLs(id)
+    order_xml_id INTEGER
 );
 
 CREATE TABLE OrderItems (
