@@ -1,6 +1,7 @@
 import { addUser, getAllUsers, getUser, updateUser } from './dataStore';
 import { Err, ErrKind, UserId, User, SessionId, EmptyObj, UserSummary } from './types';
 import validator from 'validator';
+import { redisClient } from './server'; // Redis client
 
 /**
  * Register a user with an email, password, and names, then returns their
@@ -76,7 +77,7 @@ export async function userLogin(
   if (user.password !== inputHash) {
     user.numFailedPasswordsSinceLastLogin += 1;
     await updateUser(user); // Update failed login count in DB
-    throw new Err('Password does not match the provided email', ErrKind.EINVALID);
+    throw new Err('Password does  notmatch the provided email', ErrKind.EINVALID);
   }
 
   // Reset failed login attempts and increment successful logins
@@ -87,23 +88,19 @@ export async function userLogin(
   return { userId: user.id as number };
 }
 
-// /**
-//  * User is logged out, sessioniD is deleted.
-//  *
-//  * @param {number} userId - unique identifier for an authenticated user
-//  * @returns {{} | Err } -
-//  * empty object or invalid {error: string}
-//  */
-// export function userLogout(sessionId: SessionId): EmptyObj | never {
-//   const sessions = getData().userSessions;
+/**
+ * User is logged out, sessioniD is deleted.
+ *
+ * @param {number} userId - unique identifier for an authenticated user
+ * @returns {{} | Err } -
+ * empty object or invalid {error: string}
+ */
+export async function userLogout(token: SessionId | undefined): Promise<EmptyObj | never> {
 
-//   if (!sessions.has(sessionId)) {
-//     throw new Err('Invalid User Token', ErrKind.ENOTOKEN);
-//   }
-
-//   sessions.delete(sessionId);
-//   return {};
-// }
+  await redisClient.set(`blacklist_${token}`, 'true', { EX: 3600 });
+  
+  return{}
+}
 
 
 /**

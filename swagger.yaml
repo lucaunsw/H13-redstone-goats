@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
-  title: Order API
-  description: API for creating and managing orders with UBL XML document generation.
+  title: Redstone Goats Order API
+  description: API for creating and managing orders with UBL XML document generation. State diagram is available at https://ibb.co/gZnRGDpQ.
   version: 1.0.0
   
 host: "h13-redstone-goats.vercel.app" 
@@ -12,22 +12,18 @@ schemes:
 tags:
   - name: "User Functions"
     description: Routes for user account handling
-  - name: "Version 1"
-    description: Routes written in sprint 1
-  # - name: "Version 2"
-  #   description: Routes written in sprint 2
-  # - name: "Version 3"
-  #   description: Routes written in sprint 3
-  # - name: "Version 4"
-  #   description: Routes written in sprint 4
+  - name: "Buyer Routes"
+    description: Routes accessible and usable by the buyer party.
+  - name: "Seller Routes"
+    description: Routes accessible and usable by the seller party.
   - name: "Test Functions"
-    description: Routes for tests.
+    description: Routes used for tests.
 
 paths:
   /v1/clear:
     delete:
       summary: Reset state of application back to the initial state.
-      description: Wipe all user, order etc. details.
+      description: Clear all user, order etc. details.
       tags:
         - "Test Functions"
       responses:
@@ -67,6 +63,12 @@ paths:
                 type: integer
         400:
           description: Bad request from client.
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
           
   /v1/user/login:
     post:
@@ -95,13 +97,61 @@ paths:
                 type: integer
         400:
           description: Bad request from client
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
         401:
           description: Token is unauthorized/invalid
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
   /v1/user/logout:
     post:
       summary: Logout an existing user
-      description: Logout a user who has an active session.
+      description: Logout a user by blacklisting the JWT token.
+      tags:
+        - "User Functions"
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              Token:
+                type: string
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+        400:
+          description: Bad request from client
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
+        401:
+          description: Token is unauthorized/invalid
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
+  /v1/user/details:
+    get:
+      summary: Gets a user's details
+      description: Retrieve the details about a specific user
       tags:
         - "User Functions"
       parameters:
@@ -118,17 +168,81 @@ paths:
           description: Success
           schema:
             type: object
+            properties:
+              userId:
+                type: integer
+              name:
+                type: string
+              email:
+                type: string
+              numSuccessfulLogins: 
+                type: integer
+              numFailedPasswordsSinceLastLogin:
+                type: integer
         400:
           description: Bad request from client
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
         401:
           description: Token is unauthorized/invalid
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
+    put:
+      summary: Updates a user's details
+      description: Change the current user details
+      tags:
+        - "User Functions"
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              userId:
+                type: integer
+              email:
+                type: string
+              nameFirst:
+                type: string
+              nameLast:
+                type: string
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+        400:
+          description: Bad request from client
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
+        401:
+          description: Token is unauthorized/invalid
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
   /v1/order/create:
     post:
       summary: Creates an order and produces a UBL XML document.
       description: Creates an order with items, user details, billing details, and delivery instructions.
       tags:
-        - "Version 1"
+        - "Buyer Routes"
       consumes:
         - application/json
       produces:
@@ -149,15 +263,27 @@ paths:
                 type: integer
         400:
           description: Bad request from client e.g invalid bank details, invalid order date
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
         401:
           description: Token is unauthorized/invalid or a different name is registered to the userId.
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
   /v1/{userId}/order/{orderId}/change:
     put:
-      summary: Edit an existing order with new details to update the UBL XML document.
+      summary: Edit an existing order with new details and produce a new UBL XML document.
       description: Allows updating of order details, including items, user information, billing details, and delivery instructions.
       tags:
-        - "Version 1"
+        - "Buyer Routes"
       consumes:
         - application/json
       produces:
@@ -180,15 +306,28 @@ paths:
           description: Order updated
         400:
           description: Bad request from client e.g invalid bank details, invalid order date
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
         401:
           description: Token is unauthorized/invalid or a different name is registered to the userId.
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
   /v1/{userId}/order/{orderId}/cancel:
     put:
       summary: Cancel an order before dispatch.
       description: Cancels an existing order and adds it to the user's cancel order history.
       tags:
-        - "Version 1"
+        - "Buyer Routes"
+        - "Seller Routes"
       consumes:
         - application/json
       produces:
@@ -221,15 +360,28 @@ paths:
                 type: string
         400:
           description: Unknown orderId
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
         404:
           description: Order not found.
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
   /v1/order/{orderId}/confirm:
     put:
       summary: Finalize and confirm order.
       description: Finalizes the UBL XML document and adds it to the user’s successful order history.
       tags:
-        - "Version 1"
+        - "Buyer Routes"
+        - "Seller Routes"
       parameters:
         - name: orderId
           in: path
@@ -242,15 +394,27 @@ paths:
             type: object
         400:
           description: OrderId missing or invalid
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
         404:
           description: Order not found
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
   /v1/{userId}/order/history:
     post:
       summary: Retrieve user order history.
       description: Retrieves the order history of the specific buyer.
       tags:
-        - "Version 1"
+        - "Buyer Routes"
       produces:
         - application/json
       parameters:
@@ -265,13 +429,19 @@ paths:
             $ref: "#/definitions/OrderHistory"
         400:
           description: UserId missing or invalid
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
   /v1/{userId}/order/recommendation:
     get:
       summary: Recommend orders based on history.
       description: Views trends in order history and recommends an order to the buyer.
       tags:
-        - "Version 1"
+        - "Buyer Routes"
       parameters:
         - name: userId
           in: path
@@ -286,9 +456,9 @@ paths:
   /v1/order/{userId}/sales:
     get:
       summary: Send sales analytics data.
-      description: Sends analytical data to the product distributor. 
+      description: Sends analytical data to the product distributor, with different options for data format. 
       tags:
-        - "Version 1"
+        - "Seller Routes"
       parameters:
         - name: CSV
           in: query
@@ -313,6 +483,12 @@ paths:
             $ref: "#/definitions/SalesData"
         400:
           description: UserId missing or invalid
+          schema:
+            type: object
+            properties:
+              Error:
+                type: string
+                example: "Error Message Here"
 
 definitions:
   OrderRequest:
@@ -322,12 +498,12 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Item"
-      itemQuantities:
+      quantities:
         type: array
         items:
           type: number
-      user:
-        $ref: "#/definitions/UserParam"
+      buyer:
+        $ref: "#/definitions/UserSimple"
       billingDetails:
         $ref: "#/definitions/BillingDetailsParam"
       delivery:
@@ -341,12 +517,16 @@ definitions:
           - pending
           - confirmed
           - cancelled
-  UserParam:
+      totalPrice:
+        type: number
+      createdAt:
+        type: string
+        format: date-time
+  UserSimple:
     type: object
     properties:
-      userId:
-        type: integer
-        format: int32
+      id:
+        type: number
       name:
         type: string
       streetName:
@@ -413,8 +593,8 @@ definitions:
   Item:
     type: object
     properties:
-      productId:
-        type: string
+      id:
+        type: number
       name:
         type: string
       price:
@@ -423,7 +603,7 @@ definitions:
         type: integer
       seller:
         type: object
-        $ref: "#/definitions/UserParam"
+        $ref: "#/definitions/UserSimple"
       
   User:
     type: object
@@ -474,6 +654,15 @@ definitions:
       sales:
         type: array
         items:
-          $ref: "#/definitions/Item"
+          type: object
+          properties:
+            id:
+              type: number
+            name:
+              type: string
+            price:
+              type: number
+            quantity:
+              type: integer
       CSVurl:
         type: string
