@@ -67,7 +67,15 @@ async function orderCreate (order: Order) {
   return { orderId };
 }
 
-
+/**
+ * Cancels an order for a given user with a specified reason.
+ * 
+ * @param {number} userId - The ID of the user requesting the cancellation.
+ * @param {number} orderId - The ID of the order to be cancelled.
+ * @param {string} reason - The reason for cancelling the order.
+ * @returns {Promise<{ reason: string }>} - A confirmation object containing the cancellation reason.
+ * @throws {Error} - If the user ID or order ID is invalid, the order is already cancelled, or the update fails.
+ */
 const orderCancel = async (userId: number, orderId: number, reason: string) => {
   // Check if userId and orderId are valid
   const user = await getUser(userId);
@@ -75,16 +83,17 @@ const orderCancel = async (userId: number, orderId: number, reason: string) => {
       throw new Error("invalid userId");
   }
   const orderData = await getOrder(orderId);
-  console.log(orderData);
   if (!orderData) {
       throw new Error("invalid orderId");
   }
 
+  // Check if status is already cancelled
   if (orderData.status === status.CANCELLED) {
       throw new Error("order already cancelled");
   }
   orderData.status = status.CANCELLED;
 
+  // Update order object in database
   const updateSuccess = await updateOrder(orderData);
   if (!updateSuccess) {
       throw new Error("failed to update order status to cancelled");
@@ -93,33 +102,44 @@ const orderCancel = async (userId: number, orderId: number, reason: string) => {
   return { reason };
 };
 
-
+/**
+ * Confirms an order for a given user.
+ * 
+ * @param {number} userId - The ID of the user requesting the confirmation.
+ * @param {number} orderId - The ID of the order to be confirmed.
+ * @returns {Promise<{ UBL?: string }>} - A confirmation object containing the order's UBL data (if available).
+ * @throws {Error} - If the user ID or order ID is invalid, the order is cancelled, or the update fails.
+ */
 const orderConfirm = async (userId: number, orderId: number) => {
-    const user = await getUser(userId);
-    if (!user) {
-        throw new Error("invalid userId");
-    }
-    const orderData = await getOrder(orderId);
-    if (!orderData) {
-        throw new Error("invalid orderId");
-    }
+  // Check if userId and orderId are valid  
+  const user = await getUser(userId);
+  if (!user) {
+      throw new Error("invalid userId");
+  }
+  const orderData = await getOrder(orderId);
+  if (!orderData) {
+      throw new Error("invalid orderId");
+  }
 
-    if (orderData.status === status.CANCELLED) {
-      throw new Error('order has been cancelled');
-    }
+  // Check if order status is cancelled
+  if (orderData.status === status.CANCELLED) {
+    throw new Error('order has been cancelled');
+  }
 
-    if (orderData.status === status.CONFIRMED) {
-        return {};
-    }
-    orderData.status = status.CONFIRMED;
+  if (orderData.status === status.CONFIRMED) {
+      return {};
+  }
+  orderData.status = status.CONFIRMED;
 
-    const updateSuccess = await updateOrder(orderData);
-    if (!updateSuccess) {
-        throw new Error("failed to update order status to confirmed");
-    }
+  // Update order object in database
+  const updateSuccess = await updateOrder(orderData);
+  if (!updateSuccess) {
+      throw new Error("failed to update order status to confirmed");
+  }
 
-    const UBL = await getOrderXML(Number(orderData.orderXMLId));
-    return { UBL };
+  // Fetch and return XML associated with order
+  const UBL = await getOrderXML(Number(orderData.orderXMLId));
+  return { UBL };
 };
 
 /** Seller route to return sales information to the seller.
