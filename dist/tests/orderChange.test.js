@@ -1,4 +1,158 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+// IMPORTS + CONFIGS
+const sync_request_curl_1 = __importDefault(require("sync-request-curl"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
+const testHelper_1 = require("./testHelper");
+const app_ts_1 = require("../app.ts");
+// CONSTANTS 
+const SERVER_URL = `http://127.0.0.1:3200`;
+const TIMEOUT_MS = 20 * 1000;
+// HTTP REQUEST FUNCTION 
+function orderChangePutRequest(route, body) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const res = (0, sync_request_curl_1.default)("PUT", SERVER_URL + route, {
+            json: body,
+            timeout: TIMEOUT_MS,
+        });
+        return {
+            body: JSON.parse(res.body.toString()),
+            statusCode: res.statusCode,
+        };
+    });
+}
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+// Initalise Values
+let testBuyerId;
+let testSellerId;
+let testBuyer;
+let testSeller;
+let testItem1;
+let testItem2;
+let testBillingDetails;
+let testDeliveryDetails;
+let testOrder1;
+const date = new Date().toISOString().split('T')[0];
+// Clear DB before each test
+beforeEach(() => {
+    yield (0, testHelper_1.reqHelper)('DELETE', '/v1/clear');
+});
+// Setup test values
+beforeEach(() => {
+    // REGISTER TEST BUYER TOKEN
+    const BuyerToken = yield (0, testHelper_1.userRegister)('example10@email.com', 'example123', 'Buyer', 'Test').body.token;
+    const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET);
+    const testBuyerId = decoded.userId;
+    // TEST BUYER DETAILS
+    testBuyer = {
+        id: buyerId,
+        name: 'TestSellerName',
+        streetName: 'TestStreetName',
+        cityName: 'TestCityName',
+        postalZone: '0000',
+        cbcCode: 'AU'
+    };
+    // REGISTER TEST SELLER TOKEN
+    const sellerToken = yield (0, testHelper_1.userRegister)('example20@email.com', 'example123', 'Seller', 'Test').body.token;
+    const testSellerId = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET).userId;
+    // TEST BUYER DETAILS
+    testSeller = {
+        id: sellerId,
+        name: 'TestSellerName',
+        streetName: 'TestStreetName',
+        cityName: 'TestCityName',
+        postalZone: '0000',
+        cbcCode: 'AU'
+    };
+    // TEST ITEM 1 DETAILS
+    testItem1 = {
+        id: '1',
+        name: 'TestItem1',
+        seller: testSeller,
+        description: 'TestDescription1',
+        price: '100'
+    };
+    // TEST ITEM 2 DETAILS
+    testItem2 = {
+        id: '2',
+        name: 'TestItem2',
+        seller: testSeller,
+        description: 'TestDescription2',
+        price: '120'
+    };
+    // TEST BILLING DETAILS
+    testBillingDetails = {
+        creditCardNumber: 1000000000000000,
+        CVV: 111,
+        expiryDate: date, // double check this
+    };
+    // TEST DELIVERY DETAILS
+    testDeliveryDetails = {
+        streetName: 'White St',
+        cityName: 'Sydney',
+        postalZone: '2000',
+        countrySubentity: 'NSW',
+        addressLine: '33 White St, Sydney NSW',
+        cbcCode: 'AU',
+        startDate: new Date(2025, 9, 5).toISOString().split('T')[0],
+        startTime: '13:00',
+        endDate: new Date(2025, 9, 10).toISOString().split('T')[0],
+        endTime: '13:00'
+    };
+    // TEST ORDER - VALID
+    const orderCreateTestParam = {
+        items: [testItem1, testItem2],
+        quantities: [1, 2],
+        buyer: testBuyer,
+        billingDetails: testBillingDetails,
+        delivery: testDeliveryDetails,
+        totalPrice: 5, // ? not yet calculated
+        createdAt: new Date(),
+    };
+    const orderCreatedSuccess = yield (0, app_ts_1.orderCreate)(orderCreateTestParam);
+});
+describe('TOKEN ERROR CHECKING', () => {
+    test('Tests if sellerId is invalid', () => __awaiter(void 0, void 0, void 0, function* () {
+        // Invalid sellerId
+        const invalidUserId = sellerId + 1;
+        // Expect error
+        expect(response.statusCode).toBe(401);
+        expect(response.body).toStrictEqual({ error: expect.any(String) });
+        // orderChange Params
+        // const body = {
+        //     userId: buyerId,
+        //     orderId: number, 
+        //     updatedData: {
+        //       items: Array<{ 
+        //         itemId: number; 
+        //         newQuantity: number;
+        //         name: string;
+        //         seller: UserSimple;
+        //         description: string;
+        //         price: number
+        //       }>;
+        //     }
+        // }
+    }));
+});
+// describe('ROUTE TESTING', () => {
+//     test('Tests for Invalid Token Error Response', async () => {
+//     })
+// })
 // import { orderChange } from '../app'; // Adjust the import according to your file structure
 // import { SessionId, OrderParam, UserParam, 
 //     Item, BillingDetailsParam, DeliveryInstructions, Order } from '../types';

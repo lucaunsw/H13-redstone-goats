@@ -14,10 +14,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.userRegister = userRegister;
 exports.userLogin = userLogin;
+exports.userLogout = userLogout;
 exports.userDetails = userDetails;
 const dataStore_1 = require("./dataStore");
 const types_1 = require("./types");
 const validator_1 = __importDefault(require("validator"));
+const server_1 = require("./server"); // Redis client
 /**
  * Register a user with an email, password, and names, then returns their
  * userId value
@@ -79,7 +81,7 @@ function userLogin(email, password) {
         if (user.password !== inputHash) {
             user.numFailedPasswordsSinceLastLogin += 1;
             yield (0, dataStore_1.updateUser)(user); // Update failed login count in DB
-            throw new types_1.Err('Password does not match the provided email', types_1.ErrKind.EINVALID);
+            throw new types_1.Err('Password does  notmatch the provided email', types_1.ErrKind.EINVALID);
         }
         // Reset failed login attempts and increment successful logins
         user.numFailedPasswordsSinceLastLogin = 0;
@@ -88,21 +90,19 @@ function userLogin(email, password) {
         return { userId: user.id };
     });
 }
-// /**
-//  * User is logged out, sessioniD is deleted.
-//  *
-//  * @param {number} userId - unique identifier for an authenticated user
-//  * @returns {{} | Err } -
-//  * empty object or invalid {error: string}
-//  */
-// export function userLogout(sessionId: SessionId): EmptyObj | never {
-//   const sessions = getData().userSessions;
-//   if (!sessions.has(sessionId)) {
-//     throw new Err('Invalid User Token', ErrKind.ENOTOKEN);
-//   }
-//   sessions.delete(sessionId);
-//   return {};
-// }
+/**
+ * User is logged out, sessioniD is deleted.
+ *
+ * @param {number} userId - unique identifier for an authenticated user
+ * @returns {{} | Err } -
+ * empty object or invalid {error: string}
+ */
+function userLogout(token) {
+    return __awaiter(this, void 0, void 0, function* () {
+        yield server_1.redisClient.set(`blacklist_${token}`, 'true', { EX: 3600 });
+        return {};
+    });
+}
 /**
  * Given admin users userId returns details about user.
  *

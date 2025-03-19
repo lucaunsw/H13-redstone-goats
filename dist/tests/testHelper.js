@@ -41,9 +41,9 @@ function userLogin(em, pass) {
     });
 }
 function userLogout(token) {
-    return reqHelper('POST', '/v2/admin/auth/logout', {
+    return reqHelper('POST', '/v1/user/logout', {
         headers: {
-            token: token,
+            Authorization: `Bearer ${token}`,
         },
     });
 }
@@ -55,7 +55,7 @@ function userDetails(token) {
     });
 }
 function userDetailsUpdate(tok, em, nF, nL) {
-    return reqHelper('PUT', '/v2/admin/user/details', {
+    return reqHelper('PUT', '/v1/user/details', {
         headers: {
             token: tok,
         },

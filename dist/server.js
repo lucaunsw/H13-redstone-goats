@@ -12,6 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.redisClient = void 0;
 exports.makeFmtToken = makeFmtToken;
 const express_1 = __importDefault(require("express"));
 const app_1 = require("./app");
@@ -20,6 +21,10 @@ const cors_1 = __importDefault(require("cors"));
 const morgan_1 = __importDefault(require("morgan"));
 const types_1 = require("./types");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const redis_1 = require("redis");
+const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
+const yamljs_1 = __importDefault(require("yamljs"));
+const path_1 = __importDefault(require("path"));
 const user_1 = require("./user");
 const dataStore_1 = require("./dataStore");
 const app = (0, express_1.default)();
@@ -32,6 +37,47 @@ app.use((0, morgan_1.default)("dev"));
 const PORT = parseInt(process.env.PORT || config_json_1.default.port);
 const HOST = process.env.IP || "127.0.0.1";
 const JWT_SECRET = process.env.JWT_SECRET || "r3dSt0nE@Secr3tD00r!";
+// Create path to swagger document.
+const swaggerDocument = yamljs_1.default.load(path_1.default.join(__dirname, '../swagger.yaml'));
+// Route to serve swagger file.
+app.use('/swagger', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swaggerDocument));
+// ===========================================================================
+// ============================= REDIS CLIENT ================================
+// ===========================================================================
+exports.redisClient = (0, redis_1.createClient)({
+    username: 'default',
+    password: process.env.REDIS_PASSWORD,
+    socket: {
+        host: 'redis-13657.c326.us-east-1-3.ec2.redns.redis-cloud.com',
+        port: 13657
+    }
+});
+exports.redisClient.on('error', err => console.log('Redis Client Error', err));
+function connectRedis() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            if (!exports.redisClient.isOpen) {
+                yield exports.redisClient.connect();
+                console.log('✅ Redis connected successfully!');
+            }
+            yield exports.redisClient.set('foo', 'bar');
+            const result = yield exports.redisClient.get('foo');
+            console.log('Redis Test:', result); // ✅ "bar"
+        }
+        catch (err) {
+            console.error('❌ Redis connection failed:', err);
+        }
+    });
+}
+// Call the function
+connectRedis();
+// ===========================================================================
+// ============================= VERCEL HANDLER ==============================
+// ===========================================================================
+// Export handler for Vercel
+exports.default = (req, res) => {
+    app(req, res); // Invoke the app instance to handle the request
+};
 // ===========================================================================
 // ============================= ROUTES BELOW ================================
 // ===========================================================================
@@ -68,36 +114,43 @@ function makeFmtToken(userId) {
 }
 // END Custom middleware
 //Custom middleware for JWT
-app.use((req, res, next) => {
+const jwtMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    // Extract the token from the Authorization header
-    const token = (_a = req.header('Authorization')) === null || _a === void 0 ? void 0 : _a.split(' ')[1];
-    if (!token) {
-        return next(); // No token provided, continue without interception
-    }
     try {
+        const token = (_a = req.header('Authorization')) === null || _a === void 0 ? void 0 : _a.split(' ')[1];
+        if (!token) {
+            return next(); // No token, continue
+        }
+        // Check if token is blacklisted in Redis
+        const isBlacklisted = yield exports.redisClient.get(`blacklist_${token}`);
+        if (isBlacklisted) {
+            res.status(types_1.ErrKind.ENOTOKEN).json({ error: 'Token is blacklisted. Please log in again.' }); // Send response and exit
+            return;
+        }
         // Verify and decode the token
         const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET);
-        req.body.token = decoded.userId; // Attach the userId from JWT payload to the request body
+        req.body.token = decoded.userId; // Attach userId from JWT payload
         next(); // Continue to the next middleware/route
     }
     catch (error) {
-        // Handle error (invalid or expired token)
-        res.status(types_1.ErrKind.ENOTOKEN).json({ error: 'Token is not valid or expired' });
+        res.status(types_1.ErrKind.ENOTOKEN).json({ error: 'Token is not valid or expired' }); // Send response and exit
+        return;
     }
 });
+// Apply middleware correctly
+app.use(jwtMiddleware);
 // Function for generating JWT 
 function makeJwtToken(userId) {
     const token = jsonwebtoken_1.default.sign({ userId }, JWT_SECRET, { expiresIn: '1h' }); // Token expires in 1 hour
     return { token: token };
 }
-//End of Custome middleware for JWT
-app.post('/v1/user/logout', (req, res) => {
+//End of Custom middleware for JWT
+app.post('/v1/user/logout', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    const token = (_a = req.body.token) !== null && _a !== void 0 ? _a : req.headers.token;
-    const result = userLogout(token);
+    const token = (_a = req.header('Authorization')) === null || _a === void 0 ? void 0 : _a.split(' ')[1];
+    const result = yield (0, user_1.userLogout)(token);
     res.json(result);
-});
+}));
 app.post('/v1/user/register', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password, nameFirst, nameLast } = req.body;
@@ -107,10 +160,10 @@ app.post('/v1/user/register', (req, res) => __awaiter(void 0, void 0, void 0, fu
     }
     catch (err) {
         if (err instanceof Error) {
-            res.status(400).json({ error: err.message });
+            res.status(types_1.ErrKind.EINVALID).json({ error: err.message });
         }
         else {
-            res.status(400).json({ error: 'An unknown error occurred' });
+            res.status(types_1.ErrKind.EINVALID).json({ error: 'An unknown error occurred' });
         }
     }
 }));
@@ -123,10 +176,10 @@ app.post('/v1/user/login', (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
     catch (err) {
         if (err instanceof Error) {
-            res.status(400).json({ error: err.message });
+            res.status(types_1.ErrKind.EINVALID).json({ error: err.message });
         }
         else {
-            res.status(400).json({ error: 'An unknown error occurred' });
+            res.status(types_1.ErrKind.EINVALID).json({ error: 'An unknown error occurred' });
         }
     }
 }));
@@ -138,10 +191,10 @@ app.get('/v1/user/details', (req, res) => __awaiter(void 0, void 0, void 0, func
     }
     catch (err) {
         if (err instanceof Error) {
-            res.status(400).json({ error: err.message });
+            res.status(types_1.ErrKind.EINVALID).json({ error: err.message });
         }
         else {
-            res.status(400).json({ error: 'An unknown error occurred' });
+            res.status(types_1.ErrKind.EINVALID).json({ error: 'An unknown error occurred' });
         }
     }
 }));
@@ -164,10 +217,10 @@ app.post("/v1/order/create", (req, res) => __awaiter(void 0, void 0, void 0, fun
         const e = error;
         if (e.message === 'Invalid userId or a different name is registered to userId' ||
             e.message === 'No userId provided') {
-            res.status(401).json({ error: e.message });
+            res.status(types_1.ErrKind.ENOTOKEN).json({ error: e.message });
         }
         else {
-            res.status(400).json({ error: e.message });
+            res.status(types_1.ErrKind.EINVALID).json({ error: e.message });
         }
     }
 }));
@@ -221,7 +274,7 @@ app.delete('/v1/clear', (_, res) => __awaiter(void 0, void 0, void 0, function* 
 app.use((err, req, res, next) => {
     err instanceof types_1.Err ? res.status(err.kind.valueOf()).json({ error: err.message }) : next();
 });
-app.post('/v1/:userId/order/:orderId/items/change', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.put('/v1/:userId/order/:orderId/items/change', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId, orderId } = req.params;
         // IF TOKEN ????
