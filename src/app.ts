@@ -1,7 +1,8 @@
 import { Order, status } from './types';
 import { generateUBL, userExists, validItemList, addItems } from './helper';
 import { getUser, addOrder, getOrder, updateOrder, addItem,
-  getItem, addOrderXML,getItemSellerSales
+  getItem, addOrderXML,
+  getOrderXML, getItemSellerSales
  } from './dataStore'
  import fs from 'fs';
 import { stringify } from 'csv-stringify/sync';
@@ -66,53 +67,57 @@ async function orderCreate (order: Order) {
 
 
 const orderCancel = async (userId: number, orderId: number, reason: string) => {
-    // // Check if userId and orderId are valid
-    // const user = await getUser(userId);
-    // if (!user) {
-    //     throw new Error("invalid userId");
-    // }
-    // const orderData = await getOrder(orderId);
-    // if (!orderData) {
-    //     throw new Error("invalid orderId");
-    // }
-    // const { order, items } = orderData;
+  // Check if userId and orderId are valid
+  const user = await getUser(userId);
+  if (!user) {
+      throw new Error("invalid userId");
+  }
+  const orderData = await getOrder(orderId);
+  console.log(orderData);
+  if (!orderData) {
+      throw new Error("invalid orderId");
+  }
 
-    // if (order.status === status.CANCELLED) {
-    //     throw new Error("order already cancelled");
-    // }
-    // order.status = status.CANCELLED;
+  if (orderData.status === status.CANCELLED) {
+      throw new Error("order already cancelled");
+  }
+  orderData.status = status.CANCELLED;
 
-    // const updateSuccess = await updateOrder(order, items);
-    // if (!updateSuccess) {
-    //     throw new Error("failed to update order status to cancelled");
-    // }
+  const updateSuccess = await updateOrder(orderData);
+  if (!updateSuccess) {
+      throw new Error("failed to update order status to cancelled");
+  }
 
-    // return { reason };
+  return { reason };
 };
 
 
 const orderConfirm = async (userId: number, orderId: number) => {
-    // const user = await getUser(userId);
-    // if (!user) {
-    //     throw new Error("invalid userId");
-    // }
-    // const orderData = await getOrder(orderId);
-    // if (!orderData) {
-    //     throw new Error("invalid orderId");
-    // }
-    // const { order, items } = orderData;
+    const user = await getUser(userId);
+    if (!user) {
+        throw new Error("invalid userId");
+    }
+    const orderData = await getOrder(orderId);
+    if (!orderData) {
+        throw new Error("invalid orderId");
+    }
 
-    // if (order.status === status.CONFIRMED) {
-    //     return {};
-    // }
-    // order.status = status.CONFIRMED;
+    if (orderData.status === status.CANCELLED) {
+      throw new Error('order has been cancelled');
+    }
 
-    // const updateSuccess = await updateOrder(order, items);
-    // if (!updateSuccess) {
-    //     throw new Error("failed to update order status to confirmed");
-    // }
+    if (orderData.status === status.CONFIRMED) {
+        return {};
+    }
+    orderData.status = status.CONFIRMED;
 
-    // return {};
+    const updateSuccess = await updateOrder(orderData);
+    if (!updateSuccess) {
+        throw new Error("failed to update order status to confirmed");
+    }
+
+    const UBL = await getOrderXML(Number(orderData.orderXMLId));
+    return { UBL };
 };
 
 /** Seller route to return sales information to the seller.
