@@ -59,7 +59,7 @@ describe('Test orderCreate route', () => {
       cbcCode: 'AU',
     };
     testBillingDetails = {
-      creditCardNumber: 1000000000000000,
+      creditCardNumber: "1000000000000000",
       CVV: 111,
       expiryDate: date,
     };
@@ -203,7 +203,7 @@ describe('Test orderCreate route', () => {
       quantities: [1],
       buyer: testBuyer,
       billingDetails: {
-        creditCardNumber: 100000000000000000,
+        creditCardNumber: "100000000000000000",
         CVV: 111,
         expiryDate: date,
       },

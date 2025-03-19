@@ -541,8 +541,7 @@ definitions:
     type: object
     properties:
       creditCardNumber:
-        type: integer
-        format: int64
+        type: string
       CVV:
         type: integer
         format: int32
@@ -616,7 +615,7 @@ definitions:
     type: object
     properties:
       creditCardNumber:
-        type: integer
+        type: string
       CVV:
         type: integer
       expiryDate:
