@@ -184,7 +184,7 @@ app.get('/v1/user/details', async (req: Request, res: Response) => {
 // });
 
 app.get("/", (req, res) => {
-  res.send("Hello, Express with TypeScript!");
+  res.send("Order creation API is currently in development");
 });
 
 // Route that creates an order.
@@ -209,7 +209,7 @@ app.put("/v1/:userId/order/:orderId/cancel", async (req: Request, res: Response)
     const { userId, orderId } = req.params;
     const { reason } = req.body;
 
-    const result = orderCancel(Number(userId), Number(orderId), reason);
+    const result = await orderCancel(Number(userId), Number(orderId), reason);
     res.json(result);
   } catch (error) {
     let statusCode: number;
@@ -225,28 +225,26 @@ app.put("/v1/:userId/order/:orderId/cancel", async (req: Request, res: Response)
   }
 });
 
-// app.post(
-//   "/v1/:userId/order/:orderId/confirm",
-//   (req: Request, res: Response) => {
-//     try {
-//       const { userId, orderId } = req.params;
+app.post("/v1/:userId/order/:orderId/confirm", async (req: Request, res: Response) => {
+    try {
+      const { userId, orderId } = req.params;
 
-//       const result = orderConfirm(Number(userId), Number(orderId));
-//       res.json(result);
-//     } catch (error) {
-//       let statusCode: number;
-//       const e = error as Error;
-//       if (e.message === "invalid orderId" || e.message === "invalid userId") {
-//         statusCode = 401;
-//       } else if (e.message === "order not found") {
-//         statusCode = 400;
-//       } else {
-//         statusCode = 404;
-//       }
-//       res.status(statusCode).json({ error: e.message });
-//     }
-//   }
-// );
+      const result = await orderConfirm(Number(userId), Number(orderId));
+      res.json(result);
+    } catch (error) {
+      let statusCode: number;
+      const e = error as Error;
+      if (e.message === "invalid orderId" || e.message === "invalid userId") {
+        statusCode = 401;
+      } else if (e.message === "order has been cancelled") {
+        statusCode = 400;
+      } else {
+        statusCode = 404;
+      }
+      res.status(statusCode).json({ error: e.message });
+    }
+  }
+);
 
 app.delete('/v1/clear', async (_: Request, res: Response) => {
   res.json(await clearAll());

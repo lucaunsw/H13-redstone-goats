@@ -120,7 +120,7 @@ beforeEach(async () => {
 });
 
 describe("orderCancel successful return", () => {
-  test.only("Should cancel an order successfully", async () => {
+  test("Should cancel an order successfully", async () => {
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
@@ -140,7 +140,7 @@ describe("orderCancel successful return", () => {
     const res = await getPutResponse(`/v1/${userId}/order/${orderId}/cancel`, {
       reason: "Changed my mind",
     });
-    expect(res.body).toStrictEqual({ Reason: "Changed my mind" });
+    expect(res.body).toStrictEqual({ reason: "Changed my mind" });
     expect(res.statusCode).toBe(200);
   }, 15000);
 
@@ -157,7 +157,6 @@ describe("orderCancel successful return", () => {
       createdAt: new Date(),
     }
     const response = await requestOrderCreate(body);
-    console.log(response);
     const orderId = response.body.orderId;
 
     const res = await getPutResponse(`/v1/${userId + 1000000}/order/${orderId}/cancel`, {
@@ -187,5 +186,30 @@ describe("orderCancel successful return", () => {
     });
     expect(res.body).toStrictEqual({ error: expect.any(String) });
     expect(res.statusCode).toBe(401);
+  });
+
+  test("Unable to cancel since order is already cancelled", async () => {
+    const date = new Date().toISOString().split('T')[0];
+    const body = {
+      items: [testItem],
+      quantities: [1],
+      buyer: testBuyer,
+      billingDetails: testBillingDetails,
+      totalPrice: 5,
+      delivery: testDeliveryDetails,
+      lastEdited: date,
+      createdAt: new Date(),
+    }
+    const response = await requestOrderCreate(body);
+    const orderId = response.body.orderId;
+
+    await getPutResponse(`/v1/${userId}/order/${orderId}/cancel`, {
+      reason: "Changed my mind",
+    });
+    const res = await getPutResponse(`/v1/${userId}/order/${orderId}/cancel`, {
+      reason: "Changed my mind again",
+    });
+    expect(res.body).toStrictEqual({ error: expect.any(String) });
+    expect(res.statusCode).toBe(400);
   });
 });

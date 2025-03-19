@@ -35,6 +35,17 @@ export function getPostResponse(
     };
   }
 
+  function getPutResponse(route: string, body: { [key: string]: unknown }) {
+    const res = request("PUT", SERVER_URL + route, {
+      json: body,
+      timeout: TIMEOUT_MS,
+    });
+    return {
+      body: JSON.parse(res.body.toString()),
+      statusCode: res.statusCode,
+    };
+  }
+
   ////////////////////////////////////////////////////////////////////////////////
   
   let userId: number;
@@ -107,7 +118,7 @@ export function getPostResponse(
     }
   });
 
-  describe.skip("tests for orderConfirm", () => {
+  describe("tests for orderConfirm", () => {
     test("Should confirm an order successfully", async () => {
       const date = new Date().toISOString().split('T')[0];
       const body = {
@@ -125,10 +136,10 @@ export function getPostResponse(
 
       const confirmRes = await getPostResponse(`/v1/${userId}/order/${orderId}/confirm`, {});
       expect(confirmRes.statusCode).toBe(200);
-      expect(confirmRes.body).toStrictEqual({});
-    });
+      expect(confirmRes.body).toStrictEqual({ UBL: expect.any(String) });
+    }, 25000);
 
-    test("should return 400 if order is not found", async () => {
+    test("Should return 401 for invalid orderId", async () => {
       const date = new Date().toISOString().split('T')[0];
       const body = {
         items: [testItem],
@@ -144,11 +155,11 @@ export function getPostResponse(
       const orderId = response.body.orderId;
       
       const res = await getPostResponse(`/v1/${userId}/order/${orderId + 1000000}/confirm`, {});
-      expect(res.statusCode).toBe(400);
+      expect(res.statusCode).toBe(401);
       expect(res.body).toStrictEqual({ error: expect.any(String) });
     });
 
-    test("should return 401 for invalid userId", async () => {
+    test("Should return 401 for invalid userId", async () => {
       const date = new Date().toISOString().split('T')[0];
       const body = {
         items: [testItem],
@@ -167,4 +178,28 @@ export function getPostResponse(
       expect(res.statusCode).toBe(401);
       expect(res.body).toStrictEqual({ error: expect.any(String) });
     });
+
+    test("Should return 400 since order is cancelled", async () => {
+      const date = new Date().toISOString().split('T')[0];
+      const body = {
+        items: [testItem],
+        quantities: [1],
+        buyer: testBuyer,
+        billingDetails: testBillingDetails,
+        totalPrice: 5,
+        delivery: testDeliveryDetails,
+        lastEdited: date,
+        createdAt: new Date(),
+      }
+      const response = await requestOrderCreate(body);
+      const orderId = response.body.orderId;
+
+      await getPutResponse(`/v1/${userId}/order/${orderId}/cancel`, {
+        reason: "Changed my mind",
+      });
+      const res = await getPostResponse(`/v1/${userId}/order/${orderId}/confirm`, {});
+      console.log(res);
+      expect(res.statusCode).toBe(400);
+      expect(res.body).toStrictEqual({ error: expect.any(String) });
+    }, 15000);
   });

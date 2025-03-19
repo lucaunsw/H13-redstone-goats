@@ -1,7 +1,8 @@
 import { Order, status } from './types';
 import { generateUBL, userExists, validItemList, addItems } from './helper';
 import { getUser, addOrder, getOrder, updateOrder, addItem,
-  getItem, addOrderXML
+  getItem, addOrderXML,
+  getOrderXML
  } from './dataStore'
 
 /**
@@ -100,7 +101,7 @@ const orderConfirm = async (userId: number, orderId: number) => {
 
     if (orderData.status === status.CANCELLED) {
       throw new Error('order has been cancelled');
-  }
+    }
 
     if (orderData.status === status.CONFIRMED) {
         return {};
@@ -112,7 +113,8 @@ const orderConfirm = async (userId: number, orderId: number) => {
         throw new Error("failed to update order status to confirmed");
     }
 
-    return {};
+    const UBL = await getOrderXML(Number(orderData.orderXMLId));
+    return { UBL };
 };
 
 export { orderCreate, orderCancel, orderConfirm };
