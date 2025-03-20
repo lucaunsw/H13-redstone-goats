@@ -77,7 +77,7 @@ export async function userLogin(
   if (user.password !== inputHash) {
     user.numFailedPasswordsSinceLastLogin += 1;
     await updateUser(user); // Update failed login count in DB
-    throw new Err('Password does  notmatch the provided email', ErrKind.EINVALID);
+    throw new Err('Password does not match the provided email', ErrKind.EINVALID);
   }
 
   // Reset failed login attempts and increment successful logins

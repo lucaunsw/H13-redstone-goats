@@ -78,12 +78,9 @@ async function connectRedis() {
   try {
     if (!redisClient.isOpen) {
       await redisClient.connect();
-      console.log('✅ Redis connected successfully!');
     }
-
     await redisClient.set('foo', 'bar');
     const result = await redisClient.get('foo');
-    console.log('Redis Test:', result);  // ✅ "bar"
   } catch (err) {
     console.error('❌ Redis connection failed:', err);
   }
@@ -293,7 +290,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 // ============================= ROUTES ABOVE ================================
 // ===========================================================================
 
-const server = app.listen(PORT, HOST, () => {
+export const server = app.listen(PORT, HOST, () => {
   console.log(`Server is running on http://${HOST}:${PORT}`);
 });
 
