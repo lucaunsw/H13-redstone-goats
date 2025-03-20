@@ -1,80 +1,67 @@
-import { userRegister, userDetails, reqHelper } from './testHelper';
-import { ErrKind, SessionId } from '../types';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-// Mock testHelper module
-jest.mock('./testHelper', () => ({
-  reqHelper: jest.fn(),
-  userRegister: jest.fn(),
-  userDetails: jest.fn(),
+import { userDetails } from '../user';
+import { getUser } from '../dataStore';
+import { Err, ErrKind } from '../types'; 
+import { server } from '../server';  
+jest.mock('../dataStore', () => ({
+  getUser: jest.fn(),
 }));
 
-beforeEach(() => {
-  (reqHelper as jest.Mock).mockReturnValue({ statusCode: 200 });
-  reqHelper('DELETE', '/v1/clear'); // No need for async/await
-});
+jest.mock('@redis/client', () => ({
+  createClient: jest.fn(() => ({
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+    set: jest.fn(),
+    get: jest.fn(),
+    on: jest.fn(),
+    quit: jest.fn(),
+  })),
+}));
 
 describe('userDetails', () => {
-  test('Returns error given invalid token', () => {
-    const invalidToken = 'invalidToken123';
 
-    // Instant return value (no async delay)
-    (userDetails as jest.Mock).mockReturnValue({
-      body: { error: 'Invalid token' },
-      statusCode: ErrKind.ENOTOKEN,
-    });
-
-    const resp = userDetails(invalidToken);
-
-    expect(resp.body).toStrictEqual({ error: expect.any(String) });
-    expect(resp.statusCode).toStrictEqual(ErrKind.ENOTOKEN);
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  test('Returns correct values given valid userId', () => {
-    const email = `testUser_${Date.now()}@email.com`; // Unique email
-    const password = 'StrongPass1!';
-    const nameFirst = 'Zachary';
-    const nameLast = 'Abran';
-    const mockToken: SessionId = 'mockedToken123';
+  afterAll(async () => {
+    const redisClient = require('@redis/client').createClient();
+    await redisClient.quit(); 
+    server.close(); 
+  });
 
-    // Instant return for userRegister
-    (userRegister as jest.Mock).mockReturnValue({
-      body: { token: mockToken },
-      statusCode: 200,
-    });
+  test('Returns error if user not found', async () => {
+    const invalidUserId = 999; 
+    
+    (getUser as jest.Mock).mockResolvedValueOnce(null);
+    
+    await expect(userDetails(invalidUserId)).rejects.toThrowError(
+      new Err('User not found', ErrKind.EINVALID)
+    );
+  });
 
-    // Instant return for userDetails
-    (userDetails as jest.Mock).mockReturnValue({
-      body: {
-        user: {
-          userId: 1,
-          name: `${nameFirst} ${nameLast}`,
-          email,
-          numSuccessfulLogins: 3,
-          numFailedPasswordsSinceLastLogin: 0,
-        },
-      },
-      statusCode: 200,
-    });
+  test('Returns correct user details for valid userId', async () => {
+    const validUserId = 1;
+    const mockUser = {
+      userId: validUserId,
+      nameFirst: 'John',
+      nameLast: 'Doe',
+      email: 'john.doe@example.com',
+      numSuccessfulLogins: 5,
+      numFailedPasswordsSinceLastLogin: 2,
+    };
 
-    // Simulate user registration
-    const regResp = userRegister(email, password, nameFirst, nameLast);
-    expect(regResp.body).toStrictEqual({ token: mockToken });
+    (getUser as jest.Mock).mockResolvedValueOnce(mockUser);
 
-    // Fetch user details
-    const detailsResp = userDetails(mockToken);
-    expect(detailsResp.body).toStrictEqual({
+    const result = await userDetails(validUserId);
+
+    expect(result).toEqual({
       user: {
-        userId: 1,
-        name: `${nameFirst} ${nameLast}`,
-        email,
-        numSuccessfulLogins: 3,
-        numFailedPasswordsSinceLastLogin: 0,
+        userId: validUserId,
+        name: 'John Doe', 
+        email: 'john.doe@example.com',
+        numSuccessfulLogins: 5,
+        numFailedPasswordsSinceLastLogin: 2,
       },
     });
   });
 });
-
-

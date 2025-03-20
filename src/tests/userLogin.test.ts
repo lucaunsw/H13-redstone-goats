@@ -1,167 +1,115 @@
-import { userRegister, userLogin, userDetails, reqHelper } from './testHelper';
-import { SessionId } from '../types';
-import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
+import { userLogin } from '../user'; 
+import { getAllUsers, updateUser } from '../dataStore'; 
+import { Err, ErrKind } from '../types'; 
+import { server } from '../server';  
 
-dotenv.config();
+const crypto = require('crypto');
+const testEmail = 'painpain@email.com';
+const testPassword = 'IwantToCrashOut1234!';
 
-// Mock dependencies
-jest.mock('./testHelper', () => ({
-  userRegister: jest.fn(),
-  userLogin: jest.fn(),
-  userDetails: jest.fn(),
-  reqHelper: jest.fn(),
+jest.mock('../dataStore', () => ({
+  getAllUsers: jest.fn(() => Promise.resolve([])), 
+  updateUser: jest.fn(),
 }));
 
-beforeEach(async () => {
-  (reqHelper as jest.Mock).mockResolvedValue({});
-  await reqHelper('DELETE', '/v1/clear');
-});
+jest.mock('@redis/client', () => ({
+  createClient: jest.fn(() => ({
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+    set: jest.fn(),
+    get: jest.fn(),
+    on: jest.fn(),
+    quit: jest.fn(),
+  })),
+}));
+
+jest.mock('crypto', () => ({
+  createHash: jest.fn(() => ({
+    update: jest.fn().mockReturnThis(),
+    digest: jest.fn().mockReturnValue('hashedPassword'), 
+  })),
+}));
+
 
 describe('userLogin', () => {
   beforeEach(() => {
-    // Mock user registration response
-    (userRegister as jest.Mock).mockResolvedValue({
-      body: { token: 'mockedToken' },
-    });
+    jest.clearAllMocks();
+  });
 
-    // Mock user login response
-    (userLogin as jest.Mock).mockResolvedValue({
-      body: { token: 'mockedToken' },
-      statusCode: 200,
-    });
-
-    // Mock user details response
-    (userDetails as jest.Mock).mockResolvedValue({
-      body: {
-        user: {
-          userId: 1,
-          name: 'fname lname',
-          email: 'example@email.com',
-          numSuccessfulLogins: 2, // Register sets it to 1, then one successful login
-          numFailedPasswordsSinceLastLogin: 0,
-        },
-      },
-    });
+  afterAll(async () => {
+    const redisClient = require('@redis/client').createClient();
+    await redisClient.quit(); 
+    server.close(); 
   });
 
   test('should return userId for valid email and password', async () => {
-    await userRegister('example@email.com', 'ExamplePass123', 'fname', 'lname');
-    const result = await userLogin('example@email.com', 'ExamplePass123');
-    expect(result.statusCode).toBe(200);
+    const validUser = { id: 1, email: testEmail, password: 'hashedPassword', numFailedPasswordsSinceLastLogin: 0, numSuccessfulLogins: 1 };
 
-    const resp = await userDetails(result.body.token);
-    expect(resp.body).toStrictEqual({
-      user: {
-        userId: expect.anything(),
-        name: expect.any(String),
-        email: expect.any(String),
-        numSuccessfulLogins: 2,
-        numFailedPasswordsSinceLastLogin: 0,
-      },
-    });
+    (getAllUsers as jest.Mock).mockResolvedValueOnce([validUser]);
+    
+    const result = await userLogin(testEmail, testPassword);
+
+    expect(result).toEqual({ userId: validUser.id });
+    expect(getAllUsers).toHaveBeenCalledTimes(1);
+    expect(updateUser).toHaveBeenCalledTimes(1);  
+    expect(updateUser).toHaveBeenCalledWith(validUser);
   });
 
   test('should return error for invalid email', async () => {
-    (userLogin as jest.Mock).mockResolvedValue({
-      body: { error: 'Invalid email' },
-      statusCode: 400,
-    });
+    (getAllUsers as jest.Mock).mockResolvedValueOnce([]);
 
-    const loginResult = await userLogin('invalid@email.com', 'ExamplePass123');
-
-    expect(loginResult.body).toStrictEqual({ error: 'Invalid email' });
-    expect(loginResult.statusCode).toBe(400);
+    await expect(userLogin(testEmail, testPassword)).rejects.toThrowError(new Err('Email address does not exist', ErrKind.EINVALID));
+    expect(getAllUsers).toHaveBeenCalledTimes(1);
   });
 
   test('should return error for invalid password with valid email', async () => {
-    (userLogin as jest.Mock).mockResolvedValue({
-      body: { error: 'Incorrect password' },
-      statusCode: 400,
+    const validUser = { id: 1, email: testEmail, password: 'hashedPassword', numFailedPasswordsSinceLastLogin: 0, numSuccessfulLogins: 0 };
+    
+    (getAllUsers as jest.Mock).mockResolvedValueOnce([validUser]);
+
+    (crypto.createHash as jest.Mock).mockReturnValueOnce({
+      update: jest.fn().mockReturnThis(),
+      digest: jest.fn().mockReturnValue('wrongPasswordHash') 
     });
 
-    const loginResult2 = await userLogin('example2@email.com', 'InvalidPass1');
-
-    expect(loginResult2.body).toStrictEqual({ error: 'Incorrect password' });
-    expect(loginResult2.statusCode).toBe(400);
+    await expect(userLogin(testEmail, testPassword)).rejects.toThrowError(new Err('Password does not match the provided email', ErrKind.EINVALID));
+    expect(getAllUsers).toHaveBeenCalledTimes(1);
+    expect(updateUser).toHaveBeenCalledTimes(1);  
+    expect(updateUser).toHaveBeenCalledWith({ ...validUser, numFailedPasswordsSinceLastLogin: 1 });
   });
 
   test('should increment numSuccessfulLogins on successful login', async () => {
-    (userDetails as jest.Mock).mockResolvedValue({
-      body: {
-        user: {
-          userId: 1,
-          name: 'fname lname',
-          email: 'example3@email.com',
-          numSuccessfulLogins: 4,
-          numFailedPasswordsSinceLastLogin: 0,
-        },
-      },
-    });
+    const validUser = { id: 1, email: testEmail, password: 'hashedPassword', numFailedPasswordsSinceLastLogin: 0, numSuccessfulLogins: 0 };
+    
+    (getAllUsers as jest.Mock).mockResolvedValueOnce([validUser]);
 
-    const resp = await userDetails('mockedToken');
+    await userLogin(testEmail, testPassword);
 
-    expect(resp.body).toStrictEqual({
-      user: {
-        userId: expect.anything(),
-        name: expect.any(String),
-        email: expect.any(String),
-        numSuccessfulLogins: 4, // Register sets it to 1, 3 successful logins
-        numFailedPasswordsSinceLastLogin: 0,
-      },
-    });
+    expect(updateUser).toHaveBeenCalledWith({ ...validUser, numSuccessfulLogins: 1, numFailedPasswordsSinceLastLogin: 0 });
   });
 
   test('should reset numFailedPasswordsSinceLastLogin on successful login', async () => {
-    (userDetails as jest.Mock).mockResolvedValue({
-      body: {
-        user: {
-          userId: 1,
-          name: 'fname lname',
-          email: 'example4@email.com',
-          numSuccessfulLogins: 2, // Register sets it to 1
-          numFailedPasswordsSinceLastLogin: 0,
-        },
-      },
-    });
+    const validUser = { id: 1, email: testEmail, password: 'hashedPassword', numFailedPasswordsSinceLastLogin: 5, numSuccessfulLogins: 0 };
+    
+    (getAllUsers as jest.Mock).mockResolvedValueOnce([validUser]);
 
-    const resp = await userDetails('mockedToken');
+    await userLogin(testEmail, testPassword);
 
-    expect(resp.body).toStrictEqual({
-      user: {
-        userId: expect.anything(),
-        name: expect.any(String),
-        email: expect.any(String),
-        numSuccessfulLogins: 2,
-        numFailedPasswordsSinceLastLogin: 0,
-      },
-    });
+    expect(updateUser).toHaveBeenCalledWith({ ...validUser, numSuccessfulLogins: 1, numFailedPasswordsSinceLastLogin: 0 });
   });
 
   test('should increment numFailedPasswordsSinceLastLogin on unsuccessful login', async () => {
-    (userDetails as jest.Mock).mockResolvedValue({
-      body: {
-        user: {
-          userId: 1,
-          name: 'fname lname',
-          email: 'example5@email.com',
-          numSuccessfulLogins: 1,
-          numFailedPasswordsSinceLastLogin: 3,
-        },
-      },
+    const validUser = { id: 1, email: testEmail, password: 'hashedPassword', numFailedPasswordsSinceLastLogin: 0, numSuccessfulLogins: 0 };
+    
+    (getAllUsers as jest.Mock).mockResolvedValueOnce([validUser]);
+
+    (crypto.createHash as jest.Mock).mockReturnValueOnce({
+      update: jest.fn().mockReturnThis(),
+      digest: jest.fn().mockReturnValue('wrongPasswordHash') 
     });
 
-    const resp = await userDetails('mockedToken');
+    await expect(userLogin(testEmail, testPassword)).rejects.toThrowError(new Err('Password does not match the provided email', ErrKind.EINVALID));
 
-    expect(resp.body).toStrictEqual({
-      user: {
-        userId: expect.anything(),
-        name: expect.any(String),
-        email: expect.any(String),
-        numSuccessfulLogins: 1,
-        numFailedPasswordsSinceLastLogin: 3,
-      },
-    });
+    expect(updateUser).toHaveBeenCalledWith({ ...validUser, numFailedPasswordsSinceLastLogin: 1 });
   });
 });
-
