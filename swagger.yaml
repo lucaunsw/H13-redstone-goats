@@ -19,19 +19,7 @@ tags:
   - name: "Test Routes"
     description: Routes used for tests.
 
-paths:
-  /v1/clear:
-    delete:
-      summary: Reset state of application back to the initial state.
-      description: Clear all user, order etc. details.
-      tags:
-        - "Test Routes"
-      responses:
-        200: 
-          description: Sucess
-          schema: 
-            type: object
-            
+paths:      
   /v1/user/register:
     post:
       summary: Register a new user.
