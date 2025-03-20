@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   title: Redstone Goats Order API
-  description: API for creating and managing orders with UBL XML document generation. State diagram is available at https://ibb.co/21H16g4J.
+  description: API for creating and managing orders with UBL XML document generation. State diagram is available at https://ibb.co/gZnRGDpQ.
   version: 1.0.0
   
 host: "h13-redstone-goats.vercel.app" 
@@ -10,22 +10,34 @@ schemes:
   - https
 
 tags:
-  - name: "User Routes"
+  - name: "User Functions"
     description: Routes for user account handling
   - name: "Buyer Routes"
     description: Routes accessible and usable by the buyer party.
   - name: "Seller Routes"
     description: Routes accessible and usable by the seller party.
-  - name: "Test Routes"
+  - name: "Test Functions"
     description: Routes used for tests.
 
-paths:      
+paths:
+  /v1/clear:
+    delete:
+      summary: Reset state of application back to the initial state.
+      description: Clear all user, order etc. details.
+      tags:
+        - "Test Functions"
+      responses:
+        200: 
+          description: Sucess
+          schema: 
+            type: object
+            
   /v1/user/register:
     post:
       summary: Register a new user.
       description: Registers a new user and returns the userId.
       tags:
-        - "User Routes"
+        - "User Functions"
       parameters:
         - in: body
           name: body
@@ -63,7 +75,7 @@ paths:
       summary: Login an existing user
       description: Authenticate a user with email and password.
       tags:
-        - "User Routes"
+        - "User Functions"
       parameters:
         - in: body
           name: body
@@ -105,7 +117,7 @@ paths:
       summary: Logout an existing user
       description: Logout a user by blacklisting the JWT token.
       tags:
-        - "User Routes"
+        - "User Functions"
       parameters:
         - in: body
           name: body
@@ -141,7 +153,7 @@ paths:
       summary: Gets a user's details
       description: Retrieve the details about a specific user
       tags:
-        - "User Routes"
+        - "User Functions"
       parameters:
         - in: body
           name: body
@@ -187,7 +199,7 @@ paths:
       summary: Updates a user's details
       description: Change the current user details
       tags:
-        - "User Routes"
+        - "User Functions"
       parameters:
         - in: body
           name: body
@@ -286,12 +298,17 @@ paths:
           required: true
           type: integer
         - in: body
-          name: updateDetails
+          name: updatedData
           schema:
-            $ref: "#/definitions/OrderRequest"
+            $ref: "#/definitions/OrderChangeParam"
       responses:
         201:
           description: Order updated
+          schema:
+            type: object
+            properties:
+              orderId:
+                type: integer
         400:
           description: Bad request from client e.g invalid bank details, invalid order date
           schema:
@@ -443,7 +460,7 @@ paths:
 
   /v1/order/{userId}/sales:
     get:
-      summary: Send sales analytics data to the seller.
+      summary: Send sales analytics data.
       description: Sends analytical data to the product distributor, with different options for data format. 
       tags:
         - "Seller Routes"
@@ -529,7 +546,8 @@ definitions:
     type: object
     properties:
       creditCardNumber:
-        type: string
+        type: integer
+        format: int64
       CVV:
         type: integer
         format: int32
@@ -603,7 +621,7 @@ definitions:
     type: object
     properties:
       creditCardNumber:
-        type: string
+        type: integer
       CVV:
         type: integer
       expiryDate:
@@ -647,13 +665,30 @@ definitions:
               type: number
             name:
               type: string
+            price:
+              type: number
+            quantity:
+              type: integer
+      CSVurl:
+        type: string
+  OrderChangeParam:
+    type: object
+    properties:
+      items:
+        type: array
+        items:
+          type: object
+          properties:
+            itemId:
+              type: number
+            newQuantity:
+              type: number
+            name:
+              type: string
+            seller:
+              $ref: "#/definitions/UserSimple"
             description:
               type: string
             price:
               type: number
-            amountSold:
-              type: integer
-      CSVurl:
-        type: string
-      PDFurl:
-        type: string
+              
