@@ -23,9 +23,9 @@ function orderChangePutRequest(
       timeout: TIMEOUT_MS,
     });
 
-    // DEBUG
-    console.log('HTTP REQUEST FUNCTION: orderChange Response Body', res.body.toString());
-    console.log('HTTP REQUEST FUNCTION: orderChange Status Code', res.statusCode);
+    // // DEBUG
+    // console.log('HTTP REQUEST FUNCTION: orderChange Response Body', res.body.toString());
+    // console.log('HTTP REQUEST FUNCTION: orderChange Status Code', res.statusCode);
 
     return {
       body: JSON.parse(res.body.toString()),
@@ -40,7 +40,7 @@ async function orderCreatePutRequest( body: Order,) {
       timeout: TIMEOUT_MS,
     });
 
-    console.log('HTTP REQUEST FUNCTION: orderCreate Response Body:', res.body.toString());
+    // console.log('HTTP REQUEST FUNCTION: orderCreate Response Body:', res.body.toString());
 
     return {
       body: JSON.parse(res.body.toString()),
@@ -85,7 +85,7 @@ beforeEach(async() => {
       const decodedBuyer = jwt.verify(buyerToken, process.env.JWT_SECRET as string) as { userId: number };
       testBuyerId = decodedBuyer.userId;
 
-    console.log('PRE-TEST: Test Buyer has been created', testBuyerId);
+    // console.log('PRE-TEST: Test Buyer has been created', testBuyerId);
 
     // REGISTER TEST SELLER TOKEN
     const sellerToken = await userRegister(
@@ -96,7 +96,7 @@ beforeEach(async() => {
         const decodedSeller = jwt.verify(sellerToken, process.env.JWT_SECRET as string) as { userId: number };
         testSellerId = decodedSeller.userId
 
-       console.log('PRE-TEST: Test Seller has been created', testSellerId);
+       // console.log('PRE-TEST: Test Seller has been created', testSellerId);
 
     // TEST BUYER DETAILS
       testBuyer = {
@@ -138,7 +138,7 @@ beforeEach(async() => {
 
     // TEST BILLING DETAILS
     testBillingDetails = {
-        creditCardNumber: 1000000000000000,
+        creditCardNumber: '1000000000000000',
         CVV: 111,
         expiryDate: date, // double check this
     };
@@ -213,15 +213,13 @@ describe('SUCCESS CASES', () => {
         }     
         
         // order change!
-        const ChangeResponse = await orderChangePutRequest(`/v1/${testBuyerId}/order/${orderId2}/change`,changeTestParam);
-        const orderId3 = ChangeResponse.body.orderId;
+        const changeResponse = await orderChangePutRequest(`/v1/${testBuyerId}/order/${orderId2}/change`,changeTestParam);
+        const orderId3 = changeResponse.body.orderId;
         console.log('SUITE 2: Second, order change orderId is:',orderId3);   
 
-        // const changeResponse = await orderChangePutRequest(`/v1/${testBuyerId}/order/${orderId}/change`,changeTestParam);
-        
-        // // Expect success status code, correct body
-        // expect(changeResponse.statusCode).toBe(201);
-        // expect(changeResponse.body).toStrictEqual({ orderId: expect.any(Number) });
+        // Expect success status code, correct body
+        expect(changeResponse.statusCode).toBe(200);
+        expect(changeResponse.body).toStrictEqual({ orderId: expect.any(Number) });
 
         // console.log('changeResponse is:', changeResponse);
     })

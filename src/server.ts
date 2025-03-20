@@ -267,6 +267,8 @@ app.put("/v1/:userId/order/:orderId/change", async (req: Request, res: Response)
     const { userId, orderId } = req.params;
     const updatedData = req.body;
 
+    console.log('Route reached!');
+
     // Call function, return updated order
       const result = await orderChange(Number(userId), Number(orderId), updatedData);
       res.json({orderId: result});
