@@ -4,9 +4,9 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
-import { SessionId, UserSimple, Item, BillingDetails, DeliveryInstructions, Order } from '../types';
+import { UpdatedDataParam, SessionId, UserSimple, Item, BillingDetails, DeliveryInstructions, Order } from '../types';
 import { reqHelper, userRegister } from "./testHelper";
-import { getLatestOrderXML, getOrder} from "../dataStore";
+import { getOrder} from "../dataStore";
 
 // CONSTANTS 
 const SERVER_URL = `http://127.0.0.1:3200`;
@@ -14,36 +14,24 @@ const TIMEOUT_MS = 20 * 1000;
 
 // HTTP REQUEST FUNCTION 
 
-// Generic Put Request
-// function orderChangePutRequest(  
-//     route: string,
-//     body: { 
-//         updatedData: { 
-//             items: Array<{ 
-//                 itemId: number, 
-//                 newQuantity: number, 
-//                 name: string, 
-//                 seller: UserSimple, 
-//                 description: string, 
-//                 price: number 
-//             }> 
-//         } 
-//     }) {
+function orderChangePutRequest(  
+    route: string,
+    body: UpdatedDataParam, ) {
     
-//     const res = request("PUT", SERVER_URL + route, {
-//       json: body,
-//       timeout: TIMEOUT_MS,
-//     });
+    const res = request("PUT", SERVER_URL + route, {
+      json: body,
+      timeout: TIMEOUT_MS,
+    });
 
-//     // DEBUG
-//     console.log('HTTP REQUEST FUNCTION: Change Response Body', res.body.toString());
-//     console.log('HTTP REQUEST FUNCTION: Change Status Code', res.statusCode);
+    // DEBUG
+    console.log('HTTP REQUEST FUNCTION: orderChange Response Body', res.body.toString());
+    console.log('HTTP REQUEST FUNCTION: orderChange Status Code', res.statusCode);
 
-//     return {
-//       body: JSON.parse(res.body.toString()),
-//       statusCode: res.statusCode,
-//     };
-// }
+    return {
+      body: JSON.parse(res.body.toString()),
+      statusCode: res.statusCode,
+    };
+}
 
 // OrderCreate
 async function orderCreatePutRequest( body: Order,) {
@@ -52,7 +40,7 @@ async function orderCreatePutRequest( body: Order,) {
       timeout: TIMEOUT_MS,
     });
 
-    //console.log('HTTP REQUEST FUNCTION: Create Response Body:', res.body.toString());
+    console.log('HTTP REQUEST FUNCTION: orderCreate Response Body:', res.body.toString());
 
     return {
       body: JSON.parse(res.body.toString()),
@@ -186,9 +174,9 @@ beforeEach(async() => {
 
 
 
-describe('SUCCESS', () => {
+describe('SUCCESS CASES', () => {
 
-    test('Order Create - Tests for correct successful return type', async () => {
+    test('Tests orderCreate is successful', async () => {
         // Valid order create
         const CreateResponse = await orderCreatePutRequest(orderCreateTestParam);
         const orderId = CreateResponse.body.orderId;
@@ -201,40 +189,34 @@ describe('SUCCESS', () => {
         console.log('CreateResponse is:', CreateResponse);
     })
 
-    test('Order Change', async () => {
+    test('Tests orderChange is successful', async () => {
         // Valid order create
         const CreateResponse = await orderCreatePutRequest(orderCreateTestParam);
         const orderId = CreateResponse.body.orderId;
         console.log('Second, order create orderId is:',orderId)
 
-                // Expect success status code, correct body
-                expect(CreateResponse.statusCode).toBe(201);
-                expect(CreateResponse.body).toStrictEqual({ orderId: expect.any(Number) });
-                console.log('CreateResponse is:', CreateResponse);
+        // Successful order change
+        const changeTestParam = {
+            userId: testBuyer, orderId: orderId,
+            items: [
+                {itemId: 1, 
+                newQuantity: 3,
+                name: 'TestItem1',
+                seller: testSeller,
+                description: 'TestDescription1',
+                price: 100}
+            ] 
+        }           
 
-        // // Successful order change
-        // const changeTestParam = {
-        //     userId: testBuyer, orderId: orderId, updatedData: {
-        //         items: [
-        //             {itemId: 1, 
-        //             newQuantity: 3,
-        //             name: 'TestItem1',
-        //             seller: testSeller,
-        //             description: 'TestDescription1',
-        //             price: 100}
-        //         ] 
-        //     }        
-        // }    
-        // const changeResponse = await orderChangePutRequest(`/v1/${testBuyerId}/order/${orderId}/change`,changeTestParam);
+        const changeResponse = await orderChangePutRequest(`/v1/${testBuyerId}/order/${orderId}/change`,changeTestParam);
         
-        // // Expect success status code, correct body
-        // expect(changeResponse.statusCode).toBe(201);
-        // expect(changeResponse.body).toStrictEqual({ orderId: expect.any(Number) });
+        // Expect success status code, correct body
+        expect(changeResponse.statusCode).toBe(201);
+        expect(changeResponse.body).toStrictEqual({ orderId: expect.any(Number) });
 
-        // console.log('changeResponse is:', changeResponse);
+        console.log('changeResponse is:', changeResponse);
     })
 })
-
 
 
 

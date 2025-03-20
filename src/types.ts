@@ -83,56 +83,50 @@ export interface Order {
 }
 
 
-export interface User {
-  userId: number;
-  totalPrice: number;
-}
+// export interface User {
+//   userId: number;
+//   totalPrice: number;
+// }
 
-export interface UserParam {
-  userId: number;
-  name: string;
-  streetName: string;
-  cityName: string;
-  postalZone: string;
-  cbcCode: string;
-}
+// export interface UserParam {
+//   userId: number;
+//   name: string;
+//   streetName: string;
+//   cityName: string;
+//   postalZone: string;
+//   cbcCode: string;
+// }
 
-export interface BillingDetailsParam {
-  creditCardNumber: number;
-  CVV: number;
-  expiryDate: string;
-}
+// export interface BillingDetailsParam {
+//   creditCardNumber: number;
+//   CVV: number;
+//   expiryDate: string;
+// }
 
-export interface DeliveryInstructions {
-  streetName: string;
-  citName: string;
-  postalZone: string;
-  countrySubentity: string;
-  addressLine: string;
-  cbcCode: string;
-  startDate: string;
-  startTime: string;
-  endDate: string;
-  endTime: string;
-}
+// export interface DeliveryInstructions {
+//   streetName: string;
+//   cityName: string;
+//   postalZone: string;
+//   countrySubentity: string;
+//   addressLine: string;
+//   cbcCode: string;
+//   startDate: string;
+//   startTime: string;
+//   endDate: string;
+//   endTime: string;
+// }
 
-export enum status {
-  PENDING = "pending",
-  CONFIRMED = "confirmed",
-  CANCELLED = "cancelled",
-}
-
-export interface OrderParam {
-  items: Item[];
-  user: UserParam;
-  seller: UserParam;
-  billingDetails: BillingDetails;
-  delivery: deliveryInstructions;
-  billingDetails: BillingDetailsParam;
-  delivery: DeliveryInstructions;
-  lastEdited?: string;
-  status?: status;
-}
+// export interface OrderParam {
+//   items: Item[];
+//   user: UserParam;
+//   seller: UserParam;
+//   billingDetails: BillingDetails;
+//   delivery: DeliveryInstructions;
+//   billingDetails: BillingDetailsParam;
+//   delivery: DeliveryInstructions;
+//   lastEdited?: string;
+//   status?: status;
+// }
 
 export interface ItemUpdate {
   itemId: number;  
@@ -149,9 +143,16 @@ export interface ItemUpdate {
   
   */
 
-export interface UpdatedData {
-  items: ItemUpdate[]; 
-}
+export interface UpdatedDataParam {
+  items: Array<{ 
+    itemId: number, 
+    newQuantity: number, 
+    name: string, 
+    seller: UserSimple, 
+    description: string, 
+    price: number 
+  }> 
+} 
 
 // Special error handling / other types
 export enum ErrKind {

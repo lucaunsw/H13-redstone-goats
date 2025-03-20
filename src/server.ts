@@ -247,14 +247,14 @@ app.post("/v1/:userId/order/:orderId/confirm", async (req: Request, res: Respons
   }
 );
 
-app.put('/v1/:userId/order/:orderId/items/change', async (req: Request, res: Response) => {
+app.put("/v1/:userId/order/:orderId/change", async (req: Request, res: Response) => {
   try {
     const { userId, orderId } = req.params;
     const updatedData = req.body;
 
     // Call function, return updated order
-      const updatedOrder = await orderChange(Number(userId), Number(orderId), updatedData );
-      res.json(updatedOrder);
+      const result = await orderChange(Number(userId), Number(orderId), updatedData);
+      res.json({orderId: result});
 
     // Error Checking
     } catch (error) {
@@ -267,6 +267,8 @@ app.put('/v1/:userId/order/:orderId/items/change', async (req: Request, res: Res
         statusCode = 400;
       } else if (e.message.includes("Item with id") || e.message.includes("Invalid quantity")) {
         statusCode = 422; // note to self, add changes to swagger + documentation
+      } else {
+        statusCode = 404;
       }
       res.status(statusCode).json({ error: e.message });
     };
