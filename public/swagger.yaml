@@ -19,7 +19,19 @@ tags:
   - name: "Test Routes"
     description: Routes used for tests.
 
-paths:      
+paths:
+  /v1/clear:
+    delete:
+      summary: Reset state of application back to the initial state.
+      description: Clear all user, order etc. details.
+      tags:
+        - "Test Routes"
+      responses:
+        200: 
+          description: Sucess
+          schema: 
+            type: object
+            
   /v1/user/register:
     post:
       summary: Register a new user.
@@ -529,7 +541,8 @@ definitions:
     type: object
     properties:
       creditCardNumber:
-        type: string
+        type: integer
+        format: int64
       CVV:
         type: integer
         format: int32
@@ -603,7 +616,7 @@ definitions:
     type: object
     properties:
       creditCardNumber:
-        type: string
+        type: integer
       CVV:
         type: integer
       expiryDate:

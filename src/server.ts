@@ -1,16 +1,18 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
-import { orderCreate, orderCancel, orderConfirm, orderChange } from "./app";
+import { orderCreate, orderCancel, orderConfirm, orderUserSales, orderChange } from "./app";
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
-import { ErrKind, SessionId, UserId, Err } from './types';
+import { ErrKind, SessionId, Err } from './types';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv'; 
 import { createClient } from 'redis';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import path from 'path';
+import fs from 'fs';
+import yaml from 'js-yaml';
 import { VercelRequest, VercelResponse } from '@vercel/node';
 
 import {
@@ -37,11 +39,24 @@ const PORT = parseInt(process.env.PORT || config.port);
 const HOST = process.env.IP || "127.0.0.1";
 const JWT_SECRET = process.env.JWT_SECRET || "r3dSt0nE@Secr3tD00r!";
 
-// Create path to swagger document.
-const swaggerDocument = YAML.load(path.join(__dirname, '../swagger.yaml'));
+//? CDN CSS
+const CSS_URL =
+ "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.20.1/swagger-ui.min.css";
 
-// Route to serve swagger file.
-app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// Ensure the correct path
+const swaggerPath = path.join(process.cwd(), 'public', 'swagger.yaml');
+
+// Read and parse the YAML file into a JavaScript object
+const swaggerDocument = yaml.load(fs.readFileSync(swaggerPath, 'utf8')) as object;
+
+// Route to serve Swagger UI with custom CSS
+app.use(
+  '/swagger',
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, {
+    customCssUrl: CSS_URL,  // <-- Add custom CSS URL here
+  })
+);
 
 
 // ===========================================================================
@@ -272,6 +287,26 @@ app.put("/v1/:userId/order/:orderId/change", async (req: Request, res: Response)
       }
       res.status(statusCode).json({ error: e.message });
     };
+  }
+);
+
+// Route that returns user sales data.
+app.post("/v1/order/:userId/sales", async (req: Request, res: Response) => {
+  const userId = parseInt(req.params.userId);
+  const csv = req.query.csv === "true";
+  const json = req.query.json === "true";
+  const pdf = req.query.pdf === "true";
+  try {
+    const result = await orderUserSales(csv, json, pdf, userId);
+    res.status(200).json(result);
+  } catch (error) {
+    const e = error as Error;
+    if (e.message === 'Invalid sellerId' || e.message === 'No sellerId provided') {
+      res.status(401).json({ error: e.message });
+    } else {
+      res.status(400).json({ error: e.message });
+    }
+  }
 });
 
 app.delete('/v1/clear', async (_: Request, res: Response) => {

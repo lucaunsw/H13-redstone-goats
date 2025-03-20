@@ -18,7 +18,7 @@ CREATE TABLE Tokens (
 );
 
 CREATE TABLE Items (
-    id          INTEGER NOT NULL,
+    id          INTEGER PRIMARY KEY,
     name        TEXT NOT NULL,
     seller_id   INTEGER NOT NULL REFERENCES Users(id),
     description TEXT,
@@ -27,7 +27,7 @@ CREATE TABLE Items (
 
 CREATE TABLE BillingDetails (
     id             SERIAL PRIMARY KEY,
-    credit_card_no BIGINT NOT NULL,
+    credit_card_no TEXT NOT NULL,
     cvv            INTEGER NOT NULL CHECK (cvv BETWEEN 100 AND 999), -- Ensures a valid CVV
     expiry_date    TEXT NOT NULL
 );
@@ -55,7 +55,7 @@ CREATE TABLE Orders (
     status       TEXT CHECK (status IN ('pending', 'confirmed', 'cancelled')), -- Enum-like constraint
     total_price  DECIMAL(10,2) NOT NULL,
     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    order_xml_id INTEGER REFERENCES OrderXMLs(id)
+    order_xml_id INTEGER
 );
 
 CREATE TABLE OrderItems (
