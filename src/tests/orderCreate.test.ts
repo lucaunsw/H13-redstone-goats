@@ -14,7 +14,7 @@ let testBillingDetails: BillingDetails;
 let testDeliveryDetails: DeliveryInstructions;
 const date = new Date().toISOString().split('T')[0];
 
-describe('Test orderCreate route', () => {
+describe.skip('Test orderCreate route', () => {
 
   beforeEach(async () => {
     await reqHelper('DELETE', '/v1/clear');

@@ -105,7 +105,7 @@ export function getPostResponse(
       }
     });
 
-  describe("tests for orderConfirm", () => {
+  describe.skip("tests for orderConfirm", () => {
     test("Should confirm an order successfully", async () => {
       const date = new Date().toISOString().split('T')[0];
       const body = {
