@@ -143,7 +143,7 @@ export interface ItemUpdate {
   
   */
 
-export interface UpdatedDataParam {
+export interface OrderChangeParam {
   items: Array<{ 
     itemId: number, 
     newQuantity: number, 

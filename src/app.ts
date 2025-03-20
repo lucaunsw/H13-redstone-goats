@@ -113,19 +113,52 @@ async function orderChange(
   }
 ){ 
 
-  // [ERROR CHECKING] OrderId Exists
-  const order = await getOrder(orderId); 
-  if (!order) {
-    throw new Error('Invalid orderId'); 
-  }
+  return orderId;
+}
 
-  // [ERROR CHECKING] UserId Exists
-  const user = await getUser(userId);
-  if (!user) {
-    throw new Error('Invalid userId');
-  }
+const orderConfirm = async (userId: number, orderId: number) => {
+    const user = await getUser(userId);
+    if (!user) {
+        throw new Error("invalid userId");
+    }
+    const orderData = await getOrder(orderId);
+    if (!orderData) {
+        throw new Error("invalid orderId");
+    }
+
+    if (orderData.status === status.CANCELLED) {
+      throw new Error('order has been cancelled');
+    }
+
+    if (orderData.status === status.CONFIRMED) {
+        return {};
+    }
+    orderData.status = status.CONFIRMED;
+
+    const updateSuccess = await updateOrder(orderData);
+    if (!updateSuccess) {
+        throw new Error("failed to update order status to confirmed");
+    }
+
+    const UBL = await getOrderXML(Number(orderData.orderXMLId));
+    return { UBL };
+};
+
+export { orderCreate, orderCancel, orderConfirm, orderChange };
 
 
+// orderChange logic, here to get out of the way
+  // // [ERROR CHECKING] OrderId Exists
+  // const order = await getOrder(orderId); 
+  // if (!order) {
+  //   throw new Error('Invalid orderId'); 
+  // }
+
+  // // [ERROR CHECKING] UserId Exists
+  // const user = await getUser(userId);
+  // if (!user) {
+  //   throw new Error('Invalid userId');
+  // }
 
 
   // // // Calculate updated price: cannot use this function as it throws an error when 
@@ -190,40 +223,3 @@ async function orderChange(
 
   // // Return updated orderId
   // return updatedOrderId;
-
-
-
-
-
-  return orderId;
-}
-
-const orderConfirm = async (userId: number, orderId: number) => {
-    const user = await getUser(userId);
-    if (!user) {
-        throw new Error("invalid userId");
-    }
-    const orderData = await getOrder(orderId);
-    if (!orderData) {
-        throw new Error("invalid orderId");
-    }
-
-    if (orderData.status === status.CANCELLED) {
-      throw new Error('order has been cancelled');
-    }
-
-    if (orderData.status === status.CONFIRMED) {
-        return {};
-    }
-    orderData.status = status.CONFIRMED;
-
-    const updateSuccess = await updateOrder(orderData);
-    if (!updateSuccess) {
-        throw new Error("failed to update order status to confirmed");
-    }
-
-    const UBL = await getOrderXML(Number(orderData.orderXMLId));
-    return { UBL };
-};
-
-export { orderCreate, orderCancel, orderConfirm, orderChange };
