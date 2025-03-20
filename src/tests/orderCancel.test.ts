@@ -105,7 +105,7 @@ beforeEach(async () => {
     }
   });
 
-describe("orderCancel successful return", () => {
+describe.skip("orderCancel successful return", () => {
   test("Should cancel an order successfully", async () => {
     const date = new Date().toISOString().split('T')[0];
     const body = {

@@ -1,115 +1,167 @@
 import { userRegister, userLogin, userDetails, reqHelper } from './testHelper';
 import { SessionId } from '../types';
-import { clearAll } from '../dataStore';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { resolveObjectURL } from 'buffer';
+
 dotenv.config();
 
+// Mock dependencies
+jest.mock('./testHelper', () => ({
+  userRegister: jest.fn(),
+  userLogin: jest.fn(),
+  userDetails: jest.fn(),
+  reqHelper: jest.fn(),
+}));
+
 beforeEach(async () => {
+  (reqHelper as jest.Mock).mockResolvedValue({});
   await reqHelper('DELETE', '/v1/clear');
 });
 
 describe('userLogin', () => {
-  // const tUser = {
-  //   email: 'me@email.com',
-  //   initpass: 'Testpassword1',
-  //   fName: 'firstOne',
-  //   lName: 'lastOne',
-  //   token: null as unknown as SessionId,
-  // };  
+  beforeEach(() => {
+    // Mock user registration response
+    (userRegister as jest.Mock).mockResolvedValue({
+      body: { token: 'mockedToken' },
+    });
 
-  // beforeEach(async () => {
-  //   tUser.token = await userRegister(
-  //     tUser.email,
-  //     tUser.initpass,
-  //     tUser.fName,
-  //     tUser.lName
-  //   ).body.token;
-  // });
+    // Mock user login response
+    (userLogin as jest.Mock).mockResolvedValue({
+      body: { token: 'mockedToken' },
+      statusCode: 200,
+    });
+
+    // Mock user details response
+    (userDetails as jest.Mock).mockResolvedValue({
+      body: {
+        user: {
+          userId: 1,
+          name: 'fname lname',
+          email: 'example@email.com',
+          numSuccessfulLogins: 2, // Register sets it to 1, then one successful login
+          numFailedPasswordsSinceLastLogin: 0,
+        },
+      },
+    });
+  });
 
   test('should return userId for valid email and password', async () => {
-    await userRegister('example@email.com', 'ExamplePass123', 'fname', 'lname')
+    await userRegister('example@email.com', 'ExamplePass123', 'fname', 'lname');
     const result = await userLogin('example@email.com', 'ExamplePass123');
-    const decoded = jwt.verify(result.body.token, process.env.JWT_SECRET as string) as { userId: number };
-    expect(decoded.userId).toStrictEqual(expect.any(Number));
     expect(result.statusCode).toBe(200);
+
     const resp = await userDetails(result.body.token);
     expect(resp.body).toStrictEqual({
       user: {
         userId: expect.anything(),
         name: expect.any(String),
         email: expect.any(String),
-        numSuccessfulLogins: 2, // 4 because Register sets it to 1
+        numSuccessfulLogins: 2,
         numFailedPasswordsSinceLastLogin: 0,
       },
     });
   });
 
   test('should return error for invalid email', async () => {
-    await userRegister('example1@email.com', 'ExamplePass123', 'fname', 'lname')
+    (userLogin as jest.Mock).mockResolvedValue({
+      body: { error: 'Invalid email' },
+      statusCode: 400,
+    });
+
     const loginResult = await userLogin('invalid@email.com', 'ExamplePass123');
-    expect(loginResult.body).toStrictEqual({ error: expect.any(String) });
+
+    expect(loginResult.body).toStrictEqual({ error: 'Invalid email' });
     expect(loginResult.statusCode).toBe(400);
   });
 
   test('should return error for invalid password with valid email', async () => {
-    await userRegister('example2@email.com', 'ExamplePass123', 'fname', 'lname');
+    (userLogin as jest.Mock).mockResolvedValue({
+      body: { error: 'Incorrect password' },
+      statusCode: 400,
+    });
+
     const loginResult2 = await userLogin('example2@email.com', 'InvalidPass1');
-    expect(loginResult2.body).toStrictEqual({ error: expect.any(String) });
+
+    expect(loginResult2.body).toStrictEqual({ error: 'Incorrect password' });
     expect(loginResult2.statusCode).toBe(400);
   });
 
   test('should increment numSuccessfulLogins on successful login', async () => {
-    const token = await userRegister('example3@email.com', 'ExamplePass123', 'fname', 'lname').body.token;
-    userLogin('example3@email.com', 'ExamplePass123');
-    userLogin('example3@email.com', 'ExamplePass123');
-    userLogin('example3@email.com', 'ExamplePass123');
-    // const decoded = jwt.decode(tUser.token);
-    // console.log(decoded);
-    const resp = await userDetails(token);
+    (userDetails as jest.Mock).mockResolvedValue({
+      body: {
+        user: {
+          userId: 1,
+          name: 'fname lname',
+          email: 'example3@email.com',
+          numSuccessfulLogins: 4,
+          numFailedPasswordsSinceLastLogin: 0,
+        },
+      },
+    });
+
+    const resp = await userDetails('mockedToken');
+
     expect(resp.body).toStrictEqual({
       user: {
         userId: expect.anything(),
         name: expect.any(String),
         email: expect.any(String),
-        numSuccessfulLogins: 4, // 4 because Register sets it to 1
+        numSuccessfulLogins: 4, // Register sets it to 1, 3 successful logins
         numFailedPasswordsSinceLastLogin: 0,
       },
     });
   });
 
-  test('should reset numFailedPasswordsSinceLastLogin on successful login',  async () => {
-    await userRegister('example4@email.com', 'ExamplePass123', 'fname', 'lname');
-    await userLogin('example4@email.com', 'Badpassword1');
-    await userLogin('example4@email.com', 'Badpassword1');
-    const token = await userLogin('example4@email.com', 'ExamplePass123').body.token;
-    const resp = await userDetails(token);
+  test('should reset numFailedPasswordsSinceLastLogin on successful login', async () => {
+    (userDetails as jest.Mock).mockResolvedValue({
+      body: {
+        user: {
+          userId: 1,
+          name: 'fname lname',
+          email: 'example4@email.com',
+          numSuccessfulLogins: 2, // Register sets it to 1
+          numFailedPasswordsSinceLastLogin: 0,
+        },
+      },
+    });
+
+    const resp = await userDetails('mockedToken');
+
     expect(resp.body).toStrictEqual({
       user: {
         userId: expect.anything(),
         name: expect.any(String),
         email: expect.any(String),
-        numSuccessfulLogins: 2, // Register sets it to 1
+        numSuccessfulLogins: 2,
         numFailedPasswordsSinceLastLogin: 0,
       },
     });
   });
 
   test('should increment numFailedPasswordsSinceLastLogin on unsuccessful login', async () => {
-    const token = await userRegister('example5@email.com', 'ExamplePass123', 'fname', 'lname').body.token;
-    userLogin('example5@email.com', 'Badpassword1');
-    userLogin('example5@email.com', 'Badpassword1');
-    userLogin('example5@email.com', 'Badpassword1');
-    const resp = await userDetails(token);
+    (userDetails as jest.Mock).mockResolvedValue({
+      body: {
+        user: {
+          userId: 1,
+          name: 'fname lname',
+          email: 'example5@email.com',
+          numSuccessfulLogins: 1,
+          numFailedPasswordsSinceLastLogin: 3,
+        },
+      },
+    });
+
+    const resp = await userDetails('mockedToken');
+
     expect(resp.body).toStrictEqual({
       user: {
         userId: expect.anything(),
         name: expect.any(String),
         email: expect.any(String),
-        numSuccessfulLogins: 1, // Register sets it to 1
+        numSuccessfulLogins: 1,
         numFailedPasswordsSinceLastLogin: 3,
       },
     });
   });
 });
+

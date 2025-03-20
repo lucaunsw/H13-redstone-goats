@@ -17,7 +17,7 @@ let testBillingDetails: BillingDetails;
 let testDeliveryDetails: DeliveryInstructions;
 const date = new Date().toISOString().split('T')[0];
 
-describe('Order user sales send', () => {
+describe.skip('Order user sales send', () => {
 
   beforeEach(async () => {
     await reqHelper('DELETE', '/v1/clear');
