@@ -298,12 +298,17 @@ paths:
           required: true
           type: integer
         - in: body
-          name: updateDetails
+          name: updatedData
           schema:
-            $ref: "#/definitions/OrderRequest"
+            $ref: "#/definitions/OrderChangeParam"
       responses:
         201:
           description: Order updated
+          schema:
+            type: object
+            properties:
+              orderId:
+                type: integer
         400:
           description: Bad request from client e.g invalid bank details, invalid order date
           schema:
@@ -666,3 +671,23 @@ definitions:
               type: integer
       CSVurl:
         type: string
+  OrderChangeParam:
+    type: object
+    properties:
+      items:
+        type: array
+        items:
+          type: object
+          properties:
+            itemId:
+              type: number
+            newQuantity:
+              type: number
+            name:
+              type: string
+            seller:
+              $ref: "#/definitions/UserSimple"
+            description:
+              type: string
+            price:
+              type: number
