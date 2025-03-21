@@ -1,9 +1,38 @@
-import { userRegister, reqHelper, requestOrderCreate } from './testHelper';
+// import { userRegister, reqHelper, requestOrderCreate } from './testHelper';
+import { orderCreate } from '../app';
 import { UserSimple, 
   Item, BillingDetails, DeliveryInstructions } from '../types';
-import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { server } from '../server';
+import { addOrderXML, addOrder, getItem } from '../dataStore';
+import { userExists, validItemList, addItems, generateUBL, validSellers } from '../helper';
 dotenv.config();
+import { createClient } from '@redis/client';
+
+jest.mock('../dataStore', () => ({
+  addOrder: jest.fn(),
+  addOrderXML: jest.fn(),
+  getItem: jest.fn(),
+}));
+
+jest.mock('../helper', () => ({
+  userExists: jest.fn(),
+  validItemList: jest.fn(),
+  addItems: jest.fn(),
+  generateUBL: jest.fn(),
+  validSellers: jest.fn(),
+}));
+  
+jest.mock('@redis/client', () => ({
+  createClient: jest.fn(() => ({
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+    set: jest.fn(),
+    get: jest.fn(),
+    on: jest.fn(),
+    quit: jest.fn(),
+  })),
+}));
 
 let userId: number;
 let testName: string;
@@ -14,27 +43,13 @@ let testBillingDetails: BillingDetails;
 let testDeliveryDetails: DeliveryInstructions;
 const date = new Date().toISOString().split('T')[0];
 
-describe.skip('Test orderCreate route', () => {
-
+describe('Test orderCreate route', () => {
   beforeEach(async () => {
-    await reqHelper('DELETE', '/v1/clear');
+    jest.clearAllMocks();
     testName = 'Bobby Jones'
-  
-    const token = await userRegister(
-      'example10@email.com', 
-      'example123', 
-      'Bobby', 
-      'Jones').body.token;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
-    userId = decoded.userId;
-  
-    const sellerToken = await userRegister(
-      'example20@email.com', 
-      'example123', 
-      'Test', 
-      'Seller').body.token;
-    const sellerId = (jwt.verify(sellerToken, process.env.JWT_SECRET as string) as { userId: number }).userId;
-  
+    userId = 1;
+    const sellerId = 2;
+    
     testSeller = {
       id: sellerId,
       name: 'Test Seller',
@@ -77,38 +92,65 @@ describe.skip('Test orderCreate route', () => {
     }
   });
 
-  test('Error from invalid token', async () => {
-    const invalidUserId = userId + 1; 
-    
-    const body = {
-      items: [testItem],
-      quantities: [1],
-      buyer: {
-        userId: invalidUserId,
-        name: testName,
-        streetName: 'White St',
-        cityName: 'Sydney',
-        postalZone: '2000',
-        cbcCode: 'AU',
-      },
-      billingDetails: testBillingDetails,
-      delivery: testDeliveryDetails,
-      totalPrice: 5,
-      createdAt: new Date(),
-    };
-
-    const response = await requestOrderCreate(body);
-    expect(response.statusCode).toBe(401);
-    expect(response.body).toStrictEqual({ error: expect.any(String) });
+  afterAll(async () => {
+    const redisClient = createClient();
+    await redisClient.quit(); 
+    server.close(); 
   });
 
+  test('Error from no userId provided', async () => {
+      const body = {
+        items: [testItem],
+        quantities: [1],
+        buyer: {
+          id: null,
+          name: testName,
+          streetName: 'White St',
+          cityName: 'Sydney',
+          postalZone: '2000',
+          cbcCode: 'AU',
+        },
+        billingDetails: testBillingDetails,
+        delivery: testDeliveryDetails,
+        totalPrice: 5,
+        createdAt: new Date(),
+      };
+  
+      await expect(orderCreate(body)).rejects.toThrowError('No userId provided');
+  });
+
+  test('Error from invalid token', async () => {
+    (userExists as jest.Mock).mockResolvedValue(false);
+      const invalidUserId = userId + 1; 
+      
+      const body = {
+        items: [testItem],
+        quantities: [1],
+        buyer: {
+          id: invalidUserId,
+          name: testName,
+          streetName: 'White St',
+          cityName: 'Sydney',
+          postalZone: '2000',
+          cbcCode: 'AU',
+        },
+        billingDetails: testBillingDetails,
+        delivery: testDeliveryDetails,
+        totalPrice: 5,
+        createdAt: new Date(),
+      };
+  
+      await expect(orderCreate(body)).rejects.toThrowError('Invalid userId or a different name is registered to userId');
+      expect(userExists).toHaveBeenCalledTimes(1);
+  });
+  
   test('Error from invalid name', async () => {
-    
+    (userExists as jest.Mock).mockResolvedValue(false);
     const body = {
       items: [testItem],
       quantities: [1],
       buyer: {
-        userId: userId,
+        id: userId,
         name: 'Apple Apple',
         streetName: 'White St',
         cityName: 'Sydney',
@@ -122,12 +164,14 @@ describe.skip('Test orderCreate route', () => {
       createdAt: new Date(),
     };
 
-    const response = await requestOrderCreate(body);
-    expect(response.statusCode).toBe(401);
-    expect(response.body).toStrictEqual({ error: expect.any(String) });
+    await expect(orderCreate(body)).rejects.toThrowError('Invalid userId or a different name is registered to userId');
+    expect(userExists).toHaveBeenCalledTimes(1);
   });
 
   test('Error from invalid total price', async () => {
+    (userExists as jest.Mock).mockResolvedValue(true);
+    (validSellers as jest.Mock).mockResolvedValueOnce(true); 
+    (validItemList as jest.Mock).mockResolvedValue(40);
     const body = {
       items: [{
         id: 124,
@@ -145,35 +189,137 @@ describe.skip('Test orderCreate route', () => {
       lastEdited: date,
       createdAt: new Date(),
     }
-    const response = await requestOrderCreate(body);
-    expect(response.statusCode).toBe(400);
-    expect(response.body).toStrictEqual({ error: expect.any(String) });
+    await expect(orderCreate(body)).rejects.toThrowError('Incorrect total price provided');
+    expect(userExists).toHaveBeenCalledTimes(1);
+    expect(validItemList).toHaveBeenCalledTimes(1);
   });
 
-  test('Error from invalid item', async () => {
+  test('Error from invalid seller', async () => {
+    (userExists as jest.Mock).mockResolvedValueOnce(true); 
+    (validSellers as jest.Mock).mockResolvedValueOnce(false); 
+    (getItem as jest.Mock).mockResolvedValue(null);
+  
     const body = {
       items: [{
         id: 124,
         name: 'Toothpaste',
-        seller: testSeller,
-        price: -2,
+        seller: {
+          id: 1,
+          name: 'Test Seller',
+          streetName: 'Yellow St',
+          cityName: 'Brisbane',
+          postalZone: '4000',
+          cbcCode: 'AU',
+        },
+        price: 5,
         description: 'This is Toothpaste',
       }],
       quantities: [1],
       buyer: testBuyer,
       seller: testSeller,
       billingDetails: testBillingDetails,
-      totalPrice: -2,
+      totalPrice: 5,
       delivery: testDeliveryDetails,
       lastEdited: date,
       createdAt: new Date(),
-    }
-    const response = await requestOrderCreate(body);
-    expect(response.statusCode).toBe(400);
-    expect(response.body).toStrictEqual({ error: expect.any(String) });
+    };
+  
+    await expect(orderCreate(body)).rejects.toThrowError('Invalid seller(s)');
+    expect(userExists).toHaveBeenCalledTimes(1);
   });
 
+  test('Error from no itemId provided', async () => {
+    const helper = await import('../helper'); 
+    jest.spyOn(helper, 'validItemList').mockImplementation(jest.requireActual('../helper').validItemList);
+    (userExists as jest.Mock).mockResolvedValueOnce(true); 
+    (validSellers as jest.Mock).mockResolvedValueOnce(true);
+    (getItem as jest.Mock).mockResolvedValue(null);
+    
+      const body = {
+        items: [{
+          id: null,
+          name: 'Toothpaste',
+          seller: testSeller,
+          price: 5,
+          description: 'This is Toothpaste',
+        }],
+        quantities: [1],
+        buyer: testBuyer,
+        seller: testSeller,
+        billingDetails: testBillingDetails,
+        totalPrice: 5,
+        delivery: testDeliveryDetails,
+        lastEdited: date,
+        createdAt: new Date(),
+      }
+      await expect(orderCreate(body)).rejects.toThrowError('No item Id provided');
+      expect(userExists).toHaveBeenCalledTimes(1);
+  });
+
+  test('Error from invalid item price', async () => {
+    const helper = await import('../helper'); 
+    jest.spyOn(helper, 'validItemList').mockImplementation(jest.requireActual('../helper').validItemList);
+    (userExists as jest.Mock).mockResolvedValueOnce(true); 
+    (validSellers as jest.Mock).mockResolvedValueOnce(true);
+    (getItem as jest.Mock).mockResolvedValue(null);
+    
+      const body = {
+        items: [{
+          id: 124,
+          name: 'Toothpaste',
+          seller: testSeller,
+          price: -2,
+          description: 'This is Toothpaste',
+        }],
+        quantities: [1],
+        buyer: testBuyer,
+        seller: testSeller,
+        billingDetails: testBillingDetails,
+        totalPrice: -2,
+        delivery: testDeliveryDetails,
+        lastEdited: date,
+        createdAt: new Date(),
+      }
+      await expect(orderCreate(body)).rejects.toThrowError('Invalid item price');
+      expect(userExists).toHaveBeenCalledTimes(1);
+      expect(getItem).toHaveBeenCalledTimes(1);
+  });
+
+  test('Error from invalid item quantity', async () => {
+    const helper = await import('../helper'); 
+    jest.spyOn(helper, 'validItemList').mockImplementation(jest.requireActual('../helper').validItemList);
+    (userExists as jest.Mock).mockResolvedValueOnce(true); 
+    (validSellers as jest.Mock).mockResolvedValueOnce(true);
+    (getItem as jest.Mock).mockResolvedValue(null);
+    
+      const body = {
+        items: [{
+          id: 124,
+          name: 'Toothpaste',
+          seller: testSeller,
+          price: 5,
+          description: 'This is Toothpaste',
+        }],
+        quantities: [-1],
+        buyer: testBuyer,
+        seller: testSeller,
+        billingDetails: testBillingDetails,
+        totalPrice: 5,
+        delivery: testDeliveryDetails,
+        lastEdited: date,
+        createdAt: new Date(),
+      }
+      await expect(orderCreate(body)).rejects.toThrowError('Invalid quantities provided');
+      expect(userExists).toHaveBeenCalledTimes(1);
+      expect(getItem).toHaveBeenCalledTimes(1);
+  });
+  
   test('Error from invalid item (duplicate item ids)', async () => {
+    const helper = await import('../helper'); 
+    jest.spyOn(helper, 'validItemList').mockImplementation(jest.requireActual('../helper').validItemList);
+    (userExists as jest.Mock).mockResolvedValueOnce(true);
+    (validSellers as jest.Mock).mockResolvedValueOnce(true); 
+    (getItem as jest.Mock).mockResolvedValue(null);
     const body = {
       items: [{
         id: 123,
@@ -191,12 +337,48 @@ describe.skip('Test orderCreate route', () => {
       lastEdited: date,
       createdAt: new Date(),
     }
-    const response = await requestOrderCreate(body);
-    expect(response.statusCode).toBe(400);
-    expect(response.body).toStrictEqual({ error: expect.any(String) });
+    await expect(orderCreate(body)).rejects.toThrowError('Same item Id is registered to a different item name');
+    expect(userExists).toHaveBeenCalledTimes(1);
+    expect(getItem).toHaveBeenCalledTimes(1);
   });
 
+  test('Error from invalid item id', async () => {
+    const helper = await import('../helper'); 
+    jest.spyOn(helper, 'validItemList').mockImplementation(jest.requireActual('../helper').validItemList);
+    (userExists as jest.Mock).mockResolvedValueOnce(true); 
+    (validSellers as jest.Mock).mockResolvedValueOnce(true);
+    (getItem as jest.Mock).mockResolvedValue({
+      id: 124,
+      name: 'Rock',
+      seller: testSeller,
+      price: 5,
+      description: 'This is a rock'
+    });
+    
+      const body = {
+        items: [{
+          id: 124,
+          name: 'Toothpaste',
+          seller: testSeller,
+          price: 5,
+          description: 'This is Toothpaste',
+        }],
+        quantities: [1],
+        buyer: testBuyer,
+        seller: testSeller,
+        billingDetails: testBillingDetails,
+        totalPrice: 5,
+        delivery: testDeliveryDetails,
+        lastEdited: date,
+        createdAt: new Date(),
+      }
+      await expect(orderCreate(body)).rejects.toThrowError('Same item Id is registered to a different item name');
+      expect(userExists).toHaveBeenCalledTimes(1);
+      expect(getItem).toHaveBeenCalledTimes(1);
+  });
+  
   test('Error from invalid bank details', async () => {
+    (userExists as jest.Mock).mockResolvedValue(true);
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
@@ -212,12 +394,11 @@ describe.skip('Test orderCreate route', () => {
       lastEdited: date,
       createdAt: new Date(),
     }
-    const response = await requestOrderCreate(body);
-    expect(response.statusCode).toBe(400);
-    expect(response.body).toStrictEqual({ error: expect.any(String) });
+    await expect(orderCreate(body)).rejects.toThrowError('Invalid bank details');
   });
-
+  
   test('Error from invalid delivery date (start date is before current date)', async () => {
+    (userExists as jest.Mock).mockResolvedValue(true);
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
@@ -240,12 +421,12 @@ describe.skip('Test orderCreate route', () => {
       lastEdited: date,
       createdAt: new Date(),
     }
-    const response = await requestOrderCreate(body);
-    expect(response.statusCode).toBe(400);
-    expect(response.body).toStrictEqual({ error: expect.any(String) });
-  });
+    await expect(orderCreate(body)).rejects.toThrowError('Invalid date selection');
 
+  });
+  
   test('Error from invalid delivery date (end date is before start date)', async () => {
+    (userExists as jest.Mock).mockResolvedValue(true);
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
@@ -268,12 +449,18 @@ describe.skip('Test orderCreate route', () => {
       lastEdited: date,
       createdAt: new Date(),
     }
-    const response = await requestOrderCreate(body);
-    expect(response.statusCode).toBe(400);
-    expect(response.body).toStrictEqual({ error: expect.any(String) });
+    await expect(orderCreate(body)).rejects.toThrowError('Invalid date selection');
+
   }); 
 
   test('Success case: Returns orderId', async () => {
+    (userExists as jest.Mock).mockResolvedValue(true);
+    (validSellers as jest.Mock).mockResolvedValueOnce(true); 
+    (validItemList as jest.Mock).mockResolvedValue(5);
+    (addItems as jest.Mock).mockResolvedValue({});
+    (addOrder as jest.Mock).mockResolvedValue(1);
+    (generateUBL as jest.Mock).mockResolvedValueOnce('Mock UBL');
+    (addOrderXML as jest.Mock).mockResolvedValue(1);
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
@@ -285,8 +472,9 @@ describe.skip('Test orderCreate route', () => {
       lastEdited: date,
       createdAt: new Date(),
     }
-    const response = await requestOrderCreate(body);
-    expect(response.statusCode).toBe(201);
-    expect(response.body).toStrictEqual({ orderId: expect.any(Number) });
+    await orderCreate(body);
+    expect(addOrderXML).toHaveBeenCalledTimes(1);
   });
+    
 });
+
