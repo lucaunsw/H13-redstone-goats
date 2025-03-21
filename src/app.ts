@@ -1,5 +1,5 @@
 import { ItemSales, Order, status } from './types';
-import { generateUBL, userExists, validItemList, addItems } from './helper';
+import { generateUBL, userExists, validItemList, addItems, validSellers } from './helper';
 import { getUser, addOrder, getOrder, updateOrder, 
   addOrderXML,
   getOrderXML, getItemSellerSales
@@ -43,6 +43,12 @@ async function orderCreate (order: Order) {
   // If an invalid amount of item quantities are provided, throw error.
   if (order.items.length !== order.quantities.length) {
     throw new Error ('Invalid amount of item quantities provided');
+  }
+
+  // Checks if sellers are valid.
+  const sellersValid = await validSellers(order);
+  if (!sellersValid) {
+    throw new Error ('Invalid seller(s)');
   }
 
   // Helper function checks if all items/quantities are valid and returns the 
