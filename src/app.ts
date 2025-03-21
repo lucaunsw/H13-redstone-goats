@@ -153,11 +153,11 @@ const orderConfirm = async (userId: number, orderId: number) => {
  * @param {boolean} csv - boolean to state if the csv data option is desired.
  * @param {boolean} json - boolean to state if the json data option is desired.
  * @param {boolean} pdf - boolean to state if the pdf data option is desired.
- * @param {number} sellId - Unique identifier for a seller.
+ * @param {number | null} sellId - Unique identifier for a seller.
  * @returns { sales?: ItemSales[]; CSVurl?: string; PDFurl?: string } 
  * returnBody - an object which can contain: the csv url, json body, pdf for sales info.
  */
-async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerId: number) {
+async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerId: number | null) {
   if (!csv && !json && !pdf) {
     throw new Error ('At least one data option should be selected');
   }
