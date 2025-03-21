@@ -1,4 +1,4 @@
-import { ItemSales, Order, status, UserSimple } from './types';
+import { ItemSales, Order, status, UserSimple, OrderChangeParam } from './types';
 import { generateUBL, userExists, validItemList, addItems } from './helper';
 import { getUser, addOrder, getOrder, updateOrder, 
   addOrderXML,
@@ -115,19 +115,103 @@ const orderCancel = async (userId: number, orderId: number, reason: string) => {
 async function orderChange(
   userId: number, 
   orderId: number, 
-  updatedData: {
-    items: Array<{ 
-      itemId: number; 
-      newQuantity: number;
-      name: string;
-      seller: UserSimple;
-      description: string;
-      price: number
-    }>;
-  }
+  updatedData: OrderChangeParam
 ){ 
 
-  return orderId;
+  // userId: number, 
+  // orderId: number, 
+  // updatedData: {
+  //   items: Array<{ 
+  //     itemId: number; 
+  //     newQuantity: number;
+  //     name: string;
+  //     seller: UserSimple;
+  //     description: string;
+  //     price: number
+  //   }>;
+  // }
+
+  // [ERROR CHECKING] OrderId is invalid or null (passed in from route url
+  const order = await getOrder(orderId); 
+  if (!order) {
+    throw new Error('Invalid orderId'); 
+  }
+
+  // [ERROR CHECKING] UserId is invalid or null (passed in from route url)
+  const user = await getUser(userId);
+  if (!user) {
+    throw new Error('Invalid userId');
+  }
+
+  // // // Calculate updated price: cannot use this function as it throws an error when 
+  // // // an existing itemId is inputted, change this prolly?
+  // // const totalPrice = await validItemList({
+  // //   ...order,
+  // //   items: updatedData.items,
+  // //   quantities: updatedData.items.map(item => item.newQuantity)});
+
+  // const totalPrice = 200 // Placeholder value
+
+  // // Set current time for lastEdited:
+  // const lastEdited = new Date().toISOString();
+
+  // // MODIFY ITEMS LOCALLY - Since orderUpdate db function updates all at once. must handle insertion/deleetion
+  // // logic prior to db push
+
+  // // Iterate over the provided updated items
+  // for (const item of updatedData.items) {
+  //   const itemIndex = order.items.findIndex(orderItem => orderItem.id === item.itemId);
+  //   const existingItem = await getItem(item.itemId);
+  //   if (existingItem) {
+  //     // If item exists and quantity is > 0, update quantity
+  //     if (item.newQuantity > 0) {
+  //       order.quantities[itemIndex] = item.newQuantity;
+
+  //     // If item exists and quantity is = 0, remove item
+  //     } else if (item.newQuantity === 0) {
+  //       order.items.splice(itemIndex, 1); 
+  //       order.quantities.splice(itemIndex, 1); 
+  //     } 
+  //     // If item does not exist, add new item to order
+  //   } else {
+  //     order.items.push({ 
+  //       id: item.itemId, 
+  //       name: item.name,
+  //       seller: item.seller, 
+  //       description: item.description,
+  //       price: item.price 
+  //     });
+  //     order.quantities.push(item.newQuantity);
+  //   }
+  // }
+
+  // // Create updatedOrder object to parse into db function
+  // const updatedOrder = {
+  //   ...order,
+  //   lastEdited,
+  //   totalPrice,
+  // };
+
+  // // Update order in one go woohoo
+  // const updatedOrderId = await addOrder(updatedOrder);
+
+  // // TAKEN FROM LACH
+  // // Helper function generates UBl document.
+  // if (orderId !== null) {
+  //   const UBLDocument = generateUBL(orderId, updatedOrder);
+  //   console.log(UBLDocument);
+  //   addOrderXML(orderId, UBLDocument);
+  // }
+
+  // // Return updated orderId
+  // return updatedOrderId;
+
+  const retrievedOrder = await getOrder(orderId);
+  console.log(retrievedOrder);
+
+  console.log('v.2 all change logic has been run!')
+
+  return 4;
 }
 
 /**
@@ -266,82 +350,3 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
 }
 
 export { orderCreate, orderCancel, orderConfirm, orderUserSales, orderChange };
-
-
-
-// orderChange logic, here to get out of the way
-  // // [ERROR CHECKING] OrderId Exists
-  // const order = await getOrder(orderId); 
-  // if (!order) {
-  //   throw new Error('Invalid orderId'); 
-  // }
-
-  // // [ERROR CHECKING] UserId Exists
-  // const user = await getUser(userId);
-  // if (!user) {
-  //   throw new Error('Invalid userId');
-  // }
-
-
-  // // // Calculate updated price: cannot use this function as it throws an error when 
-  // // // an existing itemId is inputted, change this prolly?
-  // // const totalPrice = await validItemList({
-  // //   ...order,
-  // //   items: updatedData.items,
-  // //   quantities: updatedData.items.map(item => item.newQuantity)});
-
-  // const totalPrice = 200 // Placeholder value
-
-  // // Set current time for lastEdited:
-  // const lastEdited = new Date().toISOString();
-
-  // // MODIFY ITEMS LOCALLY - Since orderUpdate db function updates all at once. must handle insertion/deleetion
-  // // logic prior to db push
-
-  // // Iterate over the provided updated items
-  // for (const item of updatedData.items) {
-  //   const itemIndex = order.items.findIndex(orderItem => orderItem.id === item.itemId);
-  //   const existingItem = await getItem(item.itemId);
-  //   if (existingItem) {
-  //     // If item exists and quantity is > 0, update quantity
-  //     if (item.newQuantity > 0) {
-  //       order.quantities[itemIndex] = item.newQuantity;
-
-  //     // If item exists and quantity is = 0, remove item
-  //     } else if (item.newQuantity === 0) {
-  //       order.items.splice(itemIndex, 1); 
-  //       order.quantities.splice(itemIndex, 1); 
-  //     } 
-  //     // If item does not exist, add new item to order
-  //   } else {
-  //     order.items.push({ 
-  //       id: item.itemId, 
-  //       name: item.name,
-  //       seller: item.seller, 
-  //       description: item.description,
-  //       price: item.price 
-  //     });
-  //     order.quantities.push(item.newQuantity);
-  //   }
-  // }
-
-  // // Create updatedOrder object to parse into db function
-  // const updatedOrder = {
-  //   ...order,
-  //   lastEdited,
-  //   totalPrice,
-  // };
-
-  // // Update order in one go woohoo
-  // const updatedOrderId = await addOrder(updatedOrder);
-
-  // // TAKEN FROM LACH
-  // // Helper function generates UBl document.
-  // if (orderId !== null) {
-  //   const UBLDocument = generateUBL(orderId, updatedOrder);
-  //   console.log(UBLDocument);
-  //   addOrderXML(orderId, UBLDocument);
-  // }
-
-  // // Return updated orderId
-  // return updatedOrderId;

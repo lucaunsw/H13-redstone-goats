@@ -201,7 +201,7 @@ describe('SUCCESS CASES', () => {
 
         // Valid order change input
         const changeTestParam = {
-            userId: testBuyer, orderId: orderId2,
+            userId: testBuyerId, orderId: orderId2,
             items: [
                 {itemId: 1, 
                 newQuantity: 3,
@@ -210,12 +210,13 @@ describe('SUCCESS CASES', () => {
                 description: 'TestDescription1',
                 price: 100}
             ] 
-        }     
+        }
         
         // order change!
         const changeResponse = await orderChangePutRequest(`/v1/${testBuyerId}/order/${orderId2}/change`,changeTestParam);
         const orderId3 = changeResponse.body.orderId;
-        console.log('SUITE 2: Second, order change orderId is:',orderId3);   
+        // console.log('SUITE 2: Second, order change orderId is:',orderId3);   
+        // console.log('SUITE 2: Second, order change return body:',changeResponse);   
 
         // Expect success status code, correct body
         expect(changeResponse.statusCode).toBe(200);
@@ -225,10 +226,71 @@ describe('SUCCESS CASES', () => {
     })
 })
 
+describe.only('INVALID INPUT', () => {
+    test('Tests for 401 error when orderId (Route) is invalid', async () => {
+        const CreateResponse3 = await orderCreatePutRequest(createTestParam);
+        const orderId3 = CreateResponse3.body.orderId;      
+
+        /// Valid order change param
+        const changeTestParam2 = {
+            userId: testBuyerId, orderId: orderId3, 
+            items: [
+                {itemId: 1, 
+                newQuantity: 3,
+                name: 'TestItem1',
+                seller: testSeller,
+                description: 'TestDescription1',
+                price: 100}
+            ] 
+        }  
+
+        let url = `/v1/${testBuyerId}/order/${orderId3 + 1234}/change`;
+        const changeResponse = await orderChangePutRequest(url,changeTestParam2);
+        
+        // Expect: 401 status code
+        expect(changeResponse.statusCode).toBe(401);
+        console.log('invalid route orderId', changeResponse);
+    })
+
+    test('Tests for 401 error when userId (Param) in invalid', async () => {
+        const CreateResponse4 = await orderCreatePutRequest(createTestParam);
+        const orderId4 = CreateResponse4.body.orderId;      
+        
+        /// Invalid order change param
+        const changeTestParam3 = {
+            userId: testBuyerId + 123, orderId: orderId4, 
+            items: [
+                {itemId: 1, 
+                newQuantity: 3,
+                name: 'TestItem1',
+                seller: testSeller,
+                description: 'TestDescription1',
+                price: 100}
+            ] 
+        }  
+
+        let url = `/v1/${testBuyerId + 123}/order/${orderId4}/change`;
+        const changeResponse = await orderChangePutRequest(url,changeTestParam3);
+        
+        // Expect: 401 status code
+        expect(changeResponse.statusCode).toBe(401);
+        console.log('invalid route userId', changeResponse);
+    })
+})
 
 
 
+//         // TEST TEMPLATE
+// describe('INVALID INPUT', () => {
 
+//     test('Tests for 401 error when userId is invalid', async () => {
+       
+//     })
+
+//     test('Tests orderChange is successful', async () => {
+        
+//     })
+// })
 
 
 // describe.only('SUCCESS', () => {
