@@ -126,14 +126,8 @@ export async function validItemList(order: Order) {
       throw new Error ('No item Id provided');
     } else if (itemIds.has(item.id)) {
       throw new Error ('Same item Id is registered to a different item name');
-    } else if (!item.seller.id) {
-      throw new Error ('No seller Id provided');
-    }
-    const seller = await userExists(item.seller.id, item.seller.name);
-    if (!seller) {
-      throw new Error 
-    ('Invalid sellerId or a different name is registered to sellerId');
-    }
+    } 
+    
     const orderItem = await getItem(item.id);
     if (orderItem && orderItem.name !== item.name) {
       throw new Error ('Same item Id is registered to a different item name');
@@ -151,6 +145,26 @@ export async function validItemList(order: Order) {
   }
   // Return total order price.
   return totalPrice;
+}
+
+/**
+ * Helper function to check if all sellers in an order are valid.
+ * @param {Order} order - object containg all the order information.
+ * @returns { boolean } - True if all the sellers are valid, false else.
+ */
+export async function validSellers(order: Order) {
+  for (let i = 0; i < order.items.length; i++) {
+    const item = order.items[i];
+    if (!item.seller.id) {
+      throw new Error ('No seller Id provided');
+    }
+    const seller = await userExists(item.seller.id, item.seller.name);
+    if (!seller) {
+      throw new Error 
+    ('Invalid sellerId or a different name is registered to sellerId');
+    }
+  }
+  return true;
 }
 
 /**

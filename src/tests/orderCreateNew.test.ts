@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { server } from '../server';
 import { addOrderXML, addItem, addOrder, getItem } from '../dataStore';
-import { userExists, validItemList, addItems, generateUBL } from '../helper';
+import { userExists, validItemList, addItems, generateUBL, validSellers } from '../helper';
 dotenv.config();
 
 jest.mock('../dataStore', () => ({
@@ -21,6 +21,7 @@ jest.mock('../helper', () => ({
   validItemList: jest.fn(),
   addItems: jest.fn(),
   generateUBL: jest.fn(),
+  validSellers: jest.fn(),
 }));
   
 jest.mock('@redis/client', () => ({
@@ -123,32 +124,33 @@ describe('Test orderCreate route', () => {
       expect(userExists).toHaveBeenCalledTimes(1);
     });
   
-    test('Error from invalid name', async () => {
-      (userExists as jest.Mock).mockResolvedValue(false);
-      const body = {
-        items: [testItem],
-        quantities: [1],
-        buyer: {
-          id: userId,
-          name: 'Apple Apple',
-          streetName: 'White St',
-          cityName: 'Sydney',
-          postalZone: '2000',
-          cbcCode: 'AU',
-        },
-        billingDetails: testBillingDetails,
-        delivery: testDeliveryDetails,
-        totalPrice: 5,
-        lastEdited: date,
-        createdAt: new Date(),
-      };
-  
-      await expect(orderCreate(body)).rejects.toThrowError('Invalid userId or a different name is registered to userId');
-      expect(userExists).toHaveBeenCalledTimes(1);
-    });
+  test('Error from invalid name', async () => {
+    (userExists as jest.Mock).mockResolvedValue(false);
+    const body = {
+      items: [testItem],
+      quantities: [1],
+      buyer: {
+        id: userId,
+        name: 'Apple Apple',
+        streetName: 'White St',
+        cityName: 'Sydney',
+        postalZone: '2000',
+        cbcCode: 'AU',
+      },
+      billingDetails: testBillingDetails,
+      delivery: testDeliveryDetails,
+      totalPrice: 5,
+      lastEdited: date,
+      createdAt: new Date(),
+    };
+
+    await expect(orderCreate(body)).rejects.toThrowError('Invalid userId or a different name is registered to userId');
+    expect(userExists).toHaveBeenCalledTimes(1);
+  });
 
   test('Error from invalid total price', async () => {
     (userExists as jest.Mock).mockResolvedValue(true);
+    (validSellers as jest.Mock).mockResolvedValueOnce(true); 
     (validItemList as jest.Mock).mockResolvedValue(40);
     const body = {
       items: [{
@@ -172,12 +174,9 @@ describe('Test orderCreate route', () => {
     expect(validItemList).toHaveBeenCalledTimes(1);
   });
 
-  test.skip('Error from invalid seller', async () => {
-    jest.unmock('../helper');
-    const helper = await import('../helper'); 
-
-    jest.spyOn(helper, 'validItemList'); 
-    (helper.userExists as jest.Mock) = jest.fn().mockResolvedValueOnce(true); 
+  test('Error from invalid seller', async () => {
+    (userExists as jest.Mock).mockResolvedValueOnce(true); 
+    (validSellers as jest.Mock).mockResolvedValueOnce(false); 
     (getItem as jest.Mock).mockResolvedValue(null);
   
     const body = {
@@ -205,21 +204,13 @@ describe('Test orderCreate route', () => {
       createdAt: new Date(),
     };
   
-    await expect(orderCreate(body)).rejects.toThrowError(
-      'Invalid userId or a different name is registered to userId'
-    );
-  
+    await expect(orderCreate(body)).rejects.toThrowError('Invalid seller(s)');
     expect(userExists).toHaveBeenCalledTimes(1);
-    expect(getItem).toHaveBeenCalledTimes(0); 
   });
 
   test.skip('Error from invalid item price', async () => {
-    jest.mock('../helper', () => ({
-      ...jest.requireActual('../helper'), // Retain other actual implementations
-      userExists: jest.fn().mockResolvedValue(true), // Mock userExists locally
-    }));
-    const helper = await import('../helper'); 
-    jest.spyOn(helper, 'validItemList').mockImplementation(jest.requireActual('../helper').validItemList);
+    (userExists as jest.Mock).mockResolvedValueOnce(true); 
+    (validSellers as jest.Mock).mockResolvedValueOnce(true);
     (getItem as jest.Mock).mockResolvedValue(null);
     
       const body = {
@@ -242,128 +233,132 @@ describe('Test orderCreate route', () => {
       await expect(orderCreate(body)).rejects.toThrowError('Invalid item price');
       expect(userExists).toHaveBeenCalledTimes(1);
       expect(getItem).toHaveBeenCalledTimes(1);
-    });
+  });
   
-    test.skip('Error from invalid item (duplicate item ids)', async () => {
-      const body = {
-        items: [{
-          id: 123,
-          name: 'Toothpaste',
-          seller: testSeller,
-          price: 5,
-          description: 'This is Toothpaste',
-        }, testItem],
-        quantities: [1,1],
-        buyer: testBuyer,
+  test.skip('Error from invalid item (duplicate item ids)', async () => {
+    (userExists as jest.Mock).mockResolvedValueOnce(true);
+    (validSellers as jest.Mock).mockResolvedValueOnce(true); 
+    (getItem as jest.Mock).mockResolvedValue(null);
+    const body = {
+      items: [{
+        id: 123,
+        name: 'Toothpaste',
         seller: testSeller,
-        billingDetails: testBillingDetails,
-        totalPrice: 10,
-        delivery: testDeliveryDetails,
-        lastEdited: date,
-        createdAt: new Date(),
-      }
-      // const response = await requestOrderCreate(body);
-      // expect(response.statusCode).toBe(400);
-      // expect(response.body).toStrictEqual({ error: expect.any(String) });
-    });
+        price: 5,
+        description: 'This is Toothpaste',
+      }, testItem],
+      quantities: [1,1],
+      buyer: testBuyer,
+      seller: testSeller,
+      billingDetails: testBillingDetails,
+      totalPrice: 10,
+      delivery: testDeliveryDetails,
+      lastEdited: date,
+      createdAt: new Date(),
+    }
+    // const response = await requestOrderCreate(body);
+    // expect(response.statusCode).toBe(400);
+    // expect(response.body).toStrictEqual({ error: expect.any(String) });
+  });
   
-    test('Error from invalid bank details', async () => {
-      (userExists as jest.Mock).mockResolvedValue(true);
-      const date = new Date().toISOString().split('T')[0];
-      const body = {
-        items: [testItem],
-        quantities: [1],
-        buyer: testBuyer,
-        billingDetails: {
-          creditCardNumber: "100000000000000000",
-          CVV: 111,
-          expiryDate: date,
-        },
-        totalPrice: 5,
-        delivery: testDeliveryDetails,
-        lastEdited: date,
-        createdAt: new Date(),
-      }
-      await expect(orderCreate(body)).rejects.toThrowError('Invalid bank details');
-    });
+  test('Error from invalid bank details', async () => {
+    (userExists as jest.Mock).mockResolvedValue(true);
+    const date = new Date().toISOString().split('T')[0];
+    const body = {
+      items: [testItem],
+      quantities: [1],
+      buyer: testBuyer,
+      billingDetails: {
+        creditCardNumber: "100000000000000000",
+        CVV: 111,
+        expiryDate: date,
+      },
+      totalPrice: 5,
+      delivery: testDeliveryDetails,
+      lastEdited: date,
+      createdAt: new Date(),
+    }
+    await expect(orderCreate(body)).rejects.toThrowError('Invalid bank details');
+  });
   
-    test('Error from invalid delivery date (start date is before current date)', async () => {
-      (userExists as jest.Mock).mockResolvedValue(true);
-      const date = new Date().toISOString().split('T')[0];
-      const body = {
-        items: [testItem],
-        quantities: [1],
-        buyer: testBuyer,
-        billingDetails: testBillingDetails,
-        totalPrice: 5,
-        delivery: {
-          streetName: 'White St',
-          cityName: 'Sydney',
-          postalZone: '2000',
-          countrySubentity: 'NSW',
-          addressLine: '33 White St, Sydney NSW',
-          cbcCode: 'AU',
-          startDate: new Date(2025, 0, 1).toISOString().split('T')[0],
-          startTime: '13:00',
-          endDate: new Date(2025, 0, 1).toISOString().split('T')[0],
-          endTime: '13:00'
-        },
-        lastEdited: date,
-        createdAt: new Date(),
-      }
-      await expect(orderCreate(body)).rejects.toThrowError('Invalid date selection');
+  test('Error from invalid delivery date (start date is before current date)', async () => {
+    (userExists as jest.Mock).mockResolvedValue(true);
+    const date = new Date().toISOString().split('T')[0];
+    const body = {
+      items: [testItem],
+      quantities: [1],
+      buyer: testBuyer,
+      billingDetails: testBillingDetails,
+      totalPrice: 5,
+      delivery: {
+        streetName: 'White St',
+        cityName: 'Sydney',
+        postalZone: '2000',
+        countrySubentity: 'NSW',
+        addressLine: '33 White St, Sydney NSW',
+        cbcCode: 'AU',
+        startDate: new Date(2025, 0, 1).toISOString().split('T')[0],
+        startTime: '13:00',
+        endDate: new Date(2025, 0, 1).toISOString().split('T')[0],
+        endTime: '13:00'
+      },
+      lastEdited: date,
+      createdAt: new Date(),
+    }
+    await expect(orderCreate(body)).rejects.toThrowError('Invalid date selection');
 
-    });
+  });
   
-    test('Error from invalid delivery date (end date is before start date)', async () => {
-      (userExists as jest.Mock).mockResolvedValue(true);
-      const date = new Date().toISOString().split('T')[0];
-      const body = {
-        items: [testItem],
-        quantities: [1],
-        buyer: testBuyer,
-        billingDetails: testBillingDetails,
-        totalPrice: 5,
-        delivery: {
-          streetName: 'White St',
-          cityName: 'Sydney',
-          postalZone: '2000',
-          countrySubentity: 'NSW',
-          addressLine: '33 White St, Sydney NSW',
-          cbcCode: 'AU',
-          startDate: new Date(2025, 9, 5).toISOString().split('T')[0],
-          startTime: '13:00',
-          endDate: new Date(2025, 9, 3).toISOString().split('T')[0],
-          endTime: '13:00'
-        },
-        lastEdited: date,
-        createdAt: new Date(),
-      }
-      await expect(orderCreate(body)).rejects.toThrowError('Invalid date selection');
+  test('Error from invalid delivery date (end date is before start date)', async () => {
+    (userExists as jest.Mock).mockResolvedValue(true);
+    const date = new Date().toISOString().split('T')[0];
+    const body = {
+      items: [testItem],
+      quantities: [1],
+      buyer: testBuyer,
+      billingDetails: testBillingDetails,
+      totalPrice: 5,
+      delivery: {
+        streetName: 'White St',
+        cityName: 'Sydney',
+        postalZone: '2000',
+        countrySubentity: 'NSW',
+        addressLine: '33 White St, Sydney NSW',
+        cbcCode: 'AU',
+        startDate: new Date(2025, 9, 5).toISOString().split('T')[0],
+        startTime: '13:00',
+        endDate: new Date(2025, 9, 3).toISOString().split('T')[0],
+        endTime: '13:00'
+      },
+      lastEdited: date,
+      createdAt: new Date(),
+    }
+    await expect(orderCreate(body)).rejects.toThrowError('Invalid date selection');
 
-    }); 
-  
-    test('Success case: Returns orderId', async () => {
-      (userExists as jest.Mock).mockResolvedValue(true);
-      (validItemList as jest.Mock).mockResolvedValue(5);
-      (addItems as jest.Mock).mockResolvedValue({});
-      (addOrder as jest.Mock).mockResolvedValue(1);
-      (generateUBL as jest.Mock).mockResolvedValueOnce('Mock UBL');
-      (addOrderXML as jest.Mock).mockResolvedValue(1);
-      const date = new Date().toISOString().split('T')[0];
-      const body = {
-        items: [testItem],
-        quantities: [1],
-        buyer: testBuyer,
-        billingDetails: testBillingDetails,
-        totalPrice: 5,
-        delivery: testDeliveryDetails,
-        lastEdited: date,
-        createdAt: new Date(),
-      }
-      await orderCreate(body);
-      expect(addOrderXML).toHaveBeenCalledTimes(1);
-    });
+  }); 
+
+  test('Success case: Returns orderId', async () => {
+    (userExists as jest.Mock).mockResolvedValue(true);
+    (validSellers as jest.Mock).mockResolvedValueOnce(true); 
+    (validItemList as jest.Mock).mockResolvedValue(5);
+    (addItems as jest.Mock).mockResolvedValue({});
+    (addOrder as jest.Mock).mockResolvedValue(1);
+    (generateUBL as jest.Mock).mockResolvedValueOnce('Mock UBL');
+    (addOrderXML as jest.Mock).mockResolvedValue(1);
+    const date = new Date().toISOString().split('T')[0];
+    const body = {
+      items: [testItem],
+      quantities: [1],
+      buyer: testBuyer,
+      billingDetails: testBillingDetails,
+      totalPrice: 5,
+      delivery: testDeliveryDetails,
+      lastEdited: date,
+      createdAt: new Date(),
+    }
+    await orderCreate(body);
+    expect(addOrderXML).toHaveBeenCalledTimes(1);
+  });
     
 });
 
