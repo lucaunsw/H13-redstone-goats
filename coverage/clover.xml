@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1742478727789" clover="3.2.0">
+  <project timestamp="1742478727789" name="All files">
+    <metrics statements="35" coveredstatements="21" conditionals="4" coveredconditionals="4" methods="11" coveredmethods="2" elements="50" coveredelements="27" complexity="0" loc="35" ncloc="35" packages="2" files="2" classes="2"/>
+    <package name="src">
+      <metrics statements="12" coveredstatements="9" conditionals="4" coveredconditionals="4" methods="3" coveredmethods="2"/>
+      <file name="types.ts" path="/Users/luca/Documents/SENG2021-project/H13-redstone-goats/src/types.ts">
+        <metrics statements="12" coveredstatements="9" conditionals="4" coveredconditionals="4" methods="3" coveredmethods="2"/>
+        <line num="65" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="66" count="2" type="stmt"/>
+        <line num="67" count="2" type="stmt"/>
+        <line num="68" count="2" type="stmt"/>
+        <line num="86" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="87" count="2" type="stmt"/>
+        <line num="88" count="2" type="stmt"/>
+        <line num="89" count="2" type="stmt"/>
+        <line num="101" count="2" type="stmt"/>
+        <line num="105" count="0" type="stmt"/>
+        <line num="106" count="0" type="stmt"/>
+        <line num="107" count="0" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.tests">
+      <metrics statements="23" coveredstatements="12" conditionals="0" coveredconditionals="0" methods="8" coveredmethods="0"/>
+      <file name="testHelper.ts" path="/Users/luca/Documents/SENG2021-project/H13-redstone-goats/src/tests/testHelper.ts">
+        <metrics statements="23" coveredstatements="12" conditionals="0" coveredconditionals="0" methods="8" coveredmethods="0"/>
+        <line num="1" count="5" type="stmt"/>
+        <line num="2" count="5" type="stmt"/>
+        <line num="10" count="5" type="stmt"/>
+        <line num="11" count="5" type="stmt"/>
+        <line num="13" count="5" type="stmt"/>
+        <line num="18" count="0" type="stmt"/>
+        <line num="22" count="0" type="stmt"/>
+        <line num="31" count="5" type="stmt"/>
+        <line num="37" count="0" type="stmt"/>
+        <line num="47" count="5" type="stmt"/>
+        <line num="48" count="0" type="stmt"/>
+        <line num="56" count="5" type="stmt"/>
+        <line num="57" count="0" type="stmt"/>
+        <line num="64" count="5" type="stmt"/>
+        <line num="65" count="0" type="stmt"/>
+        <line num="72" count="5" type="stmt"/>
+        <line num="78" count="0" type="stmt"/>
+        <line num="90" count="5" type="stmt"/>
+        <line num="93" count="0" type="stmt"/>
+        <line num="97" count="0" type="stmt"/>
+        <line num="103" count="5" type="stmt"/>
+        <line num="106" count="0" type="stmt"/>
+        <line num="110" count="0" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>

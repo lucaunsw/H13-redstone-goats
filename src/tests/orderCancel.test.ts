@@ -1,22 +1,13 @@
 import request from "sync-request-curl";
 const SERVER_URL = `http://127.0.0.1:3200`;
 const TIMEOUT_MS = 20 * 1000;
-import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { BillingDetails, DeliveryInstructions, Item, UserSimple } from "../types";
-import { reqHelper, userRegister, requestOrderCreate} from "./testHelper";
+import { BillingDetails, DeliveryInstructions, Item, Order, status, UserSimple } from "../types";
+import { getOrder, getUser, updateOrder } from "../dataStore";
+import { orderCancel } from "../app";
+import { createClient } from '@redis/client';
+import { server } from '../server';
 dotenv.config();
-
-function getPutResponse(route: string, body: { [key: string]: unknown }) {
-  const res = request("PUT", SERVER_URL + route, {
-    json: body,
-    timeout: TIMEOUT_MS,
-  });
-  return {
-    body: JSON.parse(res.body.toString()),
-    statusCode: res.statusCode,
-  };
-}
 
 export function getPostResponse(
   route: string,
@@ -33,6 +24,34 @@ export function getPostResponse(
   };
 }
 
+jest.mock('../dataStore', () => ({
+  getUser: jest.fn(),
+  getOrder: jest.fn(),
+  updateOrder: jest.fn(),
+  addOrder: jest.fn(),
+  addOrderXML: jest.fn(),
+  getItem: jest.fn(),
+}));
+
+jest.mock('../helper', () => ({
+  userExists: jest.fn(),
+  validItemList: jest.fn(),
+  addItems: jest.fn(),
+  generateUBL: jest.fn(),
+  validSellers: jest.fn(),
+}));
+  
+jest.mock('@redis/client', () => ({
+  createClient: jest.fn(() => ({
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+    set: jest.fn(),
+    get: jest.fn(),
+    on: jest.fn(),
+    quit: jest.fn(),
+  })),
+}));
+
 ////////////////////////////////////////////////////////////////////////////////
 
 let userId: number;
@@ -44,25 +63,13 @@ let testBillingDetails: BillingDetails;
 let testDeliveryDetails: DeliveryInstructions;
 const date = new Date().toISOString().split('T')[0];
 
-beforeEach(async () => {
-    await reqHelper('DELETE', '/v1/clear');
+describe("Tests for orderCancel", () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
     testName = 'Bobby Jones'
-  
-    const token = await userRegister(
-      'example10@email.com', 
-      'example123', 
-      'Bobby', 
-      'Jones').body.token;
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
-    userId = decoded.userId;
-  
-    const sellerToken = await userRegister(
-      'example20@email.com', 
-      'example123', 
-      'Test', 
-      'Seller').body.token;
-    const sellerId = (jwt.verify(sellerToken, process.env.JWT_SECRET as string) as { userId: number }).userId;
-  
+    userId = 1;
+    const sellerId = 2;
+    
     testSeller = {
       id: sellerId,
       name: 'Test Seller',
@@ -105,97 +112,145 @@ beforeEach(async () => {
     }
   });
 
-describe.skip("orderCancel successful return", () => {
-  test("Should cancel an order successfully", async () => {
-    const date = new Date().toISOString().split('T')[0];
-    const body = {
-      items: [testItem],
-      quantities: [1],
-      buyer: testBuyer,
-      billingDetails: testBillingDetails,
-      totalPrice: 5,
-      delivery: testDeliveryDetails,
-      lastEdited: date,
-      createdAt: new Date(),
-    }
-    const response = await requestOrderCreate(body);
-    expect(response.statusCode).toBe(201);
-    expect(response.body).toStrictEqual({ orderId: expect.any(Number) });
-    const orderId = response.body.orderId;
+  afterAll(async () => {
+    const redisClient = createClient();
+    await redisClient.quit(); 
+    server.close(); 
+  });
 
-    const res = await getPutResponse(`/v1/${userId}/order/${orderId}/cancel`, {
-      reason: "Changed my mind",
-    });
-    expect(res.body).toStrictEqual({ reason: "Changed my mind" });
-    expect(res.statusCode).toBe(200);
-  }, 15000);
+  test("Should successfully cancel an order", async () => {
+    const mockOrder: Order = {
+      id: testBuyer.id,
+      items: [testItem], 
+      quantities: [2], 
+      buyer: testBuyer, 
+      billingDetails: testBillingDetails, 
+      delivery: testDeliveryDetails, 
+      lastEdited: new Date().toISOString(), 
+      status: status.PENDING, 
+      totalPrice: testItem.price * 2, 
+      createdAt: new Date(), 
+      orderXMLId: 789, 
+    };
+    const mockReason = 'Changed my mind';
+    const orderId = mockOrder.id; 
+  
+    (getUser as jest.Mock).mockResolvedValue(orderId);
+    (getOrder as jest.Mock).mockResolvedValue(mockOrder); 
+    (updateOrder as jest.Mock).mockResolvedValue(true);
+  
+    const result = await orderCancel(userId, Number(orderId), mockReason);
+  
+    expect(result).toStrictEqual({ reason: mockReason });
+    expect(getOrder).toHaveBeenCalledWith(orderId); 
+  });
 
   test("Unable to cancel error due to invalid userId", async () => {
-    const date = new Date().toISOString().split('T')[0];
-    const body = {
-      items: [testItem],
-      quantities: [1],
-      buyer: testBuyer,
-      billingDetails: testBillingDetails,
-      totalPrice: 5,
-      delivery: testDeliveryDetails,
-      lastEdited: date,
-      createdAt: new Date(),
+    const mockOrder: Order = {
+      id: testBuyer.id,
+      items: [testItem], 
+      quantities: [2], 
+      buyer: testBuyer, 
+      billingDetails: testBillingDetails, 
+      delivery: testDeliveryDetails, 
+      lastEdited: new Date().toISOString(), 
+      status: status.PENDING, 
+      totalPrice: testItem.price * 2, 
+      createdAt: new Date(), 
+      orderXMLId: 789, 
+    };
+    const mockReason = 'Changed my mind';
+    const orderId = mockOrder.id; 
+  
+    (getUser as jest.Mock).mockResolvedValue(null);
+    (getOrder as jest.Mock).mockResolvedValue(mockOrder); 
+    (updateOrder as jest.Mock).mockResolvedValue(true);
+  
+    let result;
+    try {
+      result = await orderCancel(userId + 1000, Number(orderId), mockReason);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        result = { error: error.message }; 
+      } else {
+        result = { error: "Unknown error occurred" }; 
+      }
     }
-    const response = await requestOrderCreate(body);
-    const orderId = response.body.orderId;
 
-    const res = await getPutResponse(`/v1/${userId + 1000000}/order/${orderId}/cancel`, {
-      reason: "Changed my mind",
-    });
-    expect(res.body).toStrictEqual({ error: expect.any(String) });
-    expect(res.statusCode).toBe(401);
+    expect(result).toStrictEqual({ error: expect.any(String) });
+    expect(getOrder).not.toHaveBeenCalled(); 
   });
 
   test("Unable to cancel error due to invalid orderId", async () => {
-    const date = new Date().toISOString().split('T')[0];
-    const body = {
-      items: [testItem],
-      quantities: [1],
-      buyer: testBuyer,
-      billingDetails: testBillingDetails,
-      totalPrice: 5,
-      delivery: testDeliveryDetails,
-      lastEdited: date,
-      createdAt: new Date(),
+    const mockOrder: Order = {
+      id: testBuyer.id,
+      items: [testItem], 
+      quantities: [2], 
+      buyer: testBuyer, 
+      billingDetails: testBillingDetails, 
+      delivery: testDeliveryDetails, 
+      lastEdited: new Date().toISOString(), 
+      status: status.PENDING, 
+      totalPrice: testItem.price * 2, 
+      createdAt: new Date(), 
+      orderXMLId: 789, 
+    };
+    const mockReason = 'Changed my mind';
+    const orderId = Number(mockOrder.id) + 10000; 
+  
+    (getUser as jest.Mock).mockResolvedValue(null);
+    (getOrder as jest.Mock).mockResolvedValue(mockOrder); 
+    (updateOrder as jest.Mock).mockResolvedValue(true);
+  
+    let result;
+    try {
+      result = await orderCancel(userId, orderId, mockReason);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        result = { error: error.message }; 
+      } else {
+        result = { error: "Unknown error occurred" }; 
+      }
     }
-    const response = await requestOrderCreate(body);
-    const orderId = response.body.orderId;
 
-    const res = await getPutResponse(`/v1/${userId}/order/${orderId + 1000000}/cancel`, {
-      reason: "Changed my mind",
-    });
-    expect(res.body).toStrictEqual({ error: expect.any(String) });
-    expect(res.statusCode).toBe(401);
+    expect(result).toStrictEqual({ error: expect.any(String) });
+    expect(getOrder).not.toHaveBeenCalled(); 
   });
 
   test("Unable to cancel since order is already cancelled", async () => {
-    const date = new Date().toISOString().split('T')[0];
-    const body = {
-      items: [testItem],
-      quantities: [1],
-      buyer: testBuyer,
-      billingDetails: testBillingDetails,
-      totalPrice: 5,
-      delivery: testDeliveryDetails,
-      lastEdited: date,
-      createdAt: new Date(),
+    const mockOrder: Order = {
+      id: testBuyer.id,
+      items: [testItem], 
+      quantities: [2], 
+      buyer: testBuyer, 
+      billingDetails: testBillingDetails, 
+      delivery: testDeliveryDetails, 
+      lastEdited: new Date().toISOString(), 
+      status: status.CANCELLED,
+      totalPrice: testItem.price * 2, 
+      createdAt: new Date(), 
+      orderXMLId: 789, 
+    };
+    const mockReason = 'Changed my mind';
+    const orderId = mockOrder.id; 
+    
+    (getUser as jest.Mock).mockResolvedValue(testBuyer);
+    (getOrder as jest.Mock).mockResolvedValue(mockOrder); 
+  
+    let result;
+    try {
+      result = await orderCancel(userId, Number(orderId), mockReason);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        result = { error: error.message }; 
+      } else {
+        result = { error: "Unknown error occurred" }; 
+      }
     }
-    const response = await requestOrderCreate(body);
-    const orderId = response.body.orderId;
-
-    await getPutResponse(`/v1/${userId}/order/${orderId}/cancel`, {
-      reason: "Changed my mind",
-    });
-    const res = await getPutResponse(`/v1/${userId}/order/${orderId}/cancel`, {
-      reason: "Changed my mind again",
-    });
-    expect(res.body).toStrictEqual({ error: expect.any(String) });
-    expect(res.statusCode).toBe(400);
+  
+    expect(result).toStrictEqual({ error: expect.any(String) });
+    expect(getOrder).toHaveBeenCalledWith(Number(orderId)); 
+    expect(updateOrder).not.toHaveBeenCalled();
   });
+  
 });
