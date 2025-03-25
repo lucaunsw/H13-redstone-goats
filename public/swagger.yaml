@@ -19,19 +19,7 @@ tags:
   - name: "Test Routes"
     description: Routes used for tests.
 
-paths:
-  /v1/clear:
-    delete:
-      summary: Reset state of application back to the initial state.
-      description: Clear all user, order etc. details.
-      tags:
-        - "Test Routes"
-      responses:
-        200: 
-          description: Sucess
-          schema: 
-            type: object
-            
+paths:      
   /v1/user/register:
     post:
       summary: Register a new user.
@@ -453,43 +441,6 @@ paths:
           schema:
             $ref: "#/definitions/OrderRecommendation"
 
-  /v1/order/{userId}/sales:
-    get:
-      summary: Send sales analytics data to the seller.
-      description: Sends analytical data to the product distributor, with different options for data format. 
-      tags:
-        - "Seller Routes"
-      parameters:
-        - name: CSV
-          in: query
-          type: boolean
-          default: true
-        - name: JSON
-          in: query
-          type: boolean
-          default: true
-        - name: PDF
-          in: query
-          type: boolean
-          default: true
-        - name: userId
-          in: path
-          required: true
-          type: integer
-      responses:
-        200:
-          description: Sales data sent
-          schema:
-            $ref: "#/definitions/SalesData"
-        400:
-          description: UserId missing or invalid
-          schema:
-            type: object
-            properties:
-              Error:
-                type: string
-                example: "Error Message Here"
-
 definitions:
   OrderRequest:
     type: object
@@ -541,8 +492,7 @@ definitions:
     type: object
     properties:
       creditCardNumber:
-        type: integer
-        format: int64
+        type: string
       CVV:
         type: integer
         format: int32
@@ -605,31 +555,6 @@ definitions:
         type: object
         $ref: "#/definitions/UserSimple"
       
-  User:
-    type: object
-    properties:
-      userId:
-        type: integer
-      name:
-        type: string
-  BillingDetails:
-    type: object
-    properties:
-      creditCardNumber:
-        type: integer
-      CVV:
-        type: integer
-      expiryDate:
-        type: string
-  EmailRequest:
-    type: object
-    properties:
-      emailFrom:
-        type: string
-      emailTo:
-        type: string
-      status:
-        type: boolean
   OrderHistory:
     type: object
     properties:
@@ -648,25 +573,3 @@ definitions:
         type: array
         items: 
           $ref: "#/definitions/OrderRequest"
-  SalesData:
-    type: object
-    properties:
-      sales:
-        type: array
-        items:
-          type: object
-          properties:
-            id:
-              type: number
-            name:
-              type: string
-            description:
-              type: string
-            price:
-              type: number
-            amountSold:
-              type: integer
-      CSVurl:
-        type: string
-      PDFurl:
-        type: string
