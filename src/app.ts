@@ -1,8 +1,10 @@
-import { ItemSales, Order, status } from './types';
+import { Item, ItemSales, Order, status } from './types';
 import { generateUBL, userExists, validItemList, addItems, validSellers } from './helper';
 import { getUser, addOrder, getOrder, updateOrder, 
   addOrderXML,
-  getOrderXML, getItemSellerSales
+  getOrderXML, getItemSellerSales,
+  getItemBuyerRecommendations,
+  getPopularItems
  } from './dataStore'
  import fs from 'fs';
 import { stringify } from 'csv-stringify/sync';
@@ -241,5 +243,42 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
 
   return returnBody;
 }
+
+/**
+ * Recommends items to order for a given user (as many as can be given up to a given number).
+ * 
+ * @param {number} userId - The ID of the user requesting recommendations.
+ * @param {number} numRecommendations - How many items the user wants to be recommended.
+ * @returns {Promise<{ recommendations: Item[] }>} - A confirmation object containing the order's UBL data (if available).
+ */
+const orderRecommendations = async (userId: number, numRecommendations: number) => {
+  // Check if userId is valid  
+  const user = await getUser(userId);
+  if (!user) {
+      throw new Error("invalid userId");
+  }
+
+  const recommendedItems: Item[] = await getItemBuyerRecommendations(userId, numRecommendations);
+  if (recommendedItems.length === numRecommendations) return { recommendedItems };
+
+  const popularItems: Item[] = await getPopularItems(numRecommendations);
+  for (let index = 0; index < popularItems.length; index++) {
+    if (recommendedItems.length === numRecommendations) return { recommendedItems };
+
+    let unique = true;
+    for (const recommendedItem of recommendedItems) {
+      if (recommendedItem.name == popularItems[index].name &&
+          recommendedItem.seller.id == popularItems[index].seller.id) {
+        unique = false;
+      }
+    }
+
+    if (unique) {
+      recommendedItems.push(popularItems[index]);
+    }
+  }
+
+  return { recommendedItems };
+};
 
 export { orderCreate, orderCancel, orderConfirm, orderUserSales };
