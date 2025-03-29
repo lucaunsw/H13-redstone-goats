@@ -248,22 +248,22 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
  * Recommends items to order for a given user (as many as can be given up to a given number).
  * 
  * @param {number} userId - The ID of the user requesting recommendations.
- * @param {number} numRecommendations - How many items the user wants to be recommended.
+ * @param {number} limit - How many items the user wants to be recommended.
  * @returns {Promise<{ recommendations: Item[] }>} - A confirmation object containing the order's UBL data (if available).
  */
-const orderRecommendations = async (userId: number, numRecommendations: number) => {
+const orderRecommendations = async (userId: number, limit: number) => {
   // Check if userId is valid  
   const user = await getUser(userId);
   if (!user) {
       throw new Error("invalid userId");
   }
 
-  const recommendedItems: Item[] = await getItemBuyerRecommendations(userId, numRecommendations);
-  if (recommendedItems.length === numRecommendations) return { recommendedItems };
+  const recommendedItems: Item[] = await getItemBuyerRecommendations(userId, limit);
+  if (recommendedItems.length === limit) return { recommendedItems };
 
-  const popularItems: Item[] = await getPopularItems(numRecommendations);
+  const popularItems: Item[] = await getPopularItems(limit);
   for (let index = 0; index < popularItems.length; index++) {
-    if (recommendedItems.length === numRecommendations) return { recommendedItems };
+    if (recommendedItems.length === limit) return { recommendedItems };
 
     let unique = true;
     for (const recommendedItem of recommendedItems) {
@@ -281,4 +281,4 @@ const orderRecommendations = async (userId: number, numRecommendations: number) 
   return { recommendedItems };
 };
 
-export { orderCreate, orderCancel, orderConfirm, orderUserSales };
+export { orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations };
