@@ -252,10 +252,13 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
  * @returns {Promise<{ recommendations: Item[] }>} - A confirmation object containing the order's UBL data (if available).
  */
 const orderRecommendations = async (userId: number, limit: number) => {
+  if (!Number.isInteger(limit) || limit <= 0) {
+    throw new Error ('Limit is not a positive integer');
+  }
   // Check if userId is valid  
   const user = await getUser(userId);
   if (!user) {
-      throw new Error("invalid userId");
+    throw new Error("Invalid userId");
   }
 
   const recommendedItems: Item[] = await getItemBuyerRecommendations(userId, limit);

@@ -1,7 +1,7 @@
-import { orderUserSales } from '../app'
+import { orderRecommendations, orderUserSales } from '../app'
 import { UserSimple, 
   Item, BillingDetails, DeliveryInstructions } from '../types';
-import { getUser, getItemSellerSales } from '../dataStore';
+import { getUser, getItemBuyerRecommendations, getPopularItems } from '../dataStore';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -10,7 +10,7 @@ import { createClient } from '@redis/client';
 
 jest.mock('../dataStore', () => ({
   getUser: jest.fn(),
-  getItemSellerSales: jest.fn(),
+  getItemBuyerRecommendations: jest.fn(),
 }));
 
 jest.mock('@redis/client', () => ({
@@ -24,27 +24,38 @@ jest.mock('@redis/client', () => ({
   })),
 }));
 
-let sellerId: number;
+let seller1Id: number;
 let seller2Id: number;
+let buyerId: number;
 let testBuyer: UserSimple;
-let testSeller: UserSimple;
+let testSeller1: UserSimple;
+let testSeller2: UserSimple;
 let testItem1: Item;
 let testItem2: Item;
 let testBillingDetails: BillingDetails;
 let testDeliveryDetails: DeliveryInstructions;
 const date = new Date().toISOString().split('T')[0];
 
-describe('Order user sales send', () => {
+describe('Tests for order recommendations', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    sellerId = 1;
+    seller1Id = 1;
     seller2Id = 2;
+    buyerId = 3;
     
 
-    testSeller = {
-      id: sellerId,
-      name: 'Bobby Jones',
+    testSeller1 = {
+      id: seller1Id,
+      name: 'Sam Seller',
+      streetName: 'Yellow St',
+      cityName: 'Brisbane',
+      postalZone: '4000',
+      cbcCode: 'AU'
+    };
+    testSeller2 = {
+      id: seller2Id,
+      name: 'Sam Seller',
       streetName: 'Yellow St',
       cityName: 'Brisbane',
       postalZone: '4000',
@@ -52,21 +63,21 @@ describe('Order user sales send', () => {
     };
     testItem1 = {
       id: 123,
-      name: 'Soap',
-      seller: testSeller,
+      name: 'Beer-Flavoured Soap',
+      seller: testSeller1,
       price: 5,
       description: 'This is soap',
     };
     testItem2 = {
       id: 124,
-      name: 'Table',
-      seller: testSeller,
+      name: 'Tennis Table',
+      seller: testSeller2,
       price: 80,
-      description: 'This is a table',
+      description: 'This is a tennis table',
     }
     testBuyer = {
       id: 3,
-      name: 'Test User',
+      name: 'Bill Buyer',
       streetName: 'White St',
       cityName: 'Sydney',
       postalZone: '2000',
@@ -97,59 +108,57 @@ describe('Order user sales send', () => {
     server.close(); 
   });
 
-  test('Error from no sellerId provided', async () => {
-    await expect(orderUserSales(true, true, true, null)).
-    rejects.toThrowError('No sellerId provided');
+  test('Error from invalid limit', async () => {
+    await expect(orderRecommendations(seller1Id, -1)).
+    rejects.toThrowError('Limit is not a positive integer');
+
+    await expect(orderRecommendations(seller1Id, 1.5)).
+    rejects.toThrowError('Limit is not a positive integer');
   });
 
-  test('Error from invalid sellerId', async () => {
+  test('Error from invalid userId', async () => {
     (getUser as jest.Mock).mockResolvedValue(null);
 
-    await expect(orderUserSales(true, true, true, sellerId + 10)).
-    rejects.toThrowError('Invalid sellerId');
+    await expect(orderRecommendations(seller1Id + 10, 3)).
+    rejects.toThrowError('Invalid userId');
     expect(getUser).toHaveBeenCalledTimes(1);
   });
 
-  test('Error from invalid input', async () => {
-    await expect(orderUserSales(false, false, false, sellerId)).
-    rejects.toThrowError('At least one data option should be selected');
-  });
-
-  test('Displays no sales when order could not be created', async () => {
+  test('Successul recommendation with no items', async () => {
     (getUser as jest.Mock).mockResolvedValue({
       id: 1,
       nameFirst: 'mock',
-      nameLast: 'seller',
+      nameLast: 'buyer',
       email: 'mockemail234@gmail.com',
       password: 'string1234',
       numSuccessfulLogins: 2,
       numFailedPasswordsSinceLastLogin: 2,
     });
-    (getItemSellerSales as jest.Mock).mockResolvedValue([]);
+    (getItemBuyerRecommendations as jest.Mock).mockResolvedValue([]);
+    (getPopularItems as jest.Mock).mockResolvedValue([]);
 
-    const response = await orderUserSales(true, true, true, sellerId);
+    const response = await orderRecommendations(seller1Id, 5);
     expect(getUser).toHaveBeenCalledTimes(1);
-    expect(getItemSellerSales).toHaveBeenCalledTimes(1);
+    expect(getItemBuyerRecommendations).toHaveBeenCalledTimes(1);
+    expect(getPopularItems).toHaveBeenCalledTimes(1);
     expect(response).toStrictEqual({ 
-      sales: [], 
-      CSVurl: expect.any(String), 
-      PDFurl: expect.any(String),
+      recommendations: [],
     });
   });
-
+/*
   test('Sucess case with no sales, with no csv, no pdf', async () => {
     (getUser as jest.Mock).mockResolvedValue(
       {
         id: 1,
         nameFirst: 'mock',
-        nameLast: 'seller',
+        nameLast: 'buyer',
         email: 'mockemail234@gmail.com',
         password: 'string1234',
         numSuccessfulLogins: 2,
         numFailedPasswordsSinceLastLogin: 2,
       }
     );
-    (getItemSellerSales as jest.Mock).mockResolvedValue([]);
+    (getItemBuyerRecommendations as jest.Mock).mockResolvedValue([]);
     const response = await orderUserSales(false, true, false, seller2Id);
 
     expect(response).toStrictEqual({ 
@@ -162,14 +171,14 @@ describe('Order user sales send', () => {
       {
         id: 1,
         nameFirst: 'mock',
-        nameLast: 'seller',
+        nameLast: 'buyer',
         email: 'mockemail234@gmail.com',
         password: 'string1234',
         numSuccessfulLogins: 2,
         numFailedPasswordsSinceLastLogin: 2,
       }
     );
-    (getItemSellerSales as jest.Mock).mockResolvedValue([
+    (getItemBuyerRecommendations as jest.Mock).mockResolvedValue([
       {
         id: 123,
         name: 'Soap',
@@ -207,7 +216,7 @@ describe('Order user sales send', () => {
       PDFurl: expect.any(String), 
     });
   });
-  
+*/
 });
 
 
