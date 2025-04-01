@@ -191,6 +191,13 @@ export async function addItems(order: Order) {
   return;
 }
 
+/**
+ * Helper function to generate PDF containg user sales.
+ * @param {ItemSales} sales - object containg all the sales of a user.
+ * @param {number} sellerId - unique identifier for a user.
+ * @param {string} PDFdirPath - directory path to the pdf file.
+ * @returns nothing.
+ */
 export async function generatePDF(sales: ItemSales[], sellerId: number, PDFdirPath: string) {
   // Create the new PDF document
   const doc = new PDFDocument();
