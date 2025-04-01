@@ -212,7 +212,7 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
   }
 
   if (pdf) {
-    generatePDF(sales, sellerId, PDFdirPath);
+    await generatePDF(sales, sellerId, PDFdirPath);
     returnBody.PDFurl = `/sales_reports_pdf/sales_${sellerId}.pdf`
     
   }

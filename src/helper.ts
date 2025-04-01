@@ -7,7 +7,8 @@ import { stringify } from 'csv-stringify/sync';
 import path from 'path';
 import PDFDocument from "pdfkit";
 const { createCanvas } = require("canvas");
-const { Chart } = require("chart.js");
+const { Chart, registerables } = require("chart.js");
+Chart.register(...registerables);
 
 /**
  * Helper function to produce UBL XML document for order creation/change.
@@ -193,17 +194,65 @@ export async function addItems(order: Order) {
 export async function generatePDF(sales: ItemSales[], sellerId: number, PDFdirPath: string) {
   // Create the new PDF document
   const doc = new PDFDocument();
-
   // Create the path to the csv file
   const filePath = path.join(PDFdirPath, `sales_${sellerId}.pdf`);
-
   const writeStream = fs.createWriteStream(filePath);
   doc.pipe(writeStream);
 
-  // Add title
-  doc.fontSize(20).text("Sales Report", { align: "center" });
-  doc.moveDown();
+  // Extract sales information for piechart.
+  const labels = sales.map((item) => item.name);
+  const amountSoldValues = sales.map((item) => item.amountSold);
+  // Calculate total revenue for each item.
+  const revenueValues = sales.map((item) => item.price * item.amountSold);
+  
+  // Create first pie chart.
+  const canvas1 = createCanvas(400, 400);
+  const chart1 = canvas1.getContext("2d");
+  new Chart(chart1, {
+    type: "pie",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          data: amountSoldValues,
+          backgroundColor: ["red", "blue", "green", "orange", "purple"],
+        },
+      ],
+    },
+  });
+  const chart1Image = canvas1.toBuffer("image/png");
 
+  // Create second pie chart.
+  const canvas2 = createCanvas(400, 400);
+  const chart2 = canvas2.getContext("2d");
+  new Chart(chart2, {
+    type: "pie",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          data: revenueValues,
+          backgroundColor: ["red", "blue", "green", "orange", "purple"],
+        },
+      ],
+    },
+  });
+  const chart2Image = canvas2.toBuffer("image/png");
+
+  // Add title
+  const robotoFontPath = path.join(__dirname, 'resources', 'fonts', 'Roboto-VariableFont_wdth,wght.ttf');
+  doc.font(robotoFontPath);
+  doc.fontSize(20).text("Sales Report", { align: "center" });
+  doc.moveDown(5);
+
+  // Add Pie Charts to PDF
+  doc.fontSize(16)
+    .text("Amount Sold by Item", 70, doc.y,)
+    .text("Total Revenue by Item", 350, doc.y,);
+  doc.image(chart1Image, 70, doc.y, { fit: [200, 200] });
+  doc.image(chart2Image, 350, doc.y, { fit: [200, 200] });
+
+  doc.addPage();
   // Add sales data to pdf.
   for (const item of sales) {
     doc.fontSize(14).text(`ID: ${item.id}`);
