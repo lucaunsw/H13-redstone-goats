@@ -1,8 +1,13 @@
-import { Order, UserSimple } from "./types";
+import { Order, UserSimple, ItemSales } from "./types";
 import { getUser, addItem,
   getItem } from './dataStore'
-
 const xml2js = require('xml2js');
+import fs from 'fs';
+import { stringify } from 'csv-stringify/sync';
+import path from 'path';
+import PDFDocument from "pdfkit";
+const { createCanvas } = require("canvas");
+const { Chart } = require("chart.js");
 
 /**
  * Helper function to produce UBL XML document for order creation/change.
@@ -182,5 +187,32 @@ export async function addItems(order: Order) {
       }
     }
   }
+  return;
+}
+
+export async function generatePDF(sales: ItemSales[], sellerId: number, PDFdirPath: string) {
+  // Create the new PDF document
+  const doc = new PDFDocument();
+
+  // Create the path to the csv file
+  const filePath = path.join(PDFdirPath, `sales_${sellerId}.pdf`);
+
+  const writeStream = fs.createWriteStream(filePath);
+  doc.pipe(writeStream);
+
+  // Add title
+  doc.fontSize(20).text("Sales Report", { align: "center" });
+  doc.moveDown();
+
+  // Add sales data to pdf.
+  for (const item of sales) {
+    doc.fontSize(14).text(`ID: ${item.id}`);
+    doc.text(`Name: ${item.name}`);
+    doc.text(`Description: ${item.description}`);
+    doc.text(`Price: $${item.price}`);
+    doc.text(`Amount Sold: ${item.amountSold}`);
+    doc.moveDown();
+  }
+  doc.end();
   return;
 }
