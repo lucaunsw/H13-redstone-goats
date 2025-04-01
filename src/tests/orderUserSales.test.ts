@@ -30,6 +30,7 @@ let testBuyer: UserSimple;
 let testSeller: UserSimple;
 let testItem1: Item;
 let testItem2: Item;
+let testItem3: Item;
 let testBillingDetails: BillingDetails;
 let testDeliveryDetails: DeliveryInstructions;
 const date = new Date().toISOString().split('T')[0];
@@ -41,54 +42,60 @@ describe('Order user sales send', () => {
     sellerId = 1;
     seller2Id = 2;
     
-
-    testSeller = {
-      id: sellerId,
-      name: 'Bobby Jones',
-      streetName: 'Yellow St',
-      cityName: 'Brisbane',
-      postalZone: '4000',
-      cbcCode: 'AU'
-    };
-    testItem1 = {
-      id: 123,
-      name: 'Soap',
-      seller: testSeller,
-      price: 5,
-      description: 'This is soap',
-    };
-    testItem2 = {
-      id: 124,
-      name: 'Table',
-      seller: testSeller,
-      price: 80,
-      description: 'This is a table',
-    }
-    testBuyer = {
-      id: 3,
-      name: 'Test User',
-      streetName: 'White St',
-      cityName: 'Sydney',
-      postalZone: '2000',
-      cbcCode: 'AU',
-    };
-    testBillingDetails = {
-      creditCardNumber: "1000000000000000",
-      CVV: 111,
-      expiryDate: date,
-    };
-    testDeliveryDetails = {
-      streetName: 'White St',
-      cityName: 'Sydney',
-      postalZone: '2000',
-      countrySubentity: 'NSW',
-      addressLine: '33 White St, Sydney NSW',
-      cbcCode: 'AU',
-      startDate: new Date(2025, 9, 5).toISOString().split('T')[0],
-      startTime: '13:00',
-      endDate: new Date(2025, 9, 10).toISOString().split('T')[0],
-      endTime: '13:00'
-    }
+    // testSeller = {
+    //   id: sellerId,
+    //   name: 'Bobby Jones',
+    //   streetName: 'Yellow St',
+    //   cityName: 'Brisbane',
+    //   postalZone: '4000',
+    //   cbcCode: 'AU'
+    // };
+    // testItem1 = {
+    //   id: 123,
+    //   name: 'Soap',
+    //   seller: testSeller,
+    //   price: 5,
+    //   description: 'This is soap',
+    // };
+    // testItem2 = {
+    //   id: 124,
+    //   name: 'Table',
+    //   seller: testSeller,
+    //   price: 80,
+    //   description: 'This is a table',
+    // };
+    // testItem3 = {
+    //   id: 125,
+    //   name: 'Paper',
+    //   seller: testSeller,
+    //   price: 10,
+    //   description: 'This is paper',
+    // };
+    // testBuyer = {
+    //   id: 3,
+    //   name: 'Test User',
+    //   streetName: 'White St',
+    //   cityName: 'Sydney',
+    //   postalZone: '2000',
+    //   cbcCode: 'AU',
+    // };
+    // testBillingDetails = {
+    //   creditCardNumber: "1000000000000000",
+    //   CVV: 111,
+    //   expiryDate: date,
+    // };
+    // testDeliveryDetails = {
+    //   streetName: 'White St',
+    //   cityName: 'Sydney',
+    //   postalZone: '2000',
+    //   countrySubentity: 'NSW',
+    //   addressLine: '33 White St, Sydney NSW',
+    //   cbcCode: 'AU',
+    //   startDate: new Date(2025, 9, 5).toISOString().split('T')[0],
+    //   startTime: '13:00',
+    //   endDate: new Date(2025, 9, 10).toISOString().split('T')[0],
+    //   endTime: '13:00'
+    // }
   });
 
   afterAll(async () => {
@@ -183,7 +190,14 @@ describe('Order user sales send', () => {
         description: 'This is a table',
         price: 80,
         amountSold: 1,
-      }
+      },
+      {
+        id: 125,
+        name: 'Paper',
+        description: 'This is paper',
+        price: 10,
+        amountSold: 4,
+      },
     ]);
     const response = await orderUserSales(true, true, true, 2);
     expect(response).toStrictEqual({ 
@@ -201,6 +215,13 @@ describe('Order user sales send', () => {
           description: 'This is a table',
           price: 80,
           amountSold: 1,
+        },
+        {
+          id: 125,
+          name: 'Paper',
+          description: 'This is paper',
+          price: 10,
+          amountSold: 4,
         }
       ], 
       CSVurl: expect.any(String), 
