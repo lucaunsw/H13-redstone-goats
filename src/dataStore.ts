@@ -224,45 +224,52 @@ export async function getItemSellerSales(sellerId: number): Promise<ItemSales[]>
   return itemResults;
 }
 
+// Finds the top <limit> most purchased items
 export async function getPopularItems(limit: number): Promise<Item[]> {
-  const res = await pool.query(
-    `SELECT seller_id FROM orders
-     GROUP BY seller_id ORDER BY SUM(quantity) DESC LIMIT $2;`, [limit]
+  const itemRes = await pool.query(
+    `SELECT item_id FROM OrderItems
+     GROUP BY item_id ORDER BY SUM(quantity) DESC LIMIT $1;`, [limit]
   );
-  return res.rows;
+
+  const itemResults: Item[] = [];
+  for (const item of itemRes.rows) {
+    const itemResult = await getItem(item.item_id);
+    if (itemResult != null) itemResults.push(itemResult);
+  };
+  return itemResults;
 }
 
-
-// Determines up to 5 recommended items for a user to buy, each from a different seller
+// Finds up to <limit> recommended items for a user to buy, each from a different seller
 export async function getItemBuyerRecommendations(userId: number, limit: number): Promise<Item[]> {
   const sellerRes = await pool.query(
-    `SELECT seller_id FROM orders WHERE user_id = $1
+    `SELECT seller_id FROM Orders WHERE buyer_id = $1
      GROUP BY seller_id ORDER BY SUM(quantity) DESC LIMIT $2;`, [userId, limit]
   );
   const topSellers = sellerRes.rows.map(row => row.seller_id);
   if (topSellers.length === 0) return [];
 
-  const wordsRes = await pool.query( ///////////////////////////////////////////////////////////// FIX THIS QUERY : JOIN TO ORDER ITEMS
-    `SELECT DISTINCT UNNEST(STRING_TO_ARRAY(LOWER(item_name), ' ')) AS keyword
-     FROM orders WHERE user_id = $1;`, [userId]
+  const wordsRes = await pool.query(
+    `SELECT DISTINCT UNNEST(STRING_TO_ARRAY(LOWER(i.name), ' ')) AS keyword
+    FROM OrderItems oi LEFT JOIN Items i ON oi.item_id = i.id 
+    LEFT JOIN Orders o ON oi.order_id = o.id WHERE buyer_id = $1;`, [userId]
   );
   const keywords = wordsRes.rows.map(row => row.keyword);
   if (keywords.length === 0) return [];
 
-  const recommendations = [];
+  const itemResults: Item[] = [];
   for (const sellerId of topSellers) {
     const itemRes = await pool.query(
-      `SELECT i.seller_id, i.item_name, COUNT(o.quantity) AS popularity
-       FROM items i JOIN orders o ON i.item_name ILIKE ANY($1) WHERE i.seller_id = $2
+      `SELECT i.id, COALESCE(SUM(oi.quantity), 0) AS popularity
+       FROM Items i LEFT JOIN OrderItems oi ON oi.item_id = i.id
+       ILIKE ANY($1) WHERE i.seller_id = $2
        GROUP BY i.seller_id, i.item_name ORDER BY popularity DESC LIMIT 1;`, [keywords, sellerId]
     );
-
-    if (itemRes.rows.length > 0) {
-      recommendations.push(itemRes.rows[0]);
-    }
+    
+    const itemResult = await getItem(itemRes.rows[0].id);
+    if (itemResult != null) itemResults.push(itemResult);
   }
 
-  return recommendations;
+  return itemResults;
 }
 
 // Deletes item from DB, returns true if successful

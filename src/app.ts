@@ -262,11 +262,11 @@ const orderRecommendations = async (userId: number, limit: number) => {
   }
 
   const recommendedItems: Item[] = await getItemBuyerRecommendations(userId, limit);
-  if (recommendedItems.length === limit) return { recommendedItems };
+  if (recommendedItems.length === limit) return { recommendations: recommendedItems };
 
   const popularItems: Item[] = await getPopularItems(limit);
   for (let index = 0; index < popularItems.length; index++) {
-    if (recommendedItems.length === limit) return { recommendedItems };
+    if (recommendedItems.length === limit) return { recommendations: recommendedItems };
 
     let unique = true;
     for (const recommendedItem of recommendedItems) {
@@ -281,7 +281,7 @@ const orderRecommendations = async (userId: number, limit: number) => {
     }
   }
 
-  return { recommendedItems };
+  return { recommendations: recommendedItems };
 };
 
 export { orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations };
