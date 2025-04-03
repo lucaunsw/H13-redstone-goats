@@ -1,6 +1,6 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
-import { orderCreate, orderCancel, orderConfirm, orderUserSales } from "./app";
+import { orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations } from "./app";
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
@@ -270,6 +270,23 @@ app.post("/v1/order/:userId/sales", async (req: Request, res: Response) => {
   } catch (error) {
     const e = error as Error;
     if (e.message === 'Invalid sellerId' || e.message === 'No sellerId provided') {
+      res.status(401).json({ error: e.message });
+    } else {
+      res.status(400).json({ error: e.message });
+    }
+  }
+});
+
+// Route that returns user item recommendations.
+app.post("/v1/order/:userId/recommendations", async (req: Request, res: Response) => {
+  const userId = parseInt(req.params.userId);
+  const limit = Number(req.query.limit);
+  try {
+    const result = await orderRecommendations(userId, limit);
+    res.status(200).json(result);
+  } catch (error) {
+    const e = error as Error;
+    if (e.message === 'Invalid userId' || e.message === 'No userId provided') {
       res.status(401).json({ error: e.message });
     } else {
       res.status(400).json({ error: e.message });
