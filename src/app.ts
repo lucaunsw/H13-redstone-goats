@@ -1,5 +1,6 @@
-import { Item, ItemSales, Order, status } from './types';
-import { generateUBL, userExists, validItemList, addItems, validSellers } from './helper';
+import { ItemSales, Order, status } from './types';
+import { generateUBL, userExists, validItemList, 
+  addItems, validSellers, generatePDF } from './helper';
 import { getUser, addOrder, getOrder, updateOrder, 
   addOrderXML,
   getOrderXML, getItemSellerSales,
@@ -9,7 +10,6 @@ import { getUser, addOrder, getOrder, updateOrder,
  import fs from 'fs';
 import { stringify } from 'csv-stringify/sync';
 import path from 'path';
-import PDFDocument from "pdfkit";
 
 /**
  * Create an order and produce a UBL document, and return the
@@ -214,31 +214,9 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
   }
 
   if (pdf) {
-    // Create the new PDF document
-    const doc = new PDFDocument();
-
-    // Create the path to the csv file
-    const filePath = path.join(PDFdirPath, `sales_${sellerId}.pdf`);
-
-    const writeStream = fs.createWriteStream(filePath);
-    doc.pipe(writeStream);
-
-    // Add title
-    doc.fontSize(20).text("Sales Report", { align: "center" });
-    doc.moveDown();
-
-    // Add sales data to pdf.
-    for (const item of sales) {
-      doc.fontSize(14).text(`ID: ${item.id}`);
-      doc.text(`Name: ${item.name}`);
-      doc.text(`Description: ${item.description}`);
-      doc.text(`Price: $${item.price}`);
-      doc.text(`Amount Sold: ${item.amountSold}`);
-      doc.moveDown();
-    }
-    doc.end();
-    // Place PDF url inside body.
-    returnBody.PDFurl = `/sales_reports_pdf/sales_${sellerId}.pdf`;
+    await generatePDF(sales, sellerId, PDFdirPath);
+    returnBody.PDFurl = `/sales_reports_pdf/sales_${sellerId}.pdf`
+    
   }
 
   return returnBody;
