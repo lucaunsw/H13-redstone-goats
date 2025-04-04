@@ -156,6 +156,19 @@ describe('userRegister', () => {
       .toThrowError(new Err('new password does not contain a letter!', ErrKind.EINVALID));
   });
 
+  test('Password is too short', async () => {
+    const email = 'user@email.com';
+    const password = 'Ab12345'; 
+    const nameFirst = 'John';
+    const nameLast = 'Doe';
+
+    (validator.isEmail as jest.Mock).mockReturnValue(true);
+
+    await expect(userRegister(email, password, nameFirst, nameLast))
+      .rejects
+      .toThrowError(new Err('new password is less than 8 characters long!', ErrKind.EINVALID));
+  });
+
   test('User enters invalid name size', async () => {
     const email = 'user@email.com';
     const password = 'ValidPassword123';
