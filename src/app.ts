@@ -1,4 +1,4 @@
-import { ItemSales, Order, status } from './types';
+import { Item, ItemSales, Order, status } from './types';
 import { generateUBL, userExists, validItemList, 
   addItems, validSellers, generatePDF } from './helper';
 import { getUser, addOrder, getOrder, updateOrder, 
