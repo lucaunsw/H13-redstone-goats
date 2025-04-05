@@ -184,15 +184,9 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
 
   // Create path to sales_report csv directory.
   const CSVdirPath = path.join(__dirname, 'sales_reports_csv');
-  if (!fs.existsSync(CSVdirPath)) {
-    fs.mkdirSync(CSVdirPath);
-  }
 
   // Create path to sales_report pdf directory.
   const PDFdirPath = path.join(__dirname, 'sales_reports_pdf');
-  if (!fs.existsSync(PDFdirPath)) {
-    fs.mkdirSync(PDFdirPath);
-  }
 
   if (json) {
     returnBody.sales = sales;

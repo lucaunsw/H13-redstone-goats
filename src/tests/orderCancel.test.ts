@@ -2,7 +2,7 @@ import request from "sync-request-curl";
 const SERVER_URL = `http://127.0.0.1:3200`;
 const TIMEOUT_MS = 20 * 1000;
 import dotenv from 'dotenv';
-import { BillingDetails, DeliveryInstructions, Item, Order, status, UserSimple } from "../types";
+import { BillingDetails, DeliveryInstructions, Item, Order, status, User, UserSimple } from "../types";
 import { getOrder, getUser, updateOrder } from "../dataStore";
 import { orderCancel } from "../app";
 import { createClient } from '@redis/client';
@@ -215,6 +215,36 @@ describe("Tests for orderCancel", () => {
 
     expect(result).toStrictEqual({ error: expect.any(String) });
     expect(getOrder).not.toHaveBeenCalled(); 
+  });
+
+  test("Invalid orderId", async () => {
+    const user: User = {
+      id: 1,
+      nameFirst: "Test",
+      nameLast: "User",
+      email: "TestUser8@gmail.com",
+      password: "validPass123",
+      numSuccessfulLogins: 1,
+      numFailedPasswordsSinceLastLogin: 2,
+    }
+    const mockReason = 'Changed my mind';
+    const orderId = 1;
+    (getUser as jest.Mock).mockResolvedValue(user);
+    (getOrder as jest.Mock).mockResolvedValue(null); 
+  
+    let result;
+    try {
+      result = await orderCancel(userId, orderId, mockReason);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        result = { error: error.message }; 
+      } else {
+        result = { error: "Unknown error occurred" }; 
+      }
+    }
+
+    expect(result).toStrictEqual({ error: expect.any(String) });
+    expect(getOrder).toHaveBeenCalledTimes(1); 
   });
 
   test("Unable to cancel since order is already cancelled", async () => {

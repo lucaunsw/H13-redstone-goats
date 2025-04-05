@@ -313,6 +313,31 @@ describe('Test orderCreate route', () => {
       expect(userExists).toHaveBeenCalledTimes(1);
       expect(getItem).toHaveBeenCalledTimes(1);
   });
+
+  test('Error from invalid quantity list', async () => {
+    const helper = await import('../helper'); 
+    (userExists as jest.Mock).mockResolvedValueOnce(true); 
+    
+      const body = {
+        items: [{
+          id: 124,
+          name: 'Toothpaste',
+          seller: testSeller,
+          price: 5,
+          description: 'This is Toothpaste',
+        }],
+        quantities: [1, 2],
+        buyer: testBuyer,
+        seller: testSeller,
+        billingDetails: testBillingDetails,
+        totalPrice: 5,
+        delivery: testDeliveryDetails,
+        lastEdited: date,
+        createdAt: new Date(),
+      }
+      await expect(orderCreate(body)).rejects.toThrowError('Invalid amount of item quantities provided');
+      expect(userExists).toHaveBeenCalledTimes(1);
+  });
   
   test('Error from invalid item (duplicate item ids)', async () => {
     const helper = await import('../helper'); 
