@@ -133,21 +133,21 @@ export async function deleteUser(userId: number): Promise<boolean> {
 // Adds token to DB, returns true if successful
 export async function addToken(token: string, userId: number): Promise<boolean> {
   const res = await pool.query(
-    "INSERT INTO Token (token, user_id) VALUES ($1, $2) RETURNING user;", [token, userId])
+    "INSERT INTO Tokens (token, user_id) VALUES ($1, $2) RETURNING user;", [token, userId])
   ;
   return (res.rows.length > 0);
 }
 
 // Checks whether a token exists in DB
 export async function validToken(token: string): Promise<boolean> {
-  const res = await pool.query("SELECT user FROM Token WHERE token = $1;", [token]);
+  const res = await pool.query("SELECT user FROM Tokens WHERE token = $1;", [token]);
   return (res.rows.length > 0);
 }
 
 // Deletes token from DB, returns true if successful
 export async function deleteToken(token: string): Promise<boolean> {
   const res = await pool.query(
-    "DELETE FROM Token WHERE token = $1 RETURNING user_id;", [token]
+    "DELETE FROM Tokens WHERE token = $1 RETURNING user_id;", [token]
   );
   return (res.rows.length > 0);
 }
@@ -162,7 +162,7 @@ export async function addItem(item: Item): Promise<number | null> {
     "INSERT INTO Items (id, name, seller_id, description, price) VALUES ($1, $2, $3, $4, $5) RETURNING id;",
     [item.id, item.name, item.seller.id, item.description, item.price]
   );
-  return (res.rows.length > 0) ? res.rows[0].id : null;;
+  return (res.rows.length > 0) ? res.rows[0].id : null;
 }
 
 // Fetches item from DB
@@ -179,7 +179,7 @@ export async function getItem(itemId: number): Promise<Item | null> {
     name: item.name,
     seller: sellerResult,
     description: item.description,
-    price: item.price,
+    price: Number(item.price),
   };
   return itemResult;
 }
@@ -215,8 +215,8 @@ export async function getItemSellerSales(sellerId: number): Promise<ItemSales[]>
       id: item.id,
       name: item.name,
       description: item.description,
-      price: item.price,
-      amountSold: item.amount_sold
+      price: Number(item.price),
+      amountSold: Number(item.amount_sold)
     };
 
     itemResults.push(itemResult);
@@ -242,7 +242,8 @@ export async function getPopularItems(limit: number): Promise<Item[]> {
 // Finds up to <limit> recommended items for a user to buy, each from a different seller
 export async function getItemBuyerRecommendations(userId: number, limit: number): Promise<Item[]> {
   const sellerRes = await pool.query(
-    `SELECT seller_id FROM Orders WHERE buyer_id = $1
+    `SELECT i.seller_id FROM OrderItems oi    LEFT JOIN Items i ON oi.item_id = i.id
+     LEFT JOIN Orders o ON oi.order_id = o.id WHERE buyer_id = $1
      GROUP BY seller_id ORDER BY SUM(quantity) DESC LIMIT $2;`, [userId, limit]
   );
   const topSellers = sellerRes.rows.map(row => row.seller_id);
@@ -250,8 +251,8 @@ export async function getItemBuyerRecommendations(userId: number, limit: number)
 
   const wordsRes = await pool.query(
     `SELECT DISTINCT UNNEST(STRING_TO_ARRAY(LOWER(i.name), ' ')) AS keyword
-    FROM OrderItems oi LEFT JOIN Items i ON oi.item_id = i.id 
-    LEFT JOIN Orders o ON oi.order_id = o.id WHERE buyer_id = $1;`, [userId]
+    FROM OrderItems oi      LEFT JOIN Items i ON oi.item_id = i.id 
+    LEFT JOIN Orders o ON oi.order_id = o.id  WHERE buyer_id = $1;`, [userId]
   );
   const keywords = wordsRes.rows.map(row => row.keyword);
   if (keywords.length === 0) return [];
@@ -259,12 +260,14 @@ export async function getItemBuyerRecommendations(userId: number, limit: number)
   const itemResults: Item[] = [];
   for (const sellerId of topSellers) {
     const itemRes = await pool.query(
-      `SELECT i.id, COALESCE(SUM(oi.quantity), 0) AS popularity
+      `SELECT i.id, i.name, COALESCE(SUM(oi.quantity), 0) AS popularity
        FROM Items i LEFT JOIN OrderItems oi ON oi.item_id = i.id
-       ILIKE ANY($1) WHERE i.seller_id = $2
-       GROUP BY i.seller_id, i.item_name ORDER BY popularity DESC LIMIT 1;`, [keywords, sellerId]
+       WHERE i.seller_id = $1 AND i.name ILIKE ANY($2::text[]) 
+       GROUP BY i.id, i.name  ORDER BY popularity  DESC  LIMIT 1;`, 
+      [sellerId, keywords.map(k => `%${k}%`)]
     );
-    
+    if (itemRes.rows.length === 0) continue;
+
     const itemResult = await getItem(itemRes.rows[0].id);
     if (itemResult != null) itemResults.push(itemResult);
   }
@@ -365,7 +368,7 @@ export async function getOrder(orderId: number): Promise<Order | null> {
       name: item.name,
       seller: sellerResult,
       description: item.description,
-      price: item.price,
+      price: Number(item.price),
     };
     
     itemResults.push(itemResult);
@@ -415,10 +418,10 @@ export async function getOrder(orderId: number): Promise<Order | null> {
     delivery: deliveryResult,
     lastEdited: order.last_edited,
     status: order.status,
-    totalPrice: order.total_price,
-    createdAt: order.created_at,
-    orderXMLId: order.order_xml_id
+    totalPrice: Number(order.total_price),
+    createdAt: order.created_at
   };
+  if (order.order_xml_id != null) orderResult.orderXMLId = order.order_xml_id;
   return orderResult;
 }
 
@@ -554,9 +557,7 @@ export async function getLatestOrderXML(orderId: number): Promise<string | null>
 
 // Fetches all XMLs of a particular order from DB, from newest to oldest
 export async function getAllOrderXMLs(orderId: number): Promise<string[]> {
-  const client = await pool.connect();
-
-  const res = await client.query(
+  const res = await pool.query(
     `SELECT xml_content FROM OrderXMLs WHERE order_id = $1 ORDER BY created_at DESC;`, [orderId]
   );
   return (res.rows.length > 0) ? res.rows.map(row => row.xml_content) : [];
@@ -566,73 +567,4 @@ export async function getAllOrderXMLs(orderId: number): Promise<string[]> {
 export async function deleteOrderXMLs(orderId: number): Promise<boolean> {
   const res = await pool.query("DELETE FROM OrderXMLs WHERE order_id = $1 RETURNING *;", [orderId]);
   return (res.rows.length > 0);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-/////////////////////////// CLEAR FUNCTIONS (DEBUG) ////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-// Clears all users from DB
-export async function clearUsers(): Promise<boolean> {
-  const res = await pool.query("DELETE FROM Users RETURNING *;");
-  return (res.rows.length > 0);
-}
-
-// Clears all tokens from DB
-export async function clearTokens(): Promise<boolean> {
-  const res = await pool.query("DELETE FROM Tokens RETURNING *;");
-  return (res.rows.length > 0);
-}
-
-// Clears all items from DB
-export async function clearItems(): Promise<boolean> {
-  const res = await pool.query("DELETE FROM Items RETURNING *;");
-  return (res.rows.length > 0);
-}
-
-// Clears all orders from DB
-export async function clearOrders(): Promise<boolean> {
-  const client = await pool.connect();
-
-  try {
-    await client.query("BEGIN");
-
-    await pool.query("DELETE FROM Orders;");
-    await pool.query("DELETE FROM OrderItems;");
-    await pool.query("DELETE FROM BillingDetails;");
-    await pool.query("DELETE FROM DeliveryInstructions;");
-    await pool.query("DELETE FROM OrderXMLs;");
-
-    await client.query("COMMIT");
-    return true;
-  } catch (err) {
-    await client.query("ROLLBACK");
-    console.error("Error clearing all orders:", err);
-    return false;
-  }
-}
-
-// Clears everything from DB
-export async function clearAll(): Promise<boolean> {
-  const client = await pool.connect();
-
-  try {
-    await client.query("BEGIN");
-
-    await pool.query("DELETE FROM OrderItems;");
-
-    await pool.query("DELETE FROM Items;");
-    await pool.query("DELETE FROM OrderXMLs;");
-    await pool.query("DELETE FROM Orders;");
-    await pool.query("DELETE FROM BillingDetails;");
-    await pool.query("DELETE FROM DeliveryInstructions;");
-    await pool.query("DELETE FROM Users;");
-    await pool.query("DELETE FROM Tokens;");
-    await client.query("COMMIT");
-    return true;
-  } catch (err) {
-    await client.query("ROLLBACK");
-    console.error("Error clearing everything:", err);
-    return false;
-  }
 }

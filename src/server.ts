@@ -22,7 +22,7 @@ import {
   userDetails,
   // userDetailsUpdate,
 } from './user';
-import { addToken, clearAll, validToken } from "./dataStore";
+import { addToken, validToken } from "./dataStore";
 
 const app = express();
 
@@ -292,10 +292,6 @@ app.post("/v1/order/:userId/recommendations", async (req: Request, res: Response
       res.status(400).json({ error: e.message });
     }
   }
-});
-
-app.delete('/v1/clear', async (_: Request, res: Response) => {
-  res.json(await clearAll());
 });
 
 // Custom **error handling** middleware

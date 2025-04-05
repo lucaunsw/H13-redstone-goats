@@ -1,3 +1,5 @@
+-- Create full schema:
+----------------------
 CREATE TABLE Users (
     id          SERIAL PRIMARY KEY,
     name_first  TEXT NOT NULL,
@@ -40,10 +42,10 @@ CREATE TABLE DeliveryInstructions (
     country_subentity TEXT NOT NULL,
     address_line      TEXT NOT NULL,
     cbc_code          TEXT,
-    start_date        DATE NOT NULL,
-    start_time        TIME NOT NULL,
-    end_date          DATE NOT NULL,
-    end_time          TIME NOT NULL
+    start_date        TEXT NOT NULL,
+    start_time        TEXT NOT NULL,
+    end_date          TEXT NOT NULL,
+    end_time          TEXT NOT NULL
 );
 
 CREATE TABLE Orders (
@@ -51,7 +53,7 @@ CREATE TABLE Orders (
     buyer_id     INTEGER NOT NULL REFERENCES Users(id),
     billing_id   INTEGER NOT NULL REFERENCES BillingDetails(id),
     delivery_id  INTEGER NOT NULL REFERENCES DeliveryInstructions(id),
-    last_edited  TIMESTAMP DEFAULT CURRENT_TIMESTAMP  NOT NULL,
+    last_edited  TEXT NOT NULL,
     status       TEXT CHECK (status IN ('pending', 'confirmed', 'cancelled')), -- Enum-like constraint
     total_price  DECIMAL(10,2) NOT NULL,
     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -71,3 +73,25 @@ CREATE TABLE OrderXMLs (
     xml_content TEXT NOT NULL,
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
+
+-- Drop full schema (debug):
+----------------------------
+DROP TABLE OrderItems;
+DROP TABLE Items;
+DROP TABLE OrderXMLs;
+DROP TABLE Orders;
+DROP TABLE BillingDetails;
+DROP TABLE DeliveryInstructions;
+DROP TABLE Tokens;
+DROP TABLE Users;
+
+-- Clear all data (debug):
+--------------------------
+DELETE FROM OrderItems;
+DELETE FROM Items;
+DELETE FROM OrderXMLs;
+DELETE FROM Orders;
+DELETE FROM BillingDetails;
+DELETE FROM DeliveryInstructions;
+DELETE FROM Tokens;
+DELETE FROM Users;
