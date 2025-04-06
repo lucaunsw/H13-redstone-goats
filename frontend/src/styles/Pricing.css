@@ -1,0 +1,245 @@
+/* ===== Modern Pricing Section ===== */
+.pricing {
+  padding: 100px 5%;
+  width: 100%;
+  background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
+  text-align: center;
+}
+
+.pricing-header {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 60px;
+}
+
+.pricing h2 {
+  font-size: 2.5rem;
+  margin-bottom: 5rem;
+  color: #333;
+  position: relative;
+  display: inline-block;
+}
+
+.pricing h2:after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: #c62828;
+  border-radius: 3px;
+}
+
+.pricing-subtitle {
+  font-size: 1.15rem;
+  color: #666;
+  line-height: 1.6;
+}
+
+.pricing-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.price-card {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+  position: relative;
+  overflow: visible;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Enhanced Popular Card Styling */
+.price-card.popular {
+  border-top: 3px solid #c62828;
+  box-shadow: 0 15px 40px rgba(198, 40, 40, 0.1);
+  animation: pulse-glow 2s infinite;
+}
+
+.price-card.popular:before {
+  content: "★ MOST POPULAR ★";
+  position: absolute;
+  top: 20px;
+  right: -42px;
+  width: 160px;
+  background: linear-gradient(135deg, #c62828 0%, #e53935 100%);
+  color: white;
+  text-align: center;
+  padding: 0.35rem 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  transform: rotate(45deg);
+  letter-spacing: 1px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  box-shadow: 0 5px 15px rgba(198, 40, 40, 0.3);
+  z-index: 1;
+}
+
+/* Enhanced Title Styling */
+.price-card h3 {
+  font-size: 1.6rem;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  position: relative;
+  display: inline-block;
+}
+
+.price-card.popular h3 {
+  color: #c62828;
+}
+
+.price-card h3:after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background: #c62828;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.price-card.popular h3:after {
+  background: linear-gradient(to right, #c62828, #e53935);
+  width: 60px;
+  height: 4px;
+}
+
+.price-card:hover h3:after {
+  width: 80px;
+}
+
+.price {
+  font-size: 3rem;
+  font-weight: 800;
+  margin: 1.5rem 0;
+  color: #c62828;
+  display: flex;
+  align-items: flex-start;
+}
+
+.price .currency {
+  font-size: 1.5rem;
+  margin-top: 0.5rem;
+  margin-right: 0.25rem;
+}
+
+.price .period {
+  font-size: 1rem;
+  color: #666;
+  align-self: flex-end;
+  margin-bottom: 0.5rem;
+  margin-left: 0.25rem;
+  font-weight: 400;
+}
+
+/* Modern Feature List */
+.feature-list {
+  margin: 2rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.feature-item {
+  padding: 0.75rem 0;
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+}
+
+.feature-item:not(:last-child) {
+  border-bottom: 1px dashed #eee;
+}
+
+.feature-icon {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  margin-right: 1rem;
+  background: #e8f5e9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-icon svg {
+  width: 14px;
+  height: 14px;
+  fill: #4CAF50;
+}
+
+.feature-item.disabled .feature-icon {
+  background: #ffebee;
+}
+
+.feature-item.disabled .feature-icon svg {
+  fill: #e53935;
+}
+
+.feature-text {
+  flex: 1;
+  color: #444;
+  font-size: 1.05rem;
+}
+
+.feature-item.disabled .feature-text {
+  color: #999;
+}
+
+.price-cta {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  background: #c62828;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 1rem;
+  box-shadow: 0 5px 15px rgba(198, 40, 40, 0.2);
+}
+
+.price-cta:hover {
+  background: #b71c1c;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(183, 28, 28, 0.3);
+}
+
+/* Pulse animation for popular card */
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(198, 40, 40, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(198, 40, 40, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(198, 40, 40, 0); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pricing {
+    padding: 80px 5%;
+  }
+  
+  .price-card.popular:before {
+    right: -45px;
+    font-size: 0.7rem;
+    width: 140px;
+    top: 15px;
+  }
+  
+  .price-card h3 {
+    font-size: 1.4rem;
+  }
+}
