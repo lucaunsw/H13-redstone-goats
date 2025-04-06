@@ -256,4 +256,16 @@ const orderRecommendations = async (userId: number, limit: number) => {
   return { recommendations: recommendedItems };
 };
 
-export { orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations };
+/** Seller route to return sales information to the seller.
+ *
+ * @param {number | null} userId - Unique identifier for a user.
+ * @returns { successfulOrders: [], cancelledOrders: [] } 
+ * orderHistory, a body containing all past orders from the user.
+ */
+const orderHistory = async (userId: number) => {
+
+  return;
+}
+
+export { orderCreate, orderCancel, orderConfirm, orderUserSales, 
+  orderRecommendations, orderHistory };

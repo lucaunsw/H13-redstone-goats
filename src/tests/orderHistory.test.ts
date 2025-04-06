@@ -4,7 +4,7 @@ const TIMEOUT_MS = 20 * 1000;
 import dotenv from 'dotenv';
 import { BillingDetails, DeliveryInstructions, Item, Order, status, User, UserSimple } from "../types";
 import { getOrder, getUser, updateOrder } from "../dataStore";
-// import { orderCancel } from "../app";
+import { orderHistory } from "../app";
 import { createClient } from '@redis/client';
 import { server } from '../server';
 dotenv.config();
