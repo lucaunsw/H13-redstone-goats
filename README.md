@@ -4,13 +4,17 @@
 # API 
 Our team was assigned the Order Creation API. This Github Repository includes all the features for User Authentication and Order Creation. 
 
-# Deployment
+# Front-End Deployment
+
+**Website Link:** https://redstoneco.vercel.app/
+
+# Back-End Deployment
 This Github Repository is deployed on a fork that is linked to a Vercel deployment. Each push to the main branch will produce a new production deployment.
 
-**Deploy Link:** https://h13-redstone-goats.vercel.app/
+**API Deploy Link:** https://h13-redstone-goats.vercel.app/
 
 **Deploy Swagger Link:** https://h13-redstone-goats.vercel.app/swagger/
-
+https://github.com/lucaunsw/H13-redstone-goats
 # API Content
 
 **Expected Input:** User, Payment, and Delivery data.
