@@ -1,0 +1,93 @@
+/* Footer */
+.footer {
+  padding: 80px 5% 30px;
+  width: 100%;
+  background: #222;
+  color: white;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Footer logo section */
+.footer-image {
+  max-width: 300px;
+  max-height: 50px;
+}
+
+/* Footer links section */
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.footer-links h3,
+.social-links h3 {
+  color: #fff;
+  font-size: 18px;
+  margin-bottom: 20px;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.footer-links h3:after,
+.social-links h3:after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: #c62828;
+}
+
+.footer-links a {
+  color: #bbb;
+  text-decoration: none;
+  transition: all 0.3s;
+  padding: 5px 0;
+  display: block;
+}
+
+.footer-links a:hover {
+  color: #ef9a9a;
+  transform: translateX(5px);
+}
+
+/* Social links section */
+.social-links {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.social-links a {
+  color: #bbb;
+  text-decoration: none;
+  transition: all 0.3s;
+  padding: 5px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.social-links a:hover {
+  color: #ef9a9a;
+}
+
+/* Copyright section */
+.copyright {
+  grid-column: 1 / -1;
+  text-align: center;
+  margin-top: 50px;
+  padding-top: 30px;
+  border-top: 1px solid #444;
+  color: #888;
+  font-size: 14px;
+}

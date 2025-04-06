@@ -1,0 +1,48 @@
+/* Button Styles */
+.cta-button {
+    background-color: #c62828;
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+    box-shadow: 0 4px 8px rgba(198, 40, 40, 0.3);
+  }
+  
+  .cta-button:hover {
+    background-color: #b71c1c;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(183, 28, 28, 0.4);
+  }
+  
+  .login-button {
+    background-color: transparent;
+    color: #c62828;
+    border: 2px solid #c62828;
+    padding: 10px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+  
+  .login-button:hover {
+    background-color: rgba(198, 40, 40, 0.1);
+  }
+  
+  .register-button {
+    background-color: #b71c1c;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+  }
+  
+  .register-button:hover {
+    background-color: #8e0000;
+  }
