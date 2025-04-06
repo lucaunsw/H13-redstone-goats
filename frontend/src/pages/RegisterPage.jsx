@@ -1,16 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import '../styles/Login.css'; // Reusing the same CSS file
+import axios from 'axios';
+import '../styles/Login.css';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -21,17 +25,81 @@ const RegisterPage = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
+
     e.preventDefault();
-    // Handle registration logic here
-    console.log({ ...formData, agreeTerms });
+    setLoading(true);
+    setError('');
+  
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords don't match");
+      setLoading(false);
+      return;
+    }
+  
+    if (!agreeTerms) {
+      setError("You must agree to the terms and conditions");
+      setLoading(false);
+      return;
+    }
+  
+    try {
+
+      const response = await axios.post(
+        `https://h13-redstone-goats.vercel.app/v1/user/register`,
+        
+        {
+          email: formData.email.trim(),
+          password: formData.password.trim(),
+          nameFirst: formData.firstName.trim(),
+          nameLast: formData.lastName.trim(),
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          }
+        }
+      );      
+      
+      if (response.data.token) {
+        localStorage.setItem('authToken', response.data.token);
+        navigate('/dashboard');
+      } else {
+        navigate('/login');
+      }
+  
+    } catch (err) {
+
+      if (err.response) {
+        const backendError = err.response.data;
+        
+        if (backendError.message) {
+          setError(backendError.message);
+        } else if (backendError.error) {
+          setError(backendError.error);
+        } else if (typeof backendError === 'string') {
+          setError(backendError);
+        } else if (backendError.errors) {
+          setError(backendError.errors.join(', '));
+        } else {
+          setError('Registration failed. Please try again.');
+        }
+      } else if (err.request) {
+        setError('Network error. Please check your connection.');
+      } else {
+        setError('An unexpected error occurred.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBackClick = () => {
     navigate('/');
   };
 
-  // Animation variants (same as login page)
+  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -83,6 +151,7 @@ const RegisterPage = () => {
           aria-label="Go back"
           whileHover={{ scale: 1.1, backgroundColor: 'rgba(229, 62, 62, 0.1)' }}
           whileTap={{ scale: 0.95 }}
+          disabled={loading}
         >
           <svg className="back-icon" viewBox="0 0 24 24">
             <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z" fill="currentColor"/>
@@ -93,6 +162,16 @@ const RegisterPage = () => {
           <h2>Create Account</h2>
           <p>Join RedstoneCo today</p>
         </motion.div>
+
+        {error && (
+          <motion.div 
+            className="error-message"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            {error}
+          </motion.div>
+        )}
         
         <motion.form 
           onSubmit={handleSubmit} 
@@ -100,15 +179,16 @@ const RegisterPage = () => {
           variants={containerVariants}
         >
           <motion.div className="form-group" variants={itemVariants}>
-            <label htmlFor="name">First Name</label>
+            <label htmlFor="firstName">First Name</label>
             <motion.input
               type="text"
-              id="name"
-              name="name"
-              value={formData.name}
+              id="firstName"
+              name="firstName"
+              value={formData.firstName}
               onChange={handleChange}
               placeholder="Enter your first name"
               required
+              disabled={loading}
               whileFocus={{ 
                 borderColor: '#e53e3e',
                 boxShadow: '0 0 0 2px rgba(229, 62, 62, 0.2)'
@@ -117,15 +197,16 @@ const RegisterPage = () => {
           </motion.div>
 
           <motion.div className="form-group" variants={itemVariants}>
-            <label htmlFor="name">Last Name</label>
+            <label htmlFor="lastName">Last Name</label>
             <motion.input
               type="text"
-              id="name"
-              name="name"
-              value={formData.name}
+              id="lastName"
+              name="lastName"
+              value={formData.lastName}
               onChange={handleChange}
               placeholder="Enter your last name"
               required
+              disabled={loading}
               whileFocus={{ 
                 borderColor: '#e53e3e',
                 boxShadow: '0 0 0 2px rgba(229, 62, 62, 0.2)'
@@ -143,6 +224,7 @@ const RegisterPage = () => {
               onChange={handleChange}
               placeholder="Enter your email"
               required
+              disabled={loading}
               whileFocus={{ 
                 borderColor: '#e53e3e',
                 boxShadow: '0 0 0 2px rgba(229, 62, 62, 0.2)'
@@ -158,8 +240,10 @@ const RegisterPage = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Create a password"
+              placeholder="Create a password (min 8 characters)"
               required
+              minLength="8"
+              disabled={loading}
               whileFocus={{ 
                 borderColor: '#e53e3e',
                 boxShadow: '0 0 0 2px rgba(229, 62, 62, 0.2)'
@@ -177,6 +261,7 @@ const RegisterPage = () => {
               onChange={handleChange}
               placeholder="Confirm your password"
               required
+              disabled={loading}
               whileFocus={{ 
                 borderColor: '#e53e3e',
                 boxShadow: '0 0 0 2px rgba(229, 62, 62, 0.2)'
@@ -192,9 +277,10 @@ const RegisterPage = () => {
                 checked={agreeTerms}
                 onChange={(e) => setAgreeTerms(e.target.checked)}
                 whileTap={{ scale: 0.9 }}
+                disabled={loading}
               />
               <label htmlFor="agreeTerms">
-                I agree to the <a href="\register" className="terms-link">Terms</a> and <a href="\register" className="terms-link">Privacy Policy</a>
+                I agree to the <a href="/register" className="terms-link">Terms</a> and <a href="/register" className="terms-link">Privacy Policy</a>
               </label>
             </div>
           </motion.div>
@@ -203,11 +289,17 @@ const RegisterPage = () => {
             type="submit" 
             className="auth-login-button"
             variants={itemVariants}
-            whileHover={buttonHover}
-            whileTap={buttonTap}
-            disabled={!agreeTerms}
+            whileHover={!loading ? buttonHover : {}}
+            whileTap={!loading ? buttonTap : {}}
+            disabled={!agreeTerms || loading}
           >
-            Create Account
+            {loading ? (
+              <span className="button-loading">
+                <span className="spinner"></span> Creating Account...
+              </span>
+            ) : (
+              'Create Account'
+            )}
           </motion.button>
         </motion.form>
         
