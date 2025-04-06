@@ -178,7 +178,7 @@ const RegisterPage = () => {
           className="login-form"
           variants={containerVariants}
         >
-          <motion.div className="form-group" variants={itemVariants}>
+          <motion.div className="login-form-group" variants={itemVariants}>
             <label htmlFor="firstName">First Name</label>
             <motion.input
               type="text"
@@ -196,7 +196,7 @@ const RegisterPage = () => {
             />
           </motion.div>
 
-          <motion.div className="form-group" variants={itemVariants}>
+          <motion.div className="login-form-group" variants={itemVariants}>
             <label htmlFor="lastName">Last Name</label>
             <motion.input
               type="text"
@@ -214,7 +214,7 @@ const RegisterPage = () => {
             />
           </motion.div>
 
-          <motion.div className="form-group" variants={itemVariants}>
+          <motion.div className="login-form-group" variants={itemVariants}>
             <label htmlFor="email">Email</label>
             <motion.input
               type="email"
@@ -232,7 +232,7 @@ const RegisterPage = () => {
             />
           </motion.div>
           
-          <motion.div className="form-group" variants={itemVariants}>
+          <motion.div className="login-form-group" variants={itemVariants}>
             <label htmlFor="password">Password</label>
             <motion.input
               type="password"
@@ -251,7 +251,7 @@ const RegisterPage = () => {
             />
           </motion.div>
 
-          <motion.div className="form-group" variants={itemVariants}>
+          <motion.div className="login-form-group" variants={itemVariants}>
             <label htmlFor="confirmPassword">Confirm Password</label>
             <motion.input
               type="password"

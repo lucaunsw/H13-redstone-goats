@@ -154,7 +154,7 @@ const Login = () => {
           className="login-form"
           variants={containerVariants}
         >
-          <motion.div className="form-group" variants={itemVariants}>
+          <motion.div className="login-form-group" variants={itemVariants}>
             <label htmlFor="email">Email</label>
             <motion.input
               type="email"
@@ -172,7 +172,7 @@ const Login = () => {
             />
           </motion.div>
           
-          <motion.div className="form-group" variants={itemVariants}>
+          <motion.div className="login-form-group" variants={itemVariants}>
             <label htmlFor="password">Password</label>
             <motion.input
               type="password"
