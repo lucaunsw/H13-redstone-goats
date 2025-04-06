@@ -1,25 +1,37 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import '../styles/Login.css';
+import '../styles/Login.css'; // Reusing the same CSS file
 
-const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+const RegisterPage = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log({ email, password, rememberMe });
+    // Handle registration logic here
+    console.log({ ...formData, agreeTerms });
   };
 
   const handleBackClick = () => {
     navigate('/');
   };
 
-  // Animation variants
+  // Animation variants (same as login page)
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
@@ -78,8 +90,8 @@ const Login = () => {
         </motion.button>
         
         <motion.div className="login-header" variants={itemVariants}>
-          <h2>Welcome Back!</h2>
-          <p>Sign in to your RedstoneCo account</p>
+          <h2>Create Account</h2>
+          <p>Join RedstoneCo today</p>
         </motion.div>
         
         <motion.form 
@@ -88,12 +100,47 @@ const Login = () => {
           variants={containerVariants}
         >
           <motion.div className="form-group" variants={itemVariants}>
+            <label htmlFor="name">First Name</label>
+            <motion.input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Enter your first name"
+              required
+              whileFocus={{ 
+                borderColor: '#e53e3e',
+                boxShadow: '0 0 0 2px rgba(229, 62, 62, 0.2)'
+              }}
+            />
+          </motion.div>
+
+          <motion.div className="form-group" variants={itemVariants}>
+            <label htmlFor="name">Last Name</label>
+            <motion.input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="Enter your last name"
+              required
+              whileFocus={{ 
+                borderColor: '#e53e3e',
+                boxShadow: '0 0 0 2px rgba(229, 62, 62, 0.2)'
+              }}
+            />
+          </motion.div>
+
+          <motion.div className="form-group" variants={itemVariants}>
             <label htmlFor="email">Email</label>
             <motion.input
               type="email"
               id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
               placeholder="Enter your email"
               required
               whileFocus={{ 
@@ -108,9 +155,27 @@ const Login = () => {
             <motion.input
               type="password"
               id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Create a password"
+              required
+              whileFocus={{ 
+                borderColor: '#e53e3e',
+                boxShadow: '0 0 0 2px rgba(229, 62, 62, 0.2)'
+              }}
+            />
+          </motion.div>
+
+          <motion.div className="form-group" variants={itemVariants}>
+            <label htmlFor="confirmPassword">Confirm Password</label>
+            <motion.input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Confirm your password"
               required
               whileFocus={{ 
                 borderColor: '#e53e3e',
@@ -123,20 +188,15 @@ const Login = () => {
             <div className="remember-me">
               <motion.input
                 type="checkbox"
-                id="rememberMe"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
+                id="agreeTerms"
+                checked={agreeTerms}
+                onChange={(e) => setAgreeTerms(e.target.checked)}
                 whileTap={{ scale: 0.9 }}
               />
-              <label htmlFor="rememberMe">Remember me</label>
+              <label htmlFor="agreeTerms">
+                I agree to the <a href="\register" className="terms-link">Terms</a> and <a href="\register" className="terms-link">Privacy Policy</a>
+              </label>
             </div>
-            <motion.a 
-              href="/forgot-password" 
-              className="forgot-password"
-              whileHover={{ color: '#c53030' }}
-            >
-              Forgot password?
-            </motion.a>
           </motion.div>
           
           <motion.button 
@@ -145,20 +205,21 @@ const Login = () => {
             variants={itemVariants}
             whileHover={buttonHover}
             whileTap={buttonTap}
+            disabled={!agreeTerms}
           >
-            Sign In
+            Create Account
           </motion.button>
         </motion.form>
         
         <motion.div className="login-footer" variants={itemVariants}>
-          <p>Don't have an account? <motion.a 
-            href="/register"
+          <p>Already have an account? <motion.a 
+            href="/login"
             whileHover={{ color: '#c53030' }}
-          >Sign up</motion.a></p>
+          >Sign in</motion.a></p>
         </motion.div>
       </motion.div>
     </motion.div>
   );
 };
 
-export default Login;
+export default RegisterPage;
