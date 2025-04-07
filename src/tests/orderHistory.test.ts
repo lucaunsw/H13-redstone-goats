@@ -3,11 +3,16 @@ const SERVER_URL = `http://127.0.0.1:3200`;
 const TIMEOUT_MS = 20 * 1000;
 import dotenv from 'dotenv';
 import { BillingDetails, DeliveryInstructions, Item, Order, status, User, UserSimple } from "../types";
-import { getOrder, getUser, updateOrder } from "../dataStore";
+import { getUser, getOrdersByBuyer } from "../dataStore";
 import { orderHistory } from "../app";
 import { createClient } from '@redis/client';
 import { server } from '../server';
 dotenv.config();
+
+jest.mock('../dataStore', () => ({
+  getUser: jest.fn(),
+  getOrdersByBuyer: jest.fn(),
+}));
 
 jest.mock('@redis/client', () => ({
   createClient: jest.fn(() => ({
@@ -32,12 +37,24 @@ describe("Tests for orderCancel", () => {
   });
 
   test('Error from invalid userId', async () => {
-    await expect(orderHistory()).
+    (getUser as jest.Mock).mockResolvedValue(null);
+    await expect(orderHistory(1)).
     rejects.toThrowError('Invalid userId');
   });
 
   test('Sucess case with no orders', async () => {
-    const response = await expect(orderHistory());
+    (getUser as jest.Mock).mockResolvedValue(
+      {
+        id: 1,
+        name: "Test Buyer",
+        streetName: 'White St',
+        cityName: 'Sydney',
+        postalZone: '2000',
+        cbcCode: 'AU',
+      }
+    );
+    (getOrdersByBuyer as jest.Mock).mockResolvedValue([]);
+    const response = await orderHistory(1);
     expect(response).toStrictEqual({ 
       successfulOrders: [],
       cancelledOrders: [],
@@ -45,7 +62,7 @@ describe("Tests for orderCancel", () => {
   });
 
   test('Sucess case with cancelled and successful orders', async () => {
-
+    const date = new Date().toISOString().split('T')[0];
     const testSeller: UserSimple = {
       id: 1,
       name: 'Test Seller',
@@ -92,11 +109,68 @@ describe("Tests for orderCancel", () => {
       startTime: '13:00',
       endDate: new Date(2025, 9, 10).toISOString().split('T')[0],
       endTime: '13:00'
-    }
-    const response = await expect(orderHistory());
+    };
+
+    (getUser as jest.Mock).mockResolvedValue(
+      {
+        id: 1,
+        name: "Test Buyer",
+        streetName: 'White St',
+        cityName: 'Sydney',
+        postalZone: '2000',
+        cbcCode: 'AU',
+      }
+    );
+    (getOrdersByBuyer as jest.Mock).mockResolvedValue([
+      {
+        items: [testItem1],
+        quantities: [1],
+        buyer: testBuyer,
+        billingDetails: testBillingDetails,
+        totalPrice: 5,
+        delivery: testDeliveryDetails,
+        lastEdited: date,
+        createdAt: date,
+      },
+      {
+        items: [testItem2],
+        quantities: [1],
+        buyer: testBuyer,
+        billingDetails: testBillingDetails,
+        totalPrice: 5,
+        delivery: testDeliveryDetails,
+        lastEdited: date,
+        status: "cancelled",
+        createdAt: date,
+      }
+    ]);
+    const response = await orderHistory(1);
     expect(response).toStrictEqual({ 
-      successfulOrders: [],
-      cancelledOrders: [],
+      successfulOrders: [
+        {
+          items: [testItem1],
+          quantities: [1],
+          buyer: testBuyer,
+          billingDetails: testBillingDetails,
+          totalPrice: 5,
+          delivery: testDeliveryDetails,
+          lastEdited: date,
+          createdAt: date,
+        }
+      ],
+      cancelledOrders: [
+        {
+          items: [testItem2],
+          quantities: [1],
+          buyer: testBuyer,
+          billingDetails: testBillingDetails,
+          totalPrice: 5,
+          delivery: testDeliveryDetails,
+          lastEdited: date,
+          status: "cancelled",
+          createdAt: date,
+        }
+      ],
     });
   })
 });
