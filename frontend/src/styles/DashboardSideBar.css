@@ -1,0 +1,58 @@
+/* Sidebar Styles */
+.dashboard-sidebar {
+    width: 250px;
+    background-color: white;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+    padding: 2rem 0;
+}
+
+.dashboard-sidebar nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dashboard-sidebar nav li {
+    padding: 0.8rem 2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-weight: 500;
+    color: #555;
+    transition: all 0.2s;
+}
+
+.dashboard-sidebar nav li:hover {
+    background-color: rgba(198, 40, 40, 0.1);
+    color: #c62828;
+}
+
+.dashboard-sidebar nav li.active {
+    background-color: rgba(198, 40, 40, 0.1);
+    color: #c62828;
+    border-left: 3px solid #c62828;
+}
+
+@media (max-width: 992px) {
+    .dashboard-sidebar {
+        width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-sidebar {
+        width: 100%;
+        padding: 1rem 0;
+    }
+    
+    .dashboard-sidebar nav ul {
+        display: flex;
+        overflow-x: auto;
+    }
+    
+    .dashboard-sidebar nav li {
+        padding: 0.8rem 1.5rem;
+        white-space: nowrap;
+    }
+}

@@ -42,16 +42,15 @@ const Login = () => {
         }
       );
 
+      //delete old tokens
+      localStorage.removeItem('authToken'); 
+
       // Handle successful login
-      const token = response.data;
+      const token = response.data.token;
       
       // Store token securely
-      if (rememberMe) {
-        localStorage.setItem('authToken', token); 
-      } else {
-        sessionStorage.setItem('authToken', token); 
-      }
-      
+      localStorage.setItem('authToken', token); 
+      console.log(localStorage.getItem('authToken'))
       // Redirect to dashboard or home
       navigate('/dashboard');
 

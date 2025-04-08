@@ -11,7 +11,7 @@ const Header = () => {
   };
 
   const handleRegisterClick = () => {
-    navigate('/register'); // You might want to create a register page later
+    navigate('/register'); 
   };
 
   return (
@@ -21,7 +21,7 @@ const Header = () => {
           className="logo"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => navigate('/')} // Add navigation to home on logo click
+          onClick={() => navigate('/')}
         >
           <img 
             src={logo}
