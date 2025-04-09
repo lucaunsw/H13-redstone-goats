@@ -50,7 +50,7 @@ paths:
                   userId:
                     type: integer
         '400':
-          description: Bad request from client.
+          description: Bad request.
           content:
             application/json:
               schema:
@@ -317,8 +317,15 @@ paths:
             schema:
               $ref: "#/components/schemas/OrderRequest"
       responses:
-        '201':
-          description: Order updated
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
         '400':
           description: Bad request from client e.g invalid bank details, invalid order date
           content:
@@ -380,7 +387,17 @@ paths:
                   reason:
                     type: string
         '400':
-          description: Unknown orderId
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Error Message Here"
+        '401':
+          description: token invalid or unauthorised
           content:
             application/json:
               schema:
@@ -421,7 +438,17 @@ paths:
               schema:
                 type: object
         '400':
-          description: OrderId missing or invalid
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Error Message Here"
+        '401':
+          description: Token invalid unauthorised
           content:
             application/json:
               schema:
@@ -461,7 +488,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/OrderHistory"
         '400':
-          description: UserId missing or invalid
+          description: Bad request 
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Error Message Here"
+        '401':
+          description: Token invalid or unauthorised. 
           content:
             application/json:
               schema:
@@ -485,11 +522,27 @@ paths:
             type: integer
       responses:
         '200':
-          description: Recommended order
+          description: Success
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OrderRecommendation"
+                type: object
+                properties:
+                  recommendations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Item"
+        '401':
+          description: Token invalid or unauthorised.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Error Message Here"
+
 
   /v1/order/{userId}/sales:
     get:
@@ -526,7 +579,17 @@ paths:
               schema:
                 $ref: "#/components/schemas/SalesData"
         '400':
-          description: UserId missing or invalid
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Error Message Here"
+        '401':
+          description: Token unauthorised or invalid
           content:
             application/json:
               schema:
@@ -645,8 +708,8 @@ components:
           type: string
         price:
           type: number
-        quantity:
-          type: integer
+        description:
+          type: string
         seller:
           type: object
           $ref: "#/components/schemas/UserSimple"
