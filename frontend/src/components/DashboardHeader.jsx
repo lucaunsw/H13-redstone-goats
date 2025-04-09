@@ -16,6 +16,7 @@ const DashboardHeader = () => {
   const navigate = useNavigate();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [currentUser, setCurrentUser] = useState({ user: {} });
   const notificationsRef = useRef(null);
   const profileRef = useRef(null);
 
@@ -46,7 +47,6 @@ const DashboardHeader = () => {
    
   }, []);
 
-  const [currentUser, setCurrentUser] = useState({ user: {} });
 
 
   useEffect(() => {
@@ -73,11 +73,11 @@ const DashboardHeader = () => {
 
       setCurrentUser(response.data);
       } catch (error) {
-      console.error("Failed to fetch user details:", {
-          message: error.message,
-          status: error.response?.status,
-          data: error.response?.data
-      });
+        console.error("Failed to fetch user details:", {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data
+        });
       }
     };
 

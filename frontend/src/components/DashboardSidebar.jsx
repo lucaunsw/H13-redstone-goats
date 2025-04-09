@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { slideInLeft } from '../pages/LandingPage';
 import {
   FiTrendingUp,
-  FiPlusCircle,
+  FiPlus,
   FiPackage,
   FiGrid,
   FiHelpCircle 
@@ -11,41 +11,49 @@ import '../styles/DashboardSideBar.css';
 
 const DashboardSidebar = ({ activeTab, setActiveTab }) => {
   return (
-    <motion.aside className="dashboard-sidebar" variants={slideInLeft}>
-      <nav>
-        <ul>
-          <li 
-            className={activeTab === 'overview' ? 'active' : ''}
-            onClick={() => setActiveTab('overview')}
-          >
-            <FiGrid /> Overview
-          </li>
-          <li 
-            className={activeTab === 'create' ? 'active' : ''}
-            onClick={() => setActiveTab('create')}
-          >
-            <FiPlusCircle /> Create Order
-          </li>
-          <li 
-            className={activeTab === 'orders' ? 'active' : ''}
-            onClick={() => setActiveTab('orders')}
-          >
-            <FiPackage /> Order History
-          </li>
-          <li 
-            className={activeTab === 'sales' ? 'active' : ''}
-            onClick={() => setActiveTab('sales')}
-          >
-            <FiTrendingUp /> Order Sales
-          </li>
-          <li 
-            className={activeTab === 'recommendations' ? 'active' : ''}
-            onClick={() => setActiveTab('recommendations')}
-          >
-            <FiHelpCircle /> Order Recommendations
-          </li>
-        </ul>
-      </nav>
+    <motion.aside 
+      className="dashboard-sidebar" 
+      variants={slideInLeft}
+      initial="hidden"
+      animate="visible"
+    >
+      <div className="sidebar-content">
+        <button 
+          className="create-order-button"
+          onClick={() => setActiveTab('create')}
+        >
+          <FiPlus /> Create Order
+        </button>
+
+        <nav className="sidebar-nav">
+          <ul>
+            <li 
+              className={activeTab === 'overview' ? 'active' : ''}
+              onClick={() => setActiveTab('overview')}
+            >
+              <FiGrid /> Overview
+            </li>
+            <li 
+              className={activeTab === 'orders' ? 'active' : ''}
+              onClick={() => setActiveTab('orders')}
+            >
+              <FiPackage /> Order History
+            </li>
+            <li 
+              className={activeTab === 'sales' ? 'active' : ''}
+              onClick={() => setActiveTab('sales')}
+            >
+              <FiTrendingUp /> Order Sales
+            </li>
+            <li 
+              className={activeTab === 'recommendations' ? 'active' : ''}
+              onClick={() => setActiveTab('recommendations')}
+            >
+              <FiHelpCircle /> Order Recommendations
+            </li>
+          </ul>
+        </nav>
+      </div>
     </motion.aside>
   );
 };
