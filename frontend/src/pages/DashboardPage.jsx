@@ -1,39 +1,29 @@
-import '../App.css';
-import '../styles/Dashboard.css';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-  FiShoppingCart,
-  FiDollarSign,
-  FiUsers,
-  FiPackage,
-  FiTrendingUp,
-  FiPlusCircle,
-  FiClock,
-  FiCheckCircle,
-  FiXCircle
-} from 'react-icons/fi';
-
-// Reuse your existing animation variants
-import {
-  containerVariants,
-  itemVariants,
-  fadeIn,
-  slideInLeft,
-  popIn
-} from './LandingPage';
+import { containerVariants } from './LandingPage';
+import DashboardHeader from '../components/DashboardHeader';
+import DashboardSidebar from '../components/DashboardSidebar';
+import StatCard from '../components/StatCard';
+import RecentOrders from '../components/RecentOrders';
+import OrdersTable from '../components/OrdersTable';
+import SalesSummary from '../components/SalesSummary';
+import CustomerManagement from '../components/CustomerManagement';
 import CreateOrderForm from '../components/CreateOrderForm';
+import { 
+  FiDollarSign,
+  FiTrendingUp,
+  FiShoppingCart,
+  FiClock
+} from 'react-icons/fi';
+import '../styles/Dashboard.css';
 
 const DashboardPage = () => {
-  const [activeTab, setActiveTab] = useState('create');
+  const [activeTab, setActiveTab] = useState('overview');
   const [orders, setOrders] = useState([]);
   const [salesData, setSalesData] = useState({});
-  const navigate = useNavigate();
 
   // Load sample data
   useEffect(() => {
-    // In a real app, you would fetch this from an API
     const sampleOrders = [
       {
         id: 'ORD-1001',
@@ -81,7 +71,6 @@ const DashboardPage = () => {
       order.id === orderId ? { ...order, status: newStatus } : order
     ));
 
-    // Update pending count if needed
     if (newStatus === 'completed' || newStatus === 'shipped') {
       setSalesData(prev => ({
         ...prev,
@@ -97,260 +86,62 @@ const DashboardPage = () => {
       animate="visible"
       variants={containerVariants}
     >
-      {/* Dashboard Header */}
-      <motion.header className="dashboard-header" variants={itemVariants}>
-        <h1>Dashboard</h1>
-        <div className="user-controls">
-          <button className="logout-button" onClick={() => navigate('/')}>
-            Logout
-          </button>
-        </div>
-      </motion.header>
-
-      {/* Main Dashboard Content */}
+      <DashboardHeader />
+      
       <div className="dashboard-content">
-        {/* Sidebar */}
-        <motion.aside className="dashboard-sidebar" variants={slideInLeft}>
-          <nav>
-            <ul>
-              <li 
-                className={activeTab === 'overview' ? 'active' : ''}
-                onClick={() => setActiveTab('overview')}
-              >
-                <FiTrendingUp /> Overview
-              </li>
-              <li 
-                className={activeTab === 'create' ? 'active' : ''}
-                onClick={() => setActiveTab('create')}
-              >
-                <FiPlusCircle /> Create Order
-              </li>
-              <li 
-                className={activeTab === 'orders' ? 'active' : ''}
-                onClick={() => setActiveTab('orders')}
-              >
-                <FiPackage /> Order History
-              </li>
-              <li 
-                className={activeTab === 'customers' ? 'active' : ''}
-                onClick={() => setActiveTab('customers')}
-              >
-                <FiUsers /> Customers
-              </li>
-            </ul>
-          </nav>
-        </motion.aside>
-
-        {/* Main Panel */}
+        <DashboardSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        
         <main className="dashboard-main">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
-            <motion.div variants={fadeIn}>
+            <>
               <h2>Business Overview</h2>
               
               <div className="stats-grid">
-                <motion.div className="stat-card" variants={popIn}>
-                  <div className="stat-icon">
-                    <FiDollarSign />
-                  </div>
-                  <div className="stat-info">
-                    <h3>Today's Sales</h3>
-                    <p>${salesData.today?.toFixed(2) || '0.00'}</p>
-                  </div>
-                </motion.div>
-
-                <motion.div className="stat-card" variants={popIn}>
-                  <div className="stat-icon">
-                    <FiTrendingUp />
-                  </div>
-                  <div className="stat-info">
-                    <h3>This Month</h3>
-                    <p>${salesData.month?.toFixed(2) || '0.00'}</p>
-                  </div>
-                </motion.div>
-
-                <motion.div className="stat-card" variants={popIn}>
-                  <div className="stat-icon">
-                    <FiShoppingCart />
-                  </div>
-                  <div className="stat-info">
-                    <h3>Total Orders</h3>
-                    <p>{salesData.totalOrders || 0}</p>
-                  </div>
-                </motion.div>
-
-                <motion.div className="stat-card" variants={popIn}>
-                  <div className="stat-icon">
-                    <FiClock />
-                  </div>
-                  <div className="stat-info">
-                    <h3>Pending Orders</h3>
-                    <p>{salesData.pendingOrders || 0}</p>
-                  </div>
-                </motion.div>
+                <StatCard 
+                  icon={<FiDollarSign />}
+                  title="Today's Sales"
+                  value={`$${salesData.today?.toFixed(2) || '0.00'}`}
+                />
+                <StatCard 
+                  icon={<FiTrendingUp />}
+                  title="This Month"
+                  value={`$${salesData.month?.toFixed(2) || '0.00'}`}
+                />
+                <StatCard 
+                  icon={<FiShoppingCart />}
+                  title="Total Orders"
+                  value={salesData.totalOrders || 0}
+                />
+                <StatCard 
+                  icon={<FiClock />}
+                  title="Pending Orders"
+                  value={salesData.pendingOrders || 0}
+                />
               </div>
 
-              <motion.div className="recent-orders" variants={fadeIn}>
-                <h3>Recent Orders</h3>
-                <div className="orders-table">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Order ID</th>
-                        <th>Customer</th>
-                        <th>Product</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orders.slice(0, 5).map(order => (
-                        <tr key={order.id}>
-                          <td>{order.id}</td>
-                          <td>{order.customer}</td>
-                          <td>{order.product}</td>
-                          <td>${(order.price * order.quantity).toFixed(2)}</td>
-                          <td>
-                            <span className={`status-badge ${order.status}`}>
-                              {order.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </motion.div>
-            </motion.div>
+              <RecentOrders orders={orders} />
+            </>
           )}
 
           {/* Create Order Tab */}
           {activeTab === 'create' && (
-            <motion.div variants={fadeIn}>
-                <h2>Order Create</h2>
-                <CreateOrderForm />
-            </motion.div>
+            <>
+              <h2>Create Order</h2>
+              <CreateOrderForm />
+            </>
           )}
 
           {/* Order History Tab */}
           {activeTab === 'orders' && (
-            <motion.div variants={fadeIn}>
-              <div className="orders-header">
-                <h2>Order History</h2>
-                <div className="order-filters">
-                  <select>
-                    <option value="all">All Orders</option>
-                    <option value="pending">Pending</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="completed">Completed</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="orders-table-container">
-                <table className="orders-table">
-                  <thead>
-                    <tr>
-                      <th>Order ID</th>
-                      <th>Date</th>
-                      <th>Customer</th>
-                      <th>Product</th>
-                      <th>Qty</th>
-                      <th>Total</th>
-                      <th>Status</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.map(order => (
-                      <tr key={order.id}>
-                        <td>{order.id}</td>
-                        <td>{order.date}</td>
-                        <td>{order.customer}</td>
-                        <td>{order.product}</td>
-                        <td>{order.quantity}</td>
-                        <td>${(order.price * order.quantity).toFixed(2)}</td>
-                        <td>
-                          <span className={`status-badge ${order.status}`}>
-                            {order.status}
-                          </span>
-                        </td>
-                        <td className="order-actions">
-                          {order.status === 'pending' && (
-                            <>
-                              <button 
-                                onClick={() => updateOrderStatus(order.id, 'shipped')}
-                                className="action-button shipped"
-                              >
-                                <FiPackage /> Ship
-                              </button>
-                              <button 
-                                onClick={() => updateOrderStatus(order.id, 'completed')}
-                                className="action-button completed"
-                              >
-                                <FiCheckCircle /> Complete
-                              </button>
-                            </>
-                          )}
-                          {order.status === 'shipped' && (
-                            <button 
-                              onClick={() => updateOrderStatus(order.id, 'completed')}
-                              className="action-button completed"
-                            >
-                              <FiCheckCircle /> Complete
-                            </button>
-                          )}
-                          <button 
-                            onClick={() => {
-                              if (window.confirm('Are you sure you want to cancel this order?')) {
-                                updateOrderStatus(order.id, 'cancelled');
-                              }
-                            }}
-                            className="action-button cancelled"
-                          >
-                            <FiXCircle /> Cancel
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="sales-summary">
-                <h3>Sales Summary</h3>
-                <div className="summary-cards">
-                  <div className="summary-card">
-                    <h4>Total Revenue</h4>
-                    <p>${orders.reduce((sum, order) => 
-                      order.status !== 'cancelled' ? 
-                      sum + (order.price * order.quantity) : sum, 0).toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="summary-card">
-                    <h4>Completed Orders</h4>
-                    <p>{orders.filter(o => o.status === 'completed').length}</p>
-                  </div>
-                  <div className="summary-card">
-                    <h4>Average Order Value</h4>
-                    <p>${(orders.reduce((sum, order) => 
-                      order.status !== 'cancelled' ? 
-                      sum + (order.price * order.quantity) : sum, 0) / 
-                      (orders.length || 1)).toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+            <>
+              <OrdersTable orders={orders} updateOrderStatus={updateOrderStatus} />
+              <SalesSummary orders={orders} />
+            </>
           )}
 
           {/* Customers Tab */}
-          {activeTab === 'customers' && (
-            <motion.div variants={fadeIn}>
-              <h2>Customer Management</h2>
-              <p>Customer management features coming soon!</p>
-            </motion.div>
-          )}
+          {activeTab === 'customers' && <CustomerManagement />}
         </main>
       </div>
     </motion.div>

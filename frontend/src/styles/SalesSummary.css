@@ -1,0 +1,42 @@
+/* Sales Summary */
+.sales-summary {
+    margin-top: 3rem;
+}
+
+.sales-summary h3 {
+    font-size: 1.3rem;
+    color: #444;
+    margin-bottom: 1.5rem;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.summary-card h4 {
+    font-size: 1rem;
+    color: #666;
+    margin: 0 0 0.5rem;
+}
+
+.summary-card p {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+
+@media (max-width: 576px) {
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+}
