@@ -1,58 +1,103 @@
-/* Sidebar Styles */
 .dashboard-sidebar {
-    width: 250px;
-    background-color: white;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.05);
-    padding: 2rem 0;
+  width: 250px;
+  background: var(--bg-secondary);
+  position: static;
+  left: 0;
+  top: 80px; 
+  padding: 1.5rem 1rem;
+  z-index: 100;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
-.dashboard-sidebar nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 1.5rem;
 }
 
-.dashboard-sidebar nav li {
-    padding: 0.8rem 2rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    font-weight: 500;
-    color: #555;
-    transition: all 0.2s;
+.create-order-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  background: #c62828;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(198, 40, 40, 0.3);
 }
 
-.dashboard-sidebar nav li:hover {
-    background-color: rgba(198, 40, 40, 0.1);
-    color: #c62828;
+.create-order-button:hover {
+  background: #b71c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(198, 40, 40, 0.3);
 }
 
-.dashboard-sidebar nav li.active {
-    background-color: rgba(198, 40, 40, 0.1);
-    color: #c62828;
-    border-left: 3px solid #c62828;
+.sidebar-nav {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+  
+  /* Rest of your sidebar styles remain the same */
+
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-@media (max-width: 992px) {
-    .dashboard-sidebar {
-        width: 200px;
-    }
+.sidebar-nav ul li {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+  background: transparent;
 }
 
+.sidebar-nav ul li:hover {
+  background: rgba(198, 40, 40, 0.1);
+  color: var(--text-primary);
+}
+
+.sidebar-nav ul li.active {
+  background: rgba(198, 40, 40, 0.15);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-    .dashboard-sidebar {
-        width: 100%;
-        padding: 1rem 0;
-    }
-    
-    .dashboard-sidebar nav ul {
-        display: flex;
-        overflow-x: auto;
-    }
-    
-    .dashboard-sidebar nav li {
-        padding: 0.8rem 1.5rem;
-        white-space: nowrap;
-    }
+.dashboard-sidebar {
+  width: 200px;
+  padding: 1rem 0.75rem;
+}
+
+.dashboard-content {
+  margin-left: 200px;
+  width: calc(100% - 200px);
+}
+
+.create-order-button {
+  padding: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.sidebar-nav ul li {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
 }

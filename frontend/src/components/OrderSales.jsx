@@ -129,6 +129,7 @@ const OrderSales = () => {
       )}
          <main className="dashboard-main order-sales">
         <div className="sales-header">
+          <h2>Order Sales</h2>
           <div className="controls">
             <div className="time-range">
               {['week', 'month', 'year'].map((range) => (
