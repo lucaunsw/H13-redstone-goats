@@ -1,0 +1,126 @@
+/* Contact Section */
+.contact {
+  padding: 100px 5%;
+  width: 100%;
+  background: linear-gradient(135deg, #f9f9f9 0%, #ffffff 100%);
+  text-align: center;
+}
+
+.contact h2 {
+  font-size: 2.5rem;
+  margin-bottom: 5rem;
+  color: #333;
+  position: relative;
+  display: inline-block;
+}
+
+.contact h2:after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: #c62828;
+  border-radius: 3px;
+}
+
+.contact p.subtitle {
+  font-size: 1.1rem;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto 3rem;
+  line-height: 1.6;
+}
+
+.contact-form {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #444;
+  font-size: 0.95rem;
+}
+
+.contact-form input,
+.contact-form textarea {
+  padding: 1rem 1.2rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+}
+
+.contact-form textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  outline: none;
+  border-color: #c62828;
+  box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.1),
+              0 4px 8px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+}
+
+.contact-form button[type="submit"] {
+  align-self: center;
+  margin-top: 1rem;
+  padding: 1rem 2.5rem;
+  font-size: 1rem;
+  background-color: #c62828;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(198, 40, 40, 0.2);
+}
+
+.contact-form button[type="submit"]:hover {
+  background-color: #b71c1c;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(183, 28, 28, 0.3);
+}
+
+/* Success message */
+.form-success {
+  color: #2e7d32;
+  background-color: #e8f5e9;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  display: none; 
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .contact {
+    padding: 80px 5%;
+  }
+  
+  .contact h2 {
+    font-size: 2rem;
+  }
+  
+  .contact-form {
+    gap: 1.2rem;
+  }
+}

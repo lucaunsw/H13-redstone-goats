@@ -1,0 +1,17 @@
+/* Customer Management */
+.customer-management {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.customer-management h2 {
+    color: #333;
+    margin-bottom: 1.5rem;
+}
+
+.customer-management p {
+    color: #666;
+    line-height: 1.6;
+}

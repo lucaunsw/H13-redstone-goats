@@ -1,0 +1,168 @@
+/* Hero Section */
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 120px 5%;
+  width: 100%;
+  position: relative;
+  background: #fff;
+  flex: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.hero-content {
+  max-width: 600px;
+  padding-right: 60px;
+}
+
+.hero-content h1 {
+  font-size: 56px;
+  margin-bottom: 25px;
+  color: #333;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.hero-content p {
+  font-size: 20px;
+  color: #555;
+  margin-bottom: 35px;
+  line-height: 1.6;
+}
+
+.hero-images-container {
+  position: relative;
+  width: 50%;
+  max-width: 600px;
+  min-height: 500px; /* Increased height for more spacing */
+}
+
+.hero-image {
+  position: absolute;
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  background: transparent; /* Removed background */
+}
+
+/* Primary image */
+.hero-image:first-child {
+  width: 75%;
+  top: 40px; /* Increased from 20px */
+  left: 40px; /* Increased from 20px */
+  z-index: 1;
+  padding-right: 100px;
+  transform: rotate(5deg);
+  animation: float-primary 6s ease-in-out infinite;
+}
+
+/* Secondary image */
+.hero-image:last-child {
+  width: 70%;
+  bottom: 40px; /* Increased from 20px */
+  right: 40px; /* Increased from 20px */
+  z-index: 0;
+  padding-left: 130px;
+  transform: rotate(-8deg);
+  animation: float-secondary 6s ease-in-out infinite;
+}
+
+.hero-image-content {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Removed .placeholder-image since we don't want backgrounds */
+
+/* Separate animations for each image */
+@keyframes float-primary {
+  0%, 100% { transform: rotate(5deg) translateY(0); }
+  50% { transform: rotate(5deg) translateY(-20px); } /* Increased float distance */
+}
+
+@keyframes float-secondary {
+  0%, 100% { transform: rotate(-8deg) translateY(0); }
+  50% { transform: rotate(-8deg) translateY(20px); } /* Increased float distance */
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .hero-content {
+    padding-right: 40px;
+  }
+  
+  .hero-image:first-child {
+    width: 70%;
+    left: 30px;
+    top: 30px;
+  }
+  
+  .hero-image:last-child {
+    width: 65%;
+    right: 30px;
+    bottom: 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero {
+    flex-direction: column;
+    padding: 80px 5%;
+  }
+  
+  .hero-content {
+    padding-right: 0;
+    margin-bottom: 60px; /* Increased spacing */
+    text-align: center;
+  }
+  
+  .hero-images-container {
+    width: 100%;
+    margin-top: 0;
+    min-height: 400px; /* Adjusted for mobile */
+  }
+  
+  .hero-image:first-child {
+    width: 75%;
+    top: 30px;
+    left: 30px;
+    transform: rotate(4deg);
+  }
+  
+  .hero-image:last-child {
+    width: 70%;
+    bottom: 30px;
+    right: 30px;
+    transform: rotate(-6deg);
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-content h1 {
+    font-size: 42px;
+  }
+  
+  .hero-content p {
+    font-size: 18px;
+  }
+  
+  .hero-images-container {
+    min-height: 350px;
+  }
+  
+  .hero-image:first-child {
+    width: 80%;
+    top: 20px;
+    left: 20px;
+  }
+  
+  .hero-image:last-child {
+    width: 75%;
+    bottom: 20px;
+    right: 20px;
+  }
+}

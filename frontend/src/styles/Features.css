@@ -1,0 +1,71 @@
+/* Features Section */
+.features {
+  padding: 120px 5%;
+  width: 100%;
+  background: #f9f9f9;
+  text-align: center;
+}
+
+.features h2 {
+  font-size: 42px;
+  margin-bottom: 100px;
+  color: #c62828;
+  position: relative;
+  display: inline-block;
+}
+
+.features h2:after {
+  content: '';
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: #000000;
+  border-radius: 2px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.feature-card {
+  background: #222;
+  padding: 40px 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+  transition: all 0.4s;
+}
+
+.feature-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(239, 154, 154, 0.2);
+}
+
+.feature-card h3 {
+  margin-bottom: 20px;
+  color: #ffffff;
+  font-size: 24px;
+}
+
+.feature-card p {
+  color: #747474;
+  line-height: 1.7;
+}
+
+.feature-image-container {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 1rem;
+}
+
+.feature-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}

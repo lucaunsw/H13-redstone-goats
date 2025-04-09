@@ -1,9 +1,11 @@
-import { ItemSales, Order, status } from './types';
+import { Item, ItemSales, Order, status } from './types';
 import { generateUBL, userExists, validItemList, 
   addItems, validSellers, generatePDF } from './helper';
 import { getUser, addOrder, getOrder, updateOrder, 
   addOrderXML,
-  getOrderXML, getItemSellerSales
+  getOrderXML, getItemSellerSales,
+  getItemBuyerRecommendations,
+  getPopularItems, getOrdersByBuyer
  } from './dataStore'
  import fs from 'fs';
 import { stringify } from 'csv-stringify/sync';
@@ -182,15 +184,9 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
 
   // Create path to sales_report csv directory.
   const CSVdirPath = path.join(__dirname, 'sales_reports_csv');
-  if (!fs.existsSync(CSVdirPath)) {
-    fs.mkdirSync(CSVdirPath);
-  }
 
   // Create path to sales_report pdf directory.
   const PDFdirPath = path.join(__dirname, 'sales_reports_pdf');
-  if (!fs.existsSync(PDFdirPath)) {
-    fs.mkdirSync(PDFdirPath);
-  }
 
   if (json) {
     returnBody.sales = sales;
@@ -220,4 +216,78 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
   return returnBody;
 }
 
-export { orderCreate, orderCancel, orderConfirm, orderUserSales };
+/**
+ * Recommends items to order for a given user (as many as can be given up to a given number).
+ * 
+ * @param {number} userId - The ID of the user requesting recommendations.
+ * @param {number} limit - How many items the user wants to be recommended.
+ * @returns {Promise<{ recommendations: Item[] }>} - A confirmation object containing the order's UBL data (if available).
+ */
+const orderRecommendations = async (userId: number, limit: number) => {
+  if (!Number.isInteger(limit) || limit <= 0) {
+    throw new Error ('Limit is not a positive integer');
+  }
+  // Check if userId is valid  
+  const user = await getUser(userId);
+  if (!user) {
+    throw new Error("Invalid userId");
+  }
+
+  const recommendedItems: Item[] = await getItemBuyerRecommendations(userId, limit);
+  if (recommendedItems.length === limit) return { recommendations: recommendedItems };
+
+  const popularItems: Item[] = await getPopularItems(limit);
+  for (let index = 0; index < popularItems.length; index++) {
+    if (recommendedItems.length === limit) return { recommendations: recommendedItems };
+
+    let unique = true;
+    for (const recommendedItem of recommendedItems) {
+      if (recommendedItem.name == popularItems[index].name &&
+          recommendedItem.seller.id == popularItems[index].seller.id) {
+        unique = false;
+      }
+    }
+
+    if (unique) {
+      recommendedItems.push(popularItems[index]);
+    }
+  }
+
+  return { recommendations: recommendedItems };
+};
+
+ /** Returns orderhistory
+  *
+  * @param {number | null} userId - Unique identifier for a user.
+  * @returns { successfulOrders: [], cancelledOrders: [] } 
+  */
+
+ const orderHistory = async (userId: number) => {
+
+  // Checks for userId
+  if (!userId) {
+    throw new Error ('No userId provided');
+  }
+  const user = await getUser(userId);
+  if (!user) {
+    throw new Error 
+    ('Invalid userId');
+  }
+
+  const orders = await getOrdersByBuyer(userId);
+  const successfulOrders: Order[] = [];
+  const cancelledOrders: Order[] = [];
+
+  for (const order of orders) {
+    if (order.status === "cancelled") {
+      cancelledOrders.push(order);
+    } else {
+      successfulOrders.push(order);
+    }
+  }
+
+  return { successfulOrders: successfulOrders, 
+           cancelledOrders: cancelledOrders };
+ }
+
+export { orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory };

@@ -1,0 +1,247 @@
+/* Dashboard Header */
+.dashboard-header {
+    background-color: #222;
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 100;
+  }
+  
+  .dashboard-header h1 {
+    font-size: 1.8rem;
+    margin: 0;
+    font-weight: 600;
+  }
+  
+  .user-controls {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+  }
+  
+  /* Notifications */
+  .notifications-wrapper {
+    position: relative;
+  }
+  
+  .notifications-button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    position: relative;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #c62828;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+  }
+  
+  .notifications-dropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    width: 350px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    color: #333;
+    margin-top: 0.5rem;
+    overflow: hidden;
+  }
+  
+  .notifications-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .notifications-header h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+  
+  .mark-all-read {
+    color: #c62828;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  
+  .notifications-list {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .notification-item {
+    padding: 1rem;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .notification-item.unread {
+    background-color: #f8f8f8;
+  }
+  
+  .notification-item p {
+    margin: 0 0 0.3rem;
+    font-size: 0.9rem;
+  }
+  
+  .notification-time {
+    font-size: 0.8rem;
+    color: #777;
+  }
+  
+  .notifications-footer {
+    padding: 0.8rem;
+    text-align: center;
+    border-top: 1px solid #eee;
+  }
+  
+  .view-all {
+    background: none;
+    border: none;
+    color: #c62828;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  
+  /* Profile Menu */
+  .profile-menu-wrapper {
+    position: relative;
+  }
+  
+  .profile-button {
+    background: none;
+    border: none;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    cursor: pointer;
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+  
+  .profile-button:hover {
+    background: rgba(255,255,255,0.1);
+  }
+  
+  .profile-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .profile-avatar.large {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+  
+  .dropdown-icon {
+    transition: transform 0.2s;
+  }
+  
+  .dropdown-icon.open {
+    transform: rotate(180deg);
+  }
+  
+  .profile-dropdown {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    width: 250px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    color: #333;
+    margin-top: 0.5rem;
+    overflow: hidden;
+  }
+  
+  .profile-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .profile-details h4 {
+    margin: 0 0 0.2rem;
+    font-size: 0.95rem;
+  }
+  
+  .profile-details p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #777;
+  }
+  
+  .dropdown-divider {
+    height: 1px;
+    background: #eee;
+    margin: 0.3rem 0;
+  }
+  
+  .dropdown-item {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    background: none;
+    border: none;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #333;
+    transition: background 0.2s;
+  }
+  
+  .dropdown-item:hover {
+    background: #f5f5f5;
+  }
+  
+  .dropdown-item svg {
+    font-size: 1rem;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .notifications-dropdown {
+      width: 280px;
+      right: -20px;
+    }
+    
+    .profile-dropdown {
+      right: -10px;
+    }
+  }
