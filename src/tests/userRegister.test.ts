@@ -1,156 +1,184 @@
-import { userRegister, reqHelper } from './testHelper';
-import { SessionId } from '../types';
-import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
+import { userRegister } from '../user';
+import { getAllUsers, addUser } from '../dataStore';
+import { Err, ErrKind } from '../types'; 
+import validator from 'validator'; 
+import { server } from '../server';  
 
-dotenv.config();
 
-jest.mock('./testHelper', () => ({
-  userRegister: jest.fn(),
-  reqHelper: jest.fn(),
+jest.mock('../dataStore', () => ({
+  getAllUsers: jest.fn(),
+  addUser: jest.fn(),
 }));
 
-jest.mock('jsonwebtoken', () => ({
-  verify: jest.fn(),
+jest.mock('@redis/client', () => ({
+  createClient: jest.fn(() => ({
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+    set: jest.fn(),
+    get: jest.fn(),
+    on: jest.fn(),
+    quit: jest.fn(),
+  })),
 }));
 
-beforeEach(async () => {
-  (reqHelper as jest.Mock).mockResolvedValue({}); // Mock clear request
-  await reqHelper('DELETE', '/v1/clear');
-});
+jest.mock('validator', () => ({
+  isEmail: jest.fn(),
+}));
 
 describe('userRegister', () => {
-  const tUser = {
-    email: 'me@email.com',
-    initpass: 'testpass1',
-    fName: 'firstOne',
-    lName: 'lastOne',
-    token: null as unknown as SessionId,
-  };
-  const tUser2 = {
-    email: 'me@email.com',
-    initpass: 'testpass2',
-    fName: 'firstTwo',
-    lName: 'lastTwo',
-    token: null as unknown as SessionId,
-  };
+  let mockExistingUsers: any[];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockExistingUsers = [];
+    (getAllUsers as jest.Mock).mockResolvedValue(mockExistingUsers);
+  });
+
+  afterAll(async () => {
+    const redisClient = require('@redis/client').createClient();
+    await redisClient.quit(); 
+    server.close(); 
+  });
 
   test('A user successfully registers', async () => {
-    const mockToken = 'mocked.jwt.token';
-    (userRegister as jest.Mock).mockResolvedValue({
-      statusCode: 200,
-      body: { token: mockToken },
-    });
+    const email = 'testUser@email.com';
+    const password = 'ValidPassword123';
+    const nameFirst = 'John';
+    const nameLast = 'Doe';
+    
+    (getAllUsers as jest.Mock).mockResolvedValue([]);
+    (addUser as jest.Mock).mockResolvedValue(1); 
+    (validator.isEmail as jest.Mock).mockReturnValue(true);
 
-    (jwt.verify as jest.Mock).mockReturnValue({ userId: 123 });
+    const result = await userRegister(email, password, nameFirst, nameLast);
 
-    const resp = await userRegister('testemail@email.com', 'example123', 'firstName', 'lastName');
-
-    expect(resp.statusCode).toBe(200);
-    expect(resp.body).toStrictEqual({ token: expect.any(String) });
-
-    const decoded = jwt.verify(resp.body.token, process.env.JWT_SECRET as string);
-    expect(decoded).toEqual({ userId: 123 });
+    expect(result).toEqual({ userId: 1 });
+    expect(addUser).toHaveBeenCalledWith(expect.objectContaining({
+      email,
+      password: expect.any(String), 
+      nameFirst,
+      nameLast,
+      numSuccessfulLogins: 1,
+      numFailedPasswordsSinceLastLogin: 0,
+    }));
   });
 
   test('If a user already has an email registered, it should return an error', async () => {
-    (userRegister as jest.Mock)
-      .mockResolvedValueOnce({ statusCode: 200, body: { token: 'mockedToken' } }) // First call
-      .mockResolvedValueOnce({ statusCode: 400, body: { error: 'Email already in use' } }); // Second call
+    const email = 'existinguser@email.com';
+    const password = 'ValidPassword123';
+    const nameFirst = 'Jane';
+    const nameLast = 'Doe';
 
-    await userRegister(tUser.email, tUser.initpass, tUser.fName, tUser.lName);
-    const resp2 = await userRegister(tUser2.email, tUser2.initpass, tUser2.fName, tUser2.lName);
+    (validator.isEmail as jest.Mock).mockReturnValue(true); 
+    
+    mockExistingUsers = [{ email }];
+    (getAllUsers as jest.Mock).mockResolvedValue(mockExistingUsers);
 
-    expect(resp2.statusCode).toBe(400);
-    expect(resp2.body).toStrictEqual({ error: 'Email already in use' });
+    await expect(userRegister(email, password, nameFirst, nameLast))
+      .rejects
+      .toThrowError(new Err('This email is already registered on another account', ErrKind.EINVALID));
   });
 
   test('User enters invalid Email', async () => {
-    (userRegister as jest.Mock).mockResolvedValue({
-      statusCode: 400,
-      body: { error: 'Invalid email' },
-    });
+    const email = 'invalidemail.com';
+    const password = 'ValidPassword123';
+    const nameFirst = 'John';
+    const nameLast = 'Doe';
+    
+    (validator.isEmail as jest.Mock).mockReturnValue(false);
 
-    const resp = await userRegister('me', tUser2.initpass, tUser2.fName, tUser2.lName);
-
-    expect(resp.statusCode).toBe(400);
-    expect(resp.body).toStrictEqual({ error: 'Invalid email' });
+    await expect(userRegister(email, password, nameFirst, nameLast))
+      .rejects
+      .toThrowError(new Err('Email is invalid', ErrKind.EINVALID));
   });
 
   test('User enters invalid character in first name', async () => {
-    (userRegister as jest.Mock).mockResolvedValue({
-      statusCode: 400,
-      body: { error: 'Invalid character in name' },
-    });
+    const email = 'user@example.com';
+    const password = 'ValidPassword123';
+    const nameFirst = 'John@';
+    const nameLast = 'Doe';
 
-    const resp = await userRegister('testemail@email.com', 'ExamplePassword1', 'John@doe', 'lastname');
-
-    expect(resp.statusCode).toBe(400);
-    expect(resp.body).toStrictEqual({ error: 'Invalid character in name' });
+    (validator.isEmail as jest.Mock).mockReturnValue(true);
+    await expect(userRegister(email, password, nameFirst, nameLast))
+      .rejects
+      .toThrowError(new Err('first name can only contain letters, spaces, hyphens, and apostrophes.', ErrKind.EINVALID));
   });
 
   test('User enters invalid last name', async () => {
-    (userRegister as jest.Mock).mockResolvedValue({
-      statusCode: 400,
-      body: { error: 'Invalid character in name' },
-    });
+    const email = 'user@email.com';
+    const password = 'ValidPassword123';
+    const nameFirst = 'John';
+    const nameLast = ''; 
 
-    const resp = await userRegister('testemail@email.com', 'ExamplePassword2', 'firstname', 'last@name');
+    (validator.isEmail as jest.Mock).mockReturnValue(true); 
 
-    expect(resp.statusCode).toBe(400);
-    expect(resp.body).toStrictEqual({ error: 'Invalid character in name' });
+    await expect(userRegister(email, password, nameFirst, nameLast))
+      .rejects
+      .toThrowError(new Err('last name must be between 2 and 20 characters long.', ErrKind.EINVALID));
   });
 
   test('User enters invalid password length', async () => {
-    (userRegister as jest.Mock).mockResolvedValue({
-      statusCode: 400,
-      body: { error: 'Password too short' },
-    });
+    const email = 'user@email.com';
+    const password = 'short'; 
+    const nameFirst = 'John';
+    const nameLast = 'Doe';
 
-    const resp = await userRegister('testemail3@email.com', 'Hi5', 'firstname', 'lastname');
+    (validator.isEmail as jest.Mock).mockReturnValue(true);
 
-    expect(resp.statusCode).toBe(400);
-    expect(resp.body).toStrictEqual({ error: 'Password too short' });
+    await expect(userRegister(email, password, nameFirst, nameLast))
+      .rejects
+      .toThrowError(new Err('new password does not contain a number!', ErrKind.EINVALID));
   });
 
   test('Password does not contain a number', async () => {
-    (userRegister as jest.Mock).mockResolvedValue({
-      statusCode: 400,
-      body: { error: 'Password must contain a number' },
-    });
+    const email = 'user@email.com';
+    const password = 'NoNumbers'; 
+    const nameFirst = 'John';
+    const nameLast = 'Doe';
 
-    const resp = await userRegister('testemail@email.com', 'examplepassword', 'firstname', 'lastname');
+    (validator.isEmail as jest.Mock).mockReturnValue(true); 
 
-    expect(resp.statusCode).toBe(400);
-    expect(resp.body).toStrictEqual({ error: 'Password must contain a number' });
+    await expect(userRegister(email, password, nameFirst, nameLast))
+      .rejects
+      .toThrowError(new Err('new password does not contain a number!', ErrKind.EINVALID));
   });
 
   test('Password does not contain a letter', async () => {
-    (userRegister as jest.Mock).mockResolvedValue({
-      statusCode: 400,
-      body: { error: 'Password must contain a letter' },
-    });
+    const email = 'user@email.com';
+    const password = '12345678'; 
+    const nameFirst = 'John';
+    const nameLast = 'Doe';
 
-    const resp = await userRegister('testemail@email.com', '12345678', 'firstname', 'lastname');
+    (validator.isEmail as jest.Mock).mockReturnValue(true);
 
-    expect(resp.statusCode).toBe(400);
-    expect(resp.body).toStrictEqual({ error: 'Password must contain a letter' });
+    await expect(userRegister(email, password, nameFirst, nameLast))
+      .rejects
+      .toThrowError(new Err('new password does not contain a letter!', ErrKind.EINVALID));
+  });
+
+  test('Password is too short', async () => {
+    const email = 'user@email.com';
+    const password = 'Ab12345'; 
+    const nameFirst = 'John';
+    const nameLast = 'Doe';
+
+    (validator.isEmail as jest.Mock).mockReturnValue(true);
+
+    await expect(userRegister(email, password, nameFirst, nameLast))
+      .rejects
+      .toThrowError(new Err('new password is less than 8 characters long!', ErrKind.EINVALID));
   });
 
   test('User enters invalid name size', async () => {
-    (userRegister as jest.Mock).mockResolvedValue({
-      statusCode: 400,
-      body: { error: 'Name too long' },
-    });
+    const email = 'user@email.com';
+    const password = 'ValidPassword123';
+    const nameFirst = 'J';
+    const nameLast = 'Doe';
 
-    const resp = await userRegister(
-      'testemail8@email.com',
-      'ExamplePassword1',
-      'aaaaaaaaaaaaaaaaaaaaaaaaa',
-      'lastname'
-    );
+    (validator.isEmail as jest.Mock).mockReturnValue(true); 
 
-    expect(resp.statusCode).toBe(400);
-    expect(resp.body).toStrictEqual({ error: 'Name too long' });
+    await expect(userRegister(email, password, nameFirst, nameLast))
+      .rejects
+      .toThrowError(new Err('first name must be between 2 and 20 characters long.', ErrKind.EINVALID));
   });
 });

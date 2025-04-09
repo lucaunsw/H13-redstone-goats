@@ -1,0 +1,44 @@
+/* Base Styles */
+@font-face {
+  font-family: 'CustomFont'; 
+  src: url('./fonts/Poppins/Poppins-Black.ttf'); 
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Custom UI', Tahoma, Geneva, sans-serif;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+.App {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .hero-content {
+    padding-right: 0;
+    margin-bottom: 50px;
+  }
+  
+  .features-grid,
+  .pricing-cards {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,10 +1,10 @@
 import request from "sync-request-curl";
 const SERVER_URL = `http://127.0.0.1:3200`;
 const TIMEOUT_MS = 20 * 1000;
-import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { BillingDetails, DeliveryInstructions, Item, UserSimple } from "../types";
-import { reqHelper, userRegister, requestOrderCreate } from "./testHelper";
+import { BillingDetails, DeliveryInstructions, Item, Order, status, UserSimple } from "../types";
+import { getOrder, getOrderXML, getUser, updateOrder } from "../dataStore";
+import { orderConfirm } from "../app";
 dotenv.config();
 
 export function getPostResponse(
@@ -22,16 +22,34 @@ export function getPostResponse(
     };
   }
 
-  function getPutResponse(route: string, body: { [key: string]: unknown }) {
-    const res = request("PUT", SERVER_URL + route, {
-      json: body,
-      timeout: TIMEOUT_MS,
-    });
-    return {
-      body: JSON.parse(res.body.toString()),
-      statusCode: res.statusCode,
-    };
-  }
+  jest.mock('../dataStore', () => ({
+    getUser: jest.fn(),
+    getOrder: jest.fn(),
+    updateOrder: jest.fn(),
+    addOrder: jest.fn(),
+    addOrderXML: jest.fn(),
+    getOrderXML: jest.fn(),
+    getItem: jest.fn(),
+  }));
+  
+  jest.mock('../helper', () => ({
+    userExists: jest.fn(),
+    validItemList: jest.fn(),
+    addItems: jest.fn(),
+    generateUBL: jest.fn(),
+    validSellers: jest.fn(),
+  }));
+    
+  jest.mock('@redis/client', () => ({
+    createClient: jest.fn(() => ({
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      set: jest.fn(),
+      get: jest.fn(),
+      on: jest.fn(),
+      quit: jest.fn(),
+    })),
+  }));
 
   ////////////////////////////////////////////////////////////////////////////////
   
@@ -45,147 +63,186 @@ export function getPostResponse(
   const date = new Date().toISOString().split('T')[0];
   
   beforeEach(async () => {
-      await reqHelper('DELETE', '/v1/clear');
-      testName = 'Bobby Jones'
+    jest.clearAllMocks();
+    testName = 'Bobby Jones'
+    userId = 1;
+    const sellerId = 2;
     
-      const token = await userRegister(
-        'example10@email.com', 
-        'example123', 
-        'Bobby', 
-        'Jones').body.token;
-      const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: number };
-      userId = decoded.userId;
+    testSeller = {
+      id: sellerId,
+      name: 'Test Seller',
+      streetName: 'Yellow St',
+      cityName: 'Brisbane',
+      postalZone: '4000',
+      cbcCode: 'AU'
+    };
+    testItem = {
+      id: 123,
+      name: 'soap',
+      seller: testSeller,
+      price: 5,
+      description: 'This is soap',
+    };
+    testBuyer = {
+      id: userId,
+      name: testName,
+      streetName: 'White St',
+      cityName: 'Sydney',
+      postalZone: '2000',
+      cbcCode: 'AU',
+    };
+    testBillingDetails = {
+      creditCardNumber: "1000000000000000",
+      CVV: 111,
+      expiryDate: date,
+    };
+    testDeliveryDetails = {
+      streetName: 'White St',
+      cityName: 'Sydney',
+      postalZone: '2000',
+      countrySubentity: 'NSW',
+      addressLine: '33 White St, Sydney NSW',
+      cbcCode: 'AU',
+      startDate: new Date(2025, 9, 5).toISOString().split('T')[0],
+      startTime: '13:00',
+      endDate: new Date(2025, 9, 10).toISOString().split('T')[0],
+      endTime: '13:00'
+    }
+  });
+
+  describe("Tests for orderConfirm", () => {
+    test("Should confirm an order successfully", async () => {
+      const mockOrder: Order = {
+        id: testBuyer.id,
+        items: [testItem], 
+        quantities: [2], 
+        buyer: testBuyer, 
+        billingDetails: testBillingDetails, 
+        delivery: testDeliveryDetails, 
+        lastEdited: new Date().toISOString(), 
+        status: status.PENDING, 
+        totalPrice: testItem.price * 2, 
+        createdAt: new Date(), 
+        orderXMLId: 789, 
+      };
+      const orderId = mockOrder.id; 
     
-      const sellerToken = await userRegister(
-        'example20@email.com', 
-        'example123', 
-        'Test', 
-        'Seller').body.token;
-      const sellerId = (jwt.verify(sellerToken, process.env.JWT_SECRET as string) as { userId: number }).userId;
+      (getUser as jest.Mock).mockResolvedValue(orderId);
+      (getOrder as jest.Mock).mockResolvedValue(mockOrder); 
+      (updateOrder as jest.Mock).mockResolvedValue(true);
+      (getOrderXML as jest.Mock).mockResolvedValue('Example XML');
     
-      testSeller = {
-        id: sellerId,
-        name: 'Test Seller',
-        streetName: 'Yellow St',
-        cityName: 'Brisbane',
-        postalZone: '4000',
-        cbcCode: 'AU'
-      };
-      testItem = {
-        id: 123,
-        name: 'soap',
-        seller: testSeller,
-        price: 5,
-        description: 'This is soap',
-      };
-      testBuyer = {
-        id: userId,
-        name: testName,
-        streetName: 'White St',
-        cityName: 'Sydney',
-        postalZone: '2000',
-        cbcCode: 'AU',
-      };
-      testBillingDetails = {
-        creditCardNumber: "1000000000000000",
-        CVV: 111,
-        expiryDate: date,
-      };
-      testDeliveryDetails = {
-        streetName: 'White St',
-        cityName: 'Sydney',
-        postalZone: '2000',
-        countrySubentity: 'NSW',
-        addressLine: '33 White St, Sydney NSW',
-        cbcCode: 'AU',
-        startDate: new Date(2025, 9, 5).toISOString().split('T')[0],
-        startTime: '13:00',
-        endDate: new Date(2025, 9, 10).toISOString().split('T')[0],
-        endTime: '13:00'
-      }
+      const result = await orderConfirm(userId, Number(orderId));
+    
+      expect(result).toStrictEqual({ UBL: expect.any(String) });
+      expect(getOrder).toHaveBeenCalledWith(orderId); 
     });
 
-  describe.skip("tests for orderConfirm", () => {
-    test("Should confirm an order successfully", async () => {
-      const date = new Date().toISOString().split('T')[0];
-      const body = {
-        items: [testItem],
-        quantities: [1],
-        buyer: testBuyer,
-        billingDetails: testBillingDetails,
-        totalPrice: 5,
-        delivery: testDeliveryDetails,
-        lastEdited: date,
-        createdAt: new Date(),
-      }
-      const response = await requestOrderCreate(body);
-      const orderId = response.body.orderId;
-
-      const confirmRes = await getPostResponse(`/v1/${userId}/order/${orderId}/confirm`, {});
-      expect(confirmRes.statusCode).toBe(200);
-      expect(confirmRes.body).toStrictEqual({ UBL: expect.any(String) });
-    }, 25000);
-
     test("Should return 401 for invalid orderId", async () => {
-      const date = new Date().toISOString().split('T')[0];
-      const body = {
-        items: [testItem],
-        quantities: [1],
-        buyer: testBuyer,
-        billingDetails: testBillingDetails,
-        totalPrice: 5,
-        delivery: testDeliveryDetails,
-        lastEdited: date,
-        createdAt: new Date(),
+      const mockOrder: Order = {
+        id: testBuyer.id,
+        items: [testItem], 
+        quantities: [2], 
+        buyer: testBuyer, 
+        billingDetails: testBillingDetails, 
+        delivery: testDeliveryDetails, 
+        lastEdited: new Date().toISOString(), 
+        status: status.PENDING, 
+        totalPrice: testItem.price * 2, 
+        createdAt: new Date(), 
+        orderXMLId: 789, 
+      };
+      const orderId = Number(mockOrder.id) + 1000; 
+    
+      (getUser as jest.Mock).mockResolvedValue(testBuyer);
+      (getOrder as jest.Mock).mockResolvedValue(null); 
+      (updateOrder as jest.Mock).mockResolvedValue(true);
+      (getOrderXML as jest.Mock).mockResolvedValue('Example XML');
+    
+      let result;
+      try {
+        result = await orderConfirm(userId, orderId);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          result = { error: error.message }; 
+        } else {
+          result = { error: "Unknown error occurred" }; 
+        }
       }
-      const response = await requestOrderCreate(body);
-      const orderId = response.body.orderId;
-      
-      const res = await getPostResponse(`/v1/${userId}/order/${orderId + 1000000}/confirm`, {});
-      expect(res.statusCode).toBe(401);
-      expect(res.body).toStrictEqual({ error: expect.any(String) });
+    
+      expect(result).toStrictEqual({ error: expect.any(String) });
+      expect(getOrder).toHaveBeenCalledWith(orderId); 
     });
 
     test("Should return 401 for invalid userId", async () => {
-      const date = new Date().toISOString().split('T')[0];
-      const body = {
-        items: [testItem],
-        quantities: [1],
-        buyer: testBuyer,
-        billingDetails: testBillingDetails,
-        totalPrice: 5,
-        delivery: testDeliveryDetails,
-        lastEdited: date,
-        createdAt: new Date(),
+      const mockOrder: Order = {
+        id: testBuyer.id,
+        items: [testItem], 
+        quantities: [2], 
+        buyer: testBuyer, 
+        billingDetails: testBillingDetails, 
+        delivery: testDeliveryDetails, 
+        lastEdited: new Date().toISOString(), 
+        status: status.PENDING, 
+        totalPrice: testItem.price * 2, 
+        createdAt: new Date(), 
+        orderXMLId: 789, 
+      };
+      const orderId = Number(mockOrder.id); 
+    
+      (getUser as jest.Mock).mockResolvedValue(null);
+      (getOrder as jest.Mock).mockResolvedValue(mockOrder); 
+      (updateOrder as jest.Mock).mockResolvedValue(true);
+      (getOrderXML as jest.Mock).mockResolvedValue('Example XML');
+    
+      let result;
+      try {
+        result = await orderConfirm(userId + 1000, orderId);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          result = { error: error.message }; 
+        } else {
+          result = { error: "Unknown error occurred" }; 
+        }
       }
-      const response = await requestOrderCreate(body);
-      const orderId = response.body.orderId;
-
-      const res = await getPostResponse(`/v1/${userId + 1000000}/order/${orderId}/confirm`, {});
-      expect(res.statusCode).toBe(401);
-      expect(res.body).toStrictEqual({ error: expect.any(String) });
+    
+      expect(result).toStrictEqual({ error: expect.any(String) });
+      expect(getOrder).not.toHaveBeenCalledWith(orderId); 
     });
 
     test("Should return 400 since order is cancelled", async () => {
-      const date = new Date().toISOString().split('T')[0];
-      const body = {
-        items: [testItem],
-        quantities: [1],
-        buyer: testBuyer,
-        billingDetails: testBillingDetails,
-        totalPrice: 5,
-        delivery: testDeliveryDetails,
-        lastEdited: date,
-        createdAt: new Date(),
+      const mockOrder: Order = {
+        id: testBuyer.id,
+        items: [testItem], 
+        quantities: [2], 
+        buyer: testBuyer, 
+        billingDetails: testBillingDetails, 
+        delivery: testDeliveryDetails, 
+        lastEdited: new Date().toISOString(), 
+        status: status.CANCELLED, 
+        totalPrice: testItem.price * 2, 
+        createdAt: new Date(), 
+        orderXMLId: 789, 
+      };
+      const orderId = Number(mockOrder.id); 
+    
+      (getUser as jest.Mock).mockResolvedValue(orderId);
+      (getOrder as jest.Mock).mockResolvedValue(mockOrder); 
+      (updateOrder as jest.Mock).mockResolvedValue(true);
+      (getOrderXML as jest.Mock).mockResolvedValue('Example XML');
+    
+      let result;
+      try {
+        result = await orderConfirm(userId, orderId);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          result = { error: error.message }; 
+        } else {
+          result = { error: "Unknown error occurred" }; 
+        }
       }
-      const response = await requestOrderCreate(body);
-      const orderId = response.body.orderId;
-
-      await getPutResponse(`/v1/${userId}/order/${orderId}/cancel`, {
-        reason: "Changed my mind",
-      });
-      const res = await getPostResponse(`/v1/${userId}/order/${orderId}/confirm`, {});
-      expect(res.statusCode).toBe(400);
-      expect(res.body).toStrictEqual({ error: expect.any(String) });
-    }, 15000);
+    
+      expect(result).toStrictEqual({ error: expect.any(String) });
+      expect(getOrder).toHaveBeenCalledWith(orderId); 
+    });
   });

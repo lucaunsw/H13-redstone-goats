@@ -1,13 +1,15 @@
-import { ItemSales, Order, status, UserSimple, OrderChangeParam } from './types';
-import { generateUBL, userExists, validItemList, addItems } from './helper';
+import { Item, ItemSales, Order, status, UserSimple, OrderChangeParam } from './types';
+import { generateUBL, userExists, validItemList, 
+  addItems, validSellers, generatePDF } from './helper';
 import { getUser, addOrder, getOrder, updateOrder, 
   addOrderXML,
-  getOrderXML, getItemSellerSales
+  getOrderXML, getItemSellerSales,
+  getItemBuyerRecommendations,
+  getPopularItems
  } from './dataStore'
  import fs from 'fs';
 import { stringify } from 'csv-stringify/sync';
 import path from 'path';
-import PDFDocument from "pdfkit";
 
 
 /**
@@ -44,6 +46,12 @@ async function orderCreate (order: Order) {
   // If an invalid amount of item quantities are provided, throw error.
   if (order.items.length !== order.quantities.length) {
     throw new Error ('Invalid amount of item quantities provided');
+  }
+
+  // Checks if sellers are valid.
+  const sellersValid = await validSellers(order);
+  if (!sellersValid) {
+    throw new Error ('Invalid seller(s)');
   }
 
   // Helper function checks if all items/quantities are valid and returns the 
@@ -260,11 +268,11 @@ const orderConfirm = async (userId: number, orderId: number) => {
  * @param {boolean} csv - boolean to state if the csv data option is desired.
  * @param {boolean} json - boolean to state if the json data option is desired.
  * @param {boolean} pdf - boolean to state if the pdf data option is desired.
- * @param {number} sellId - Unique identifier for a seller.
+ * @param {number | null} sellId - Unique identifier for a seller.
  * @returns { sales?: ItemSales[]; CSVurl?: string; PDFurl?: string } 
  * returnBody - an object which can contain: the csv url, json body, pdf for sales info.
  */
-async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerId: number) {
+async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerId: number | null) {
   if (!csv && !json && !pdf) {
     throw new Error ('At least one data option should be selected');
   }
@@ -289,15 +297,9 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
 
   // Create path to sales_report csv directory.
   const CSVdirPath = path.join(__dirname, 'sales_reports_csv');
-  if (!fs.existsSync(CSVdirPath)) {
-    fs.mkdirSync(CSVdirPath);
-  }
 
   // Create path to sales_report pdf directory.
   const PDFdirPath = path.join(__dirname, 'sales_reports_pdf');
-  if (!fs.existsSync(PDFdirPath)) {
-    fs.mkdirSync(PDFdirPath);
-  }
 
   if (json) {
     returnBody.sales = sales;
@@ -319,34 +321,52 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
   }
 
   if (pdf) {
-    // Create the new PDF document
-    const doc = new PDFDocument();
-
-    // Create the path to the csv file
-    const filePath = path.join(PDFdirPath, `sales_${sellerId}.pdf`);
-
-    const writeStream = fs.createWriteStream(filePath);
-    doc.pipe(writeStream);
-
-    // Add title
-    doc.fontSize(20).text("Sales Report", { align: "center" });
-    doc.moveDown();
-
-    // Add sales data to pdf.
-    for (const item of sales) {
-      doc.fontSize(14).text(`ID: ${item.id}`);
-      doc.text(`Name: ${item.name}`);
-      doc.text(`Description: ${item.description}`);
-      doc.text(`Price: $${item.price}`);
-      doc.text(`Amount Sold: ${item.amountSold}`);
-      doc.moveDown();
-    }
-    doc.end();
-    // Place PDF url inside body.
-    returnBody.PDFurl = `/sales_reports_pdf/sales_${sellerId}.pdf`;
+    await generatePDF(sales, sellerId, PDFdirPath);
+    returnBody.PDFurl = `/sales_reports_pdf/sales_${sellerId}.pdf`
+    
   }
 
   return returnBody;
 }
 
-export { orderCreate, orderCancel, orderConfirm, orderUserSales, orderChange };
+/**
+ * Recommends items to order for a given user (as many as can be given up to a given number).
+ * 
+ * @param {number} userId - The ID of the user requesting recommendations.
+ * @param {number} limit - How many items the user wants to be recommended.
+ * @returns {Promise<{ recommendations: Item[] }>} - A confirmation object containing the order's UBL data (if available).
+ */
+const orderRecommendations = async (userId: number, limit: number) => {
+  if (!Number.isInteger(limit) || limit <= 0) {
+    throw new Error ('Limit is not a positive integer');
+  }
+  // Check if userId is valid  
+  const user = await getUser(userId);
+  if (!user) {
+    throw new Error("Invalid userId");
+  }
+
+  const recommendedItems: Item[] = await getItemBuyerRecommendations(userId, limit);
+  if (recommendedItems.length === limit) return { recommendations: recommendedItems };
+
+  const popularItems: Item[] = await getPopularItems(limit);
+  for (let index = 0; index < popularItems.length; index++) {
+    if (recommendedItems.length === limit) return { recommendations: recommendedItems };
+
+    let unique = true;
+    for (const recommendedItem of recommendedItems) {
+      if (recommendedItem.name == popularItems[index].name &&
+          recommendedItem.seller.id == popularItems[index].seller.id) {
+        unique = false;
+      }
+    }
+
+    if (unique) {
+      recommendedItems.push(popularItems[index]);
+    }
+  }
+
+  return { recommendations: recommendedItems };
+};
+
+export { orderCreate, orderCancel, orderConfirm, orderUserSales, orderChange, orderRecommendations };

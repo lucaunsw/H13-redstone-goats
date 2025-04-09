@@ -1,6 +1,6 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
-import { orderCreate, orderCancel, orderConfirm, orderUserSales, orderChange } from "./app";
+import { orderCreate, orderCancel, orderConfirm, orderUserSales, orderChange, orderRecommendations } from "./app";
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
@@ -22,7 +22,7 @@ import {
   userDetails,
   // userDetailsUpdate,
 } from './user';
-import { addToken, clearAll, validToken } from "./dataStore";
+import { addToken, validToken } from "./dataStore";
 
 const app = express();
 
@@ -78,12 +78,9 @@ async function connectRedis() {
   try {
     if (!redisClient.isOpen) {
       await redisClient.connect();
-      console.log('✅ Redis connected successfully!');
     }
-
     await redisClient.set('foo', 'bar');
     const result = await redisClient.get('foo');
-    console.log('Redis Test:', result);  // ✅ "bar"
   } catch (err) {
     console.error('❌ Redis connection failed:', err);
   }
@@ -311,8 +308,21 @@ app.post("/v1/order/:userId/sales", async (req: Request, res: Response) => {
   }
 });
 
-app.delete('/v1/clear', async (_: Request, res: Response) => {
-  res.json(await clearAll());
+// Route that returns user item recommendations.
+app.post("/v1/order/:userId/recommendations", async (req: Request, res: Response) => {
+  const userId = parseInt(req.params.userId);
+  const limit = Number(req.query.limit);
+  try {
+    const result = await orderRecommendations(userId, limit);
+    res.status(200).json(result);
+  } catch (error) {
+    const e = error as Error;
+    if (e.message === 'Invalid userId' || e.message === 'No userId provided') {
+      res.status(401).json({ error: e.message });
+    } else {
+      res.status(400).json({ error: e.message });
+    }
+  }
 });
 
 // Custom **error handling** middleware
@@ -324,7 +334,7 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 // ============================= ROUTES ABOVE ================================
 // ===========================================================================
 
-const server = app.listen(PORT, HOST, () => {
+export const server = app.listen(PORT, HOST, () => {
   console.log(`Server is running on http://${HOST}:${PORT}`);
 });
 
