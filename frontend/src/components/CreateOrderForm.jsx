@@ -238,7 +238,8 @@ const CreateOrderForm = () => {
       
 
       if (response.data?.orderId) {
-        setSuccessMessage('Order created successfully!');
+        const orderId = response.data.orderId;
+        setSuccessMessage('Order created! OrderId: ' + orderId);
         setTimeout(() => setSuccessMessage(''), 5000);
       }
       
