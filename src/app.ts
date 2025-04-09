@@ -5,7 +5,7 @@ import { getUser, addOrder, getOrder, updateOrder,
   addOrderXML,
   getOrderXML, getItemSellerSales,
   getItemBuyerRecommendations,
-  getPopularItems
+  getPopularItems, getOrdersByBuyer
  } from './dataStore'
  import fs from 'fs';
 import { stringify } from 'csv-stringify/sync';
@@ -256,4 +256,38 @@ const orderRecommendations = async (userId: number, limit: number) => {
   return { recommendations: recommendedItems };
 };
 
-export { orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations };
+ /** Returns orderhistory
+  *
+  * @param {number | null} userId - Unique identifier for a user.
+  * @returns { successfulOrders: [], cancelledOrders: [] } 
+  */
+
+ const orderHistory = async (userId: number) => {
+
+  // Checks for userId
+  if (!userId) {
+    throw new Error ('No userId provided');
+  }
+  const user = await getUser(userId);
+  if (!user) {
+    throw new Error 
+    ('Invalid userId');
+  }
+
+  const orders = await getOrdersByBuyer(userId);
+  const successfulOrders: Order[] = [];
+  const cancelledOrders: Order[] = [];
+
+  for (const order of orders) {
+    if (order.status === "cancelled") {
+      cancelledOrders.push(order);
+    } else {
+      successfulOrders.push(order);
+    }
+  }
+
+  return { successfulOrders: successfulOrders, 
+           cancelledOrders: cancelledOrders };
+ }
+
+export { orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory };
