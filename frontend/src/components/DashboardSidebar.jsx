@@ -4,7 +4,9 @@ import {
   FiTrendingUp,
   FiPlusCircle,
   FiPackage,
-  FiUsers
+  FiUsers,
+  FiGrid,
+  FiHelpCircle 
 } from 'react-icons/fi';
 import '../styles/DashboardSideBar.css';
 
@@ -17,7 +19,7 @@ const DashboardSidebar = ({ activeTab, setActiveTab }) => {
             className={activeTab === 'overview' ? 'active' : ''}
             onClick={() => setActiveTab('overview')}
           >
-            <FiTrendingUp /> Overview
+            <FiGrid /> Overview
           </li>
           <li 
             className={activeTab === 'create' ? 'active' : ''}
@@ -30,6 +32,18 @@ const DashboardSidebar = ({ activeTab, setActiveTab }) => {
             onClick={() => setActiveTab('orders')}
           >
             <FiPackage /> Order History
+          </li>
+          <li 
+            className={activeTab === 'sales' ? 'active' : ''}
+            onClick={() => setActiveTab('sales')}
+          >
+            <FiTrendingUp /> Order Sales
+          </li>
+          <li 
+            className={activeTab === 'recommendations' ? 'active' : ''}
+            onClick={() => setActiveTab('recommendations')}
+          >
+            <FiHelpCircle /> Order Recommendations
           </li>
           <li 
             className={activeTab === 'customers' ? 'active' : ''}

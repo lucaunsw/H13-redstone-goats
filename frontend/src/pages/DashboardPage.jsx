@@ -9,6 +9,7 @@ import OrdersTable from '../components/OrdersTable';
 import SalesSummary from '../components/SalesSummary';
 import CustomerManagement from '../components/CustomerManagement';
 import CreateOrderForm from '../components/CreateOrderForm';
+import OrderSales from '../components/OrderSales';
 import { 
   FiDollarSign,
   FiTrendingUp,
@@ -139,6 +140,18 @@ const DashboardPage = () => {
               <SalesSummary orders={orders} />
             </>
           )}
+
+          {/* Order History Tab */}
+          {activeTab === 'sales' && (
+            <>
+              <h2>Order Sales</h2>
+              <OrderSales />
+            </>
+          )}
+          {/* Order History Tab */}
+          {/* {activeTab === 'recommendations' && (
+            
+          )} */}
 
           {/* Customers Tab */}
           {activeTab === 'customers' && <CustomerManagement />}
