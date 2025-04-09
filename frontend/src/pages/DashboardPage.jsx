@@ -5,8 +5,7 @@ import DashboardHeader from '../components/DashboardHeader';
 import DashboardSidebar from '../components/DashboardSidebar';
 import StatCard from '../components/StatCard';
 import RecentOrders from '../components/RecentOrders';
-import OrdersTable from '../components/OrdersTable';
-import SalesSummary from '../components/SalesSummary';
+import OrderHistory from '../components/OrderHistory';
 import CustomerManagement from '../components/CustomerManagement';
 import CreateOrderForm from '../components/CreateOrderForm';
 import OrderSales from '../components/OrderSales';
@@ -67,18 +66,18 @@ const DashboardPage = () => {
     setSalesData(sampleSales);
   }, []);
 
-  const updateOrderStatus = (orderId, newStatus) => {
-    setOrders(orders.map(order => 
-      order.id === orderId ? { ...order, status: newStatus } : order
-    ));
+  // const updateOrderStatus = (orderId, newStatus) => {
+  //   setOrders(orders.map(order => 
+  //     order.id === orderId ? { ...order, status: newStatus } : order
+  //   ));
 
-    if (newStatus === 'completed' || newStatus === 'shipped') {
-      setSalesData(prev => ({
-        ...prev,
-        pendingOrders: prev.pendingOrders - 1
-      }));
-    }
-  };
+  //   if (newStatus === 'completed' || newStatus === 'shipped') {
+  //     setSalesData(prev => ({
+  //       ...prev,
+  //       pendingOrders: prev.pendingOrders - 1
+  //     }));
+  //   }
+  // };
 
   return (
     <motion.div 
@@ -136,12 +135,11 @@ const DashboardPage = () => {
           {/* Order History Tab */}
           {activeTab === 'orders' && (
             <>
-              <OrdersTable orders={orders} updateOrderStatus={updateOrderStatus} />
-              <SalesSummary orders={orders} />
+              <OrderHistory />
             </>
           )}
 
-          {/* Order History Tab */}
+          {/* Order Sales Tab */}
           {activeTab === 'sales' && (
             <>
               <h2>Order Sales</h2>

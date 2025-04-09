@@ -219,8 +219,8 @@ const Login = () => {
             disabled={loading}
           >
             {loading ? (
-              <span className="button-loading">
-                <span className="spinner"></span> Signing In...
+              <span className="login-button-loading">
+                <span className="login-spinner"></span> Signing In...
               </span>
             ) : (
               'Sign In'

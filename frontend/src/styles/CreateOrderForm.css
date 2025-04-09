@@ -364,12 +364,3 @@ input[type="text"][placeholder="MM/YY"] {
   font-weight: bold;
 }
 
-/* Existing error message for reference */
-.error-message {
-  background-color: #ffebee;
-  color: #c62828;
-  padding: 1rem;
-  border-radius: 4px;
-  margin: 1rem 0;
-  border-left: 4px solid #c62828;
-}

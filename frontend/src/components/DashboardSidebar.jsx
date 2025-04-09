@@ -4,7 +4,6 @@ import {
   FiTrendingUp,
   FiPlusCircle,
   FiPackage,
-  FiUsers,
   FiGrid,
   FiHelpCircle 
 } from 'react-icons/fi';
@@ -44,12 +43,6 @@ const DashboardSidebar = ({ activeTab, setActiveTab }) => {
             onClick={() => setActiveTab('recommendations')}
           >
             <FiHelpCircle /> Order Recommendations
-          </li>
-          <li 
-            className={activeTab === 'customers' ? 'active' : ''}
-            onClick={() => setActiveTab('customers')}
-          >
-            <FiUsers /> Customers
           </li>
         </ul>
       </nav>

@@ -14,6 +14,7 @@ import StatCard from './StatCard';
 import axios from 'axios';
 
 const OrderSales = () => {
+  const [error, setError] = useState('');
   const [timeRange, setTimeRange] = useState('month');
   const [format, setFormat] = useState('table');
   const [salesData, setSalesData] = useState([]);
@@ -35,11 +36,11 @@ const OrderSales = () => {
   // Calculate summary statistics
   const calculateSummary = (data) => {
     const summary = {
-      totalSales: data.reduce((sum, order) => sum + Number(order.amount), 0),
+      totalSales: data.reduce((sum, order) => sum + Number(order.price)*order.amountSold, 0),
       completedOrders: data.filter(o => o.status === 'completed').length,
       pendingOrders: data.filter(o => o.status === 'pending').length,
       averageOrder: data.length > 0 
-        ? data.reduce((sum, order) => sum + Number(order.amount), 0) / data.length 
+        ? data.reduce((sum, order) => sum + Number(order.price)*order.amountSold, 0) / data.length 
         : 0
     };
     setSummaryData(summary);
@@ -48,9 +49,8 @@ const OrderSales = () => {
   // Handle export download
   const handleExport = async (type) => {
     try {
-      const response = await axios.post(
+      const response = await axios.get(
         `https://h13-redstone-goats.vercel.app/v1/order/${payload.userId}/sales`,
-        {},
         {
           params: { [type]: true },
           responseType: type === 'pdf' ? 'blob' : 'json',
@@ -88,9 +88,8 @@ const OrderSales = () => {
   
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
   
-        const response = await axios.post(
+        const response = await axios.get(
           `https://h13-redstone-goats.vercel.app/v1/order/${payload.userId}/sales`,
-          {},
           {
             params: { json: true },
             headers: {
@@ -98,12 +97,16 @@ const OrderSales = () => {
             }
           }
         );
-  
+        
+        console.log(response.data);
         setSalesData(response.data.sales || []);
         calculateSummary(response.data.sales || []);
-      } catch (error) {
-        console.error('Error fetching sales data:', error);
-        alert('Failed to load sales data');
+      } catch (err) {
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.error || 'Failed to load order sales');
+        } else {
+          setError('An unexpected error occurred');
+        }
       } finally {
         setLoading(false);
       }
@@ -119,6 +122,11 @@ const OrderSales = () => {
       initial="hidden"
       animate="visible"
     >
+      {error && (
+        <div className="error-message">
+          {error}
+        </div>
+      )}
          <main className="dashboard-main order-sales">
         <div className="sales-header">
           <div className="controls">
@@ -195,11 +203,11 @@ const OrderSales = () => {
                   <thead>
                     <tr>
                       <th>Order ID</th>
-                      <th>Date</th>
-                      <th>Customer</th>
-                      <th>Items</th>
-                      <th>Amount</th>
-                      <th>Status</th>
+                      <th>Product</th>
+                      <th>Description</th>
+                      <th>Amount Sold</th>
+                      <th>Price</th>
+                      <th>Total</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -209,16 +217,12 @@ const OrderSales = () => {
                         <tr key={order.id}>
                           <td>{order.id}</td>
                           <td>
-                            {new Date(order.date).toLocaleDateString()}
+                            {order.name}
                           </td>
-                          <td>{order.customer}</td>
-                          <td>{order.items}</td>
-                          <td>${Number(order.amount).toFixed(2)}</td>
-                          <td>
-                            <span className={`status-badge ${order.status}`}>
-                              {order.status}
-                            </span>
-                          </td>
+                          <td>{order.description}</td>
+                          <td>{order.amountSold}</td>
+                          <td>${Number(order.price).toFixed(2)}</td>
+                          <td>${Number(order.price).toFixed(2)*order.amountSold}</td>
                           <td>
                             <button
                               className="print-btn"
