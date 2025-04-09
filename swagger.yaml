@@ -520,6 +520,11 @@ paths:
           required: true
           schema:
             type: integer
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: integer
       responses:
         '200':
           description: Success
