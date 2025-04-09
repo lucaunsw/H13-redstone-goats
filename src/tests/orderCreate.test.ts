@@ -1,4 +1,3 @@
-// import { userRegister, reqHelper, requestOrderCreate } from './testHelper';
 import { orderCreate } from '../app';
 import { UserSimple, 
   Item, BillingDetails, DeliveryInstructions } from '../types';
