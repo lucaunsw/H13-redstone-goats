@@ -56,6 +56,7 @@ CREATE TABLE Orders (
     last_edited  TEXT NOT NULL,
     status       TEXT CHECK (status IN ('pending', 'confirmed', 'cancelled')), -- Enum-like constraint
     total_price  DECIMAL(10,2) NOT NULL,
+    tax_amount   DECIMAL(10,2),
     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     order_xml_id INTEGER
 );
@@ -74,8 +75,8 @@ CREATE TABLE OrderXMLs (
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
--- Drop full schema (debug):
-----------------------------
+-- Drop full schema:
+--------------------
 DROP TABLE OrderItems;
 DROP TABLE Items;
 DROP TABLE OrderXMLs;
@@ -85,8 +86,8 @@ DROP TABLE DeliveryInstructions;
 DROP TABLE Tokens;
 DROP TABLE Users;
 
--- Clear all data (debug):
---------------------------
+-- Clear all data:
+------------------
 DELETE FROM OrderItems;
 DELETE FROM Items;
 DELETE FROM OrderXMLs;
