@@ -78,6 +78,7 @@ export interface Order {
   lastEdited?: string;
   status?: status;
   totalPrice: number;
+  taxAmount?: number;
   createdAt: Date;
   orderXMLId?: number;
 }

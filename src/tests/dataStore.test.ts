@@ -141,6 +141,7 @@ describe('Test dataStore helpers', () => {
       buyer: testBuyerSimple,
       billingDetails: testBillingDetails,
       totalPrice: 175,
+      taxAmount: 17,
       delivery: testDeliveryDetails,
       lastEdited: date,
       createdAt: new Date(),
@@ -152,6 +153,7 @@ describe('Test dataStore helpers', () => {
       buyer: testBuyerSimple,
       billingDetails: testBillingDetails,
       totalPrice: 200,
+      taxAmount: 0,
       delivery: testDeliveryDetails,
       lastEdited: date,
       createdAt: new Date(),
@@ -234,6 +236,7 @@ describe('Test dataStore helpers', () => {
     // Updating/getting order                                                   🧑Users 🥮Tokens 💎Items 📦Orders
     testOrder2.quantities[0] += 1;
     testOrder2.totalPrice += 5;
+    testOrder2.taxAmount = Number(testOrder2.taxAmount) + 0.5;
     expect(await updateOrder(testOrder2));
     expect(await getOrder(Number(testOrder2.id))).toStrictEqual(testOrder2);
 
@@ -295,8 +298,6 @@ describe('Test dataStore helpers', () => {
     expect(await deleteUser(seller2Id));
     expect(await deleteUser(buyerId));
     expect(await getUser(buyerId)).toBeNull();
-
-    console.log("we did it");
   }, 40000);
 
   

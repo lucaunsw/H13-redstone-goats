@@ -315,10 +315,11 @@ export async function addOrder(order: Order): Promise<number | null> {
     order.lastEdited = order.lastEdited ?? new Date().toISOString();
     const orderRes = await client.query(
       `INSERT INTO Orders
-          (buyer_id, billing_id, delivery_id, last_edited, status, total_price, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;`,
-      [order.buyer.id, billingRes.rows[0].id, deliveryRes.rows[0].id,
-       order.lastEdited, order.status, order.totalPrice, order.createdAt]
+          (buyer_id, billing_id, delivery_id, last_edited, 
+           status, total_price, tax_amount, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id;`,
+      [order.buyer.id, billingRes.rows[0].id, deliveryRes.rows[0].id, order.lastEdited,
+       order.status, order.totalPrice, order.taxAmount, order.createdAt]
     );
     const orderId = orderRes.rows[0].id;
 
@@ -421,6 +422,7 @@ export async function getOrder(orderId: number): Promise<Order | null> {
     totalPrice: Number(order.total_price),
     createdAt: order.created_at
   };
+  if (order.tax_amount != null) orderResult.taxAmount = Number(order.tax_amount);
   if (order.order_xml_id != null) orderResult.orderXMLId = order.order_xml_id;
   return orderResult;
 }
@@ -473,8 +475,10 @@ export async function updateOrder(order: Order): Promise<boolean> {
 
     const orderRes = await client.query(
       `UPDATE Orders 
-       SET buyer_id = $1, last_edited = $2, status = $3, total_price = $4 WHERE id = $5;`,
-      [order.buyer.id, order.lastEdited, order.status, order.totalPrice, order.id]
+       SET buyer_id = $1, last_edited = $2, status = $3, 
+           total_price = $4, tax_amount = $5 WHERE id = $6;`,
+      [order.buyer.id, order.lastEdited, order.status,
+       order.totalPrice, order.taxAmount, order.id]
     );
     if (orderRes.rowCount === 0) throw new Error("Overview update failed");
 
