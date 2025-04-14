@@ -35,7 +35,9 @@ export function generateUBL(orderId: number, order: Order) {
   let tax = 0
   if (order.taxAmount) {
     tax = order.taxAmount;
+    total = (total * (tax + 1));
   }
+  
   const ublOrder = {
       Order: {
           $: {
@@ -96,11 +98,11 @@ export function generateUBL(orderId: number, order: Order) {
             "cbc:Description": item.description,
             "cbc:Name": item.name,
           })),
-          "cac:AnticipatedMonetaryTotal": {
-            "cbc:PayableAmount": total,
-          },
           "cac:TaxAmount": {
             "cbc:Tax": tax,
+          },
+          "cac:AnticipatedMonetaryTotal": {
+            "cbc:PayableAmount": total,
           },
       }
   };
