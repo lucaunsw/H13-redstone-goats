@@ -20,19 +20,21 @@ export function generateUBL(orderId: number, order: Order) {
   // Create a map to keep track of unique sellers.
   const uniqueSellers = new Map<number, UserSimple>();
   // Add unique sellers into the map.
+  let total = 0;
   for (const item of order.items) {
     if (item.seller.id && !uniqueSellers.has(item.seller.id)) {
       uniqueSellers.set(item.seller.id, item.seller);
     }
+    total += item.price;
   }
-
   const builder = new xml2js.Builder({
       headless: false,
       renderOpts: { 'pretty': true }
   });
-  let total = 0;
-  for (const item of order.items) {
-    total += item.price;
+  
+  let tax = 0
+  if (order.taxAmount) {
+    tax = order.taxAmount;
   }
   const ublOrder = {
       Order: {
@@ -96,6 +98,9 @@ export function generateUBL(orderId: number, order: Order) {
           })),
           "cac:AnticipatedMonetaryTotal": {
             "cbc:PayableAmount": total,
+          },
+          "cac:TaxAmount": {
+            "cbc:Tax": tax,
           },
       }
   };
