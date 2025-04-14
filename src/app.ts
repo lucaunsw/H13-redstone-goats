@@ -47,6 +47,10 @@ async function orderCreate (order: Order) {
     throw new Error ('Invalid amount of item quantities provided');
   }
 
+  if (order.taxAmount && (order.taxAmount < 0 || order.taxAmount >= 1)) {
+    throw new Error ('Invalid tax amount entered');
+  }
+
   // Checks if sellers are valid.
   const sellersValid = await validSellers(order);
   if (!sellersValid) {
@@ -256,13 +260,13 @@ const orderRecommendations = async (userId: number, limit: number) => {
   return { recommendations: recommendedItems };
 };
 
- /** Returns orderhistory
-  *
-  * @param {number | null} userId - Unique identifier for a user.
-  * @returns { successfulOrders: [], cancelledOrders: [] } 
-  */
+/** Returns orderhistory
+*
+* @param {number | null} userId - Unique identifier for a user.
+* @returns { successfulOrders: [], cancelledOrders: [] } 
+*/
 
- const orderHistory = async (userId: number) => {
+const orderHistory = async (userId: number) => {
 
   // Checks for userId
   if (!userId) {
@@ -288,6 +292,6 @@ const orderRecommendations = async (userId: number, limit: number) => {
 
   return { successfulOrders: successfulOrders, 
            cancelledOrders: cancelledOrders };
- }
+}
 
 export { orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory };

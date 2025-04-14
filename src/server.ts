@@ -149,7 +149,7 @@ app.post('/v1/user/register', async (req: Request, res: Response) => {
   try {
     const { email, password, nameFirst, nameLast } = req.body;
     const result = await userRegister(email, password, nameFirst, nameLast); 
-    const sessionToken = await makeJwtToken(result.userId); 
+    const sessionToken = await makeJwtToken(result.userId);
     res.json(sessionToken);
   } catch (err) {
     if (err instanceof Error) {
@@ -305,6 +305,28 @@ app.post("/v1/:userId/order/history", async (req: Request, res: Response) => {
     if (e.message === 'Invalid userId' || e.message === 'No userId provided') {
       res.status(401).json({ error: e.message });
     } 
+  }
+});
+
+// Version 2 route for order creation.
+app.post("/v2/order/create", async (req: Request, res: Response) => {
+  const order = req.body;
+  if (!order.taxAmount) {
+    const result = { error: 'No tax amount entered' };
+    res.status(401).json(result);
+    return;
+  }
+  try {
+    const result = await orderCreate(order);
+    res.status(201).json(result);
+  } catch (error) {
+    const e = error as Error;
+    if (e.message === 'Invalid userId or a different name is registered to userId' ||
+      e.message === 'No userId provided') {
+      res.status(ErrKind.ENOTOKEN).json({ error: e.message });
+    } else {
+      res.status(ErrKind.EINVALID).json({ error: e.message });
+    }
   }
 });
 
