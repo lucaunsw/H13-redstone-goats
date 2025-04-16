@@ -1,11 +1,7 @@
 import request from 'sync-request-curl';
 import config from '../config.json';
 import { HttpVerb, Options, Response } from 'sync-request-curl/dist/cjs/types';
-import {
-  EmptyObj,
-  SessionId,
-  User, Order, 
-} from '../types';
+import { EmptyObj, SessionId, UserV1, OrderV1 } from '../types';
 
 const port = config.port;
 const url = config.url;
@@ -22,11 +18,11 @@ export function reqHelper<BodyTyp>(
   return { ...res, body: JSON.parse(res.body.toString()) };
 }
 
-/// //////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 //                                                                 //
-/// / HELPERS BELOW THIS LINE ARE SPECIALISED VARIANTS OF THE ABOVE //
+//  HELPERS BELOW THIS LINE ARE SPECIALISED VARIANTS OF THE ABOVE  //
 //                                                                 //
-/// //////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////
 
 export function userRegister<T = { token: SessionId }>(
   em: string,
@@ -61,7 +57,7 @@ export function userLogout<T = EmptyObj>(token: SessionId) {
   });
 }
 
-export function userDetails<T = { user: User }>(token: SessionId) {
+export function userDetails<T = { user: UserV1 }>(token: SessionId) {
   return reqHelper<T>('GET', '/v1/user/details', {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -88,7 +84,7 @@ export function userDetailsUpdate<T = EmptyObj>(
 }
 
 export async function requestOrderCreate(
-  body: Order,
+  body: OrderV1,
 ) {
   const res = request("POST", `${url}:${port}/v1/order/create`, {
     json: body,

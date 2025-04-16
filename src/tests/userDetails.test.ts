@@ -1,9 +1,9 @@
 import { userDetails } from '../user';
-import { getUser } from '../dataStore';
+import { getUserV1 } from '../dataStoreV1';
 import { Err, ErrKind } from '../types'; 
 import { server } from '../server';  
-jest.mock('../dataStore', () => ({
-  getUser: jest.fn(),
+jest.mock('../dataStoreV1', () => ({
+  getUserV1: jest.fn(),
 }));
 
 jest.mock('@redis/client', () => ({
@@ -32,7 +32,7 @@ describe('userDetails', () => {
   test('Returns error if user not found', async () => {
     const invalidUserId = 999; 
     
-    (getUser as jest.Mock).mockResolvedValueOnce(null);
+    (getUserV1 as jest.Mock).mockResolvedValueOnce(null);
     
     await expect(userDetails(invalidUserId)).rejects.toThrowError(
       new Err('User not found', ErrKind.EINVALID)
@@ -50,7 +50,7 @@ describe('userDetails', () => {
       numFailedPasswordsSinceLastLogin: 2,
     };
 
-    (getUser as jest.Mock).mockResolvedValueOnce(mockUser);
+    (getUserV1 as jest.Mock).mockResolvedValueOnce(mockUser);
 
     const result = await userDetails(validUserId);
 
