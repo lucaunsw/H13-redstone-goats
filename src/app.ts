@@ -290,4 +290,33 @@ const orderRecommendations = async (userId: number, limit: number) => {
            cancelledOrders: cancelledOrders };
  }
 
-export { orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory };
+/** Fetches an individual order using orderId
+  *
+  * @param {number} userId - Unique identifier for a user.
+  * @param {number} orderId - Unique identifier for an order.
+  * @returns {Order} orderDetails - order fields for a single order 
+  */
+
+  const orderDetails = async (userId: number, orderId: number) => {
+
+  // ERROR CHECKING: Check if userId is valid
+  const userCheck = await getUser(userId);
+  if (!userCheck) {
+      throw new Error("Invalid userId");
+  }
+
+  // ERROR CHECKING: Check if orderId is valid
+  const orderCheck = await getOrder(orderId);
+  if (!orderCheck) {
+      throw new Error("Invalid orderId");
+  }
+
+  // Fetch order
+  const orderDetail = await getOrder(orderId);
+
+  // Return order
+  return orderDetail;
+
+}
+
+export { orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory, orderDetails };
