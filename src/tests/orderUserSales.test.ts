@@ -1,16 +1,16 @@
 import { orderUserSales } from '../app'
-import { UserSimple, 
-  Item, BillingDetails, DeliveryInstructions } from '../types';
-import { getUser, getItemSellerSales } from '../dataStore';
+import { UserSimpleV1, 
+  ItemV1, BillingDetailsV1, DeliveryInstructionsV1 } from '../types';
+import { getUserV1, getItemSellerSalesV1 } from '../dataStoreV1';
 import dotenv from 'dotenv';
 dotenv.config();
 
 import { server } from '../server';
 import { createClient } from '@redis/client';
 
-jest.mock('../dataStore', () => ({
-  getUser: jest.fn(),
-  getItemSellerSales: jest.fn(),
+jest.mock('../dataStoreV1', () => ({
+  getUserV1: jest.fn(),
+  getItemSellerSalesV1: jest.fn(),
 }));
 
 jest.mock('@redis/client', () => ({
@@ -26,13 +26,13 @@ jest.mock('@redis/client', () => ({
 
 let sellerId: number;
 let seller2Id: number;
-let testBuyer: UserSimple;
-let testSeller: UserSimple;
-let testItem1: Item;
-let testItem2: Item;
-let testItem3: Item;
-let testBillingDetails: BillingDetails;
-let testDeliveryDetails: DeliveryInstructions;
+let testBuyer: UserSimpleV1;
+let testSeller: UserSimpleV1;
+let testItem1: ItemV1;
+let testItem2: ItemV1;
+let testItem3: ItemV1;
+let testBillingDetails: BillingDetailsV1;
+let testDeliveryDetails: DeliveryInstructionsV1;
 const date = new Date().toISOString().split('T')[0];
 
 describe('Order user sales send', () => {
@@ -55,11 +55,11 @@ describe('Order user sales send', () => {
   });
 
   test('Error from invalid sellerId', async () => {
-    (getUser as jest.Mock).mockResolvedValue(null);
+    (getUserV1 as jest.Mock).mockResolvedValue(null);
 
     await expect(orderUserSales(true, true, true, sellerId + 10)).
     rejects.toThrowError('Invalid sellerId');
-    expect(getUser).toHaveBeenCalledTimes(1);
+    expect(getUserV1).toHaveBeenCalledTimes(1);
   });
 
   test('Error from invalid input', async () => {
@@ -68,7 +68,7 @@ describe('Order user sales send', () => {
   });
 
   test('Displays no sales when order could not be created', async () => {
-    (getUser as jest.Mock).mockResolvedValue({
+    (getUserV1 as jest.Mock).mockResolvedValue({
       id: 1,
       nameFirst: 'mock',
       nameLast: 'seller',
@@ -77,11 +77,11 @@ describe('Order user sales send', () => {
       numSuccessfulLogins: 2,
       numFailedPasswordsSinceLastLogin: 2,
     });
-    (getItemSellerSales as jest.Mock).mockResolvedValue([]);
+    (getItemSellerSalesV1 as jest.Mock).mockResolvedValue([]);
 
     const response = await orderUserSales(true, true, true, sellerId);
-    expect(getUser).toHaveBeenCalledTimes(1);
-    expect(getItemSellerSales).toHaveBeenCalledTimes(1);
+    expect(getUserV1).toHaveBeenCalledTimes(1);
+    expect(getItemSellerSalesV1).toHaveBeenCalledTimes(1);
     expect(response).toStrictEqual({ 
       sales: [], 
       CSVurl: expect.any(String), 
@@ -90,7 +90,7 @@ describe('Order user sales send', () => {
   });
 
   test('Sucess case with no sales, with no csv, no pdf', async () => {
-    (getUser as jest.Mock).mockResolvedValue(
+    (getUserV1 as jest.Mock).mockResolvedValue(
       {
         id: 1,
         nameFirst: 'mock',
@@ -101,7 +101,7 @@ describe('Order user sales send', () => {
         numFailedPasswordsSinceLastLogin: 2,
       }
     );
-    (getItemSellerSales as jest.Mock).mockResolvedValue([]);
+    (getItemSellerSalesV1 as jest.Mock).mockResolvedValue([]);
     const response = await orderUserSales(false, true, false, seller2Id);
 
     expect(response).toStrictEqual({ 
@@ -110,7 +110,7 @@ describe('Order user sales send', () => {
   });
 
   test('Success case with multiple sales', async () => {
-    (getUser as jest.Mock).mockResolvedValue(
+    (getUserV1 as jest.Mock).mockResolvedValue(
       {
         id: 1,
         nameFirst: 'mock',
@@ -121,7 +121,7 @@ describe('Order user sales send', () => {
         numFailedPasswordsSinceLastLogin: 2,
       }
     );
-    (getItemSellerSales as jest.Mock).mockResolvedValue([
+    (getItemSellerSalesV1 as jest.Mock).mockResolvedValue([
       {
         id: 123,
         name: 'Soap',

@@ -1,10 +1,11 @@
--- Create full schema:
-----------------------
+-- Create schema:
+-----------------
 CREATE TABLE Users (
     id          SERIAL PRIMARY KEY,
     name_first  TEXT NOT NULL,
     name_last   TEXT NOT NULL,
     email       TEXT UNIQUE NOT NULL,
+    phone       TEXT,
     password    TEXT NOT NULL, -- Will be hashed
     street_name TEXT,
     city_name   TEXT,
@@ -15,8 +16,8 @@ CREATE TABLE Users (
 );
 
 CREATE TABLE Tokens (
-    token   TEXT PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES Users(id)
+    jwt_token TEXT PRIMARY KEY,
+    user_id   INTEGER NOT NULL REFERENCES Users(id)
 );
 
 CREATE TABLE Items (
@@ -57,6 +58,11 @@ CREATE TABLE Orders (
     status       TEXT CHECK (status IN ('pending', 'confirmed', 'cancelled')), -- Enum-like constraint
     total_price  DECIMAL(10,2) NOT NULL,
     tax_amount   DECIMAL(10,2),
+    tax_total    DECIMAL(10,2),
+    currency     TEXT,
+    payment_account_id TEXT,
+    payment_account_name TEXT,
+    financial_institution_branch_id TEXT,
     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     order_xml_id INTEGER
 );
@@ -75,8 +81,8 @@ CREATE TABLE OrderXMLs (
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
--- Drop full schema:
---------------------
+-- Drop schema:
+---------------
 DROP TABLE OrderItems;
 DROP TABLE Items;
 DROP TABLE OrderXMLs;
@@ -86,8 +92,8 @@ DROP TABLE DeliveryInstructions;
 DROP TABLE Tokens;
 DROP TABLE Users;
 
--- Clear all data:
-------------------
+-- Clear data:
+--------------
 DELETE FROM OrderItems;
 DELETE FROM Items;
 DELETE FROM OrderXMLs;

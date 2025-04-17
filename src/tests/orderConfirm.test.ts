@@ -2,8 +2,8 @@ import request from "sync-request-curl";
 const SERVER_URL = `http://127.0.0.1:3200`;
 const TIMEOUT_MS = 20 * 1000;
 import dotenv from 'dotenv';
-import { BillingDetails, DeliveryInstructions, Item, Order, status, UserSimple } from "../types";
-import { getOrder, getOrderXML, getUser, updateOrder } from "../dataStore";
+import { BillingDetailsV1, DeliveryInstructionsV1, ItemV1, OrderV1, UserSimpleV1, status } from "../types";
+import { getOrderV1, getOrderXMLV1, getUserV1, updateOrderV1 } from "../dataStoreV1";
 import { orderConfirm } from "../app";
 dotenv.config();
 
@@ -22,14 +22,14 @@ export function getPostResponse(
     };
   }
 
-  jest.mock('../dataStore', () => ({
-    getUser: jest.fn(),
-    getOrder: jest.fn(),
-    updateOrder: jest.fn(),
-    addOrder: jest.fn(),
-    addOrderXML: jest.fn(),
-    getOrderXML: jest.fn(),
-    getItem: jest.fn(),
+  jest.mock('../dataStoreV1', () => ({
+    getUserV1: jest.fn(),
+    getOrderV1: jest.fn(),
+    updateOrderV1: jest.fn(),
+    addOrderV1: jest.fn(),
+    addOrderXMLV1: jest.fn(),
+    getOrderXMLV1: jest.fn(),
+    getItemV1: jest.fn(),
   }));
   
   jest.mock('../helper', () => ({
@@ -55,11 +55,11 @@ export function getPostResponse(
   
   let userId: number;
   let testName: string;
-  let testBuyer: UserSimple;
-  let testSeller: UserSimple;
-  let testItem: Item;
-  let testBillingDetails: BillingDetails;
-  let testDeliveryDetails: DeliveryInstructions;
+  let testBuyer: UserSimpleV1;
+  let testSeller: UserSimpleV1;
+  let testItem: ItemV1;
+  let testBillingDetails: BillingDetailsV1;
+  let testDeliveryDetails: DeliveryInstructionsV1;
   const date = new Date().toISOString().split('T')[0];
   
   beforeEach(async () => {
@@ -112,7 +112,7 @@ export function getPostResponse(
 
   describe("Tests for orderConfirm", () => {
     test("Should confirm an order successfully", async () => {
-      const mockOrder: Order = {
+      const mockOrder: OrderV1 = {
         id: testBuyer.id,
         items: [testItem], 
         quantities: [2], 
@@ -127,19 +127,19 @@ export function getPostResponse(
       };
       const orderId = mockOrder.id; 
     
-      (getUser as jest.Mock).mockResolvedValue(orderId);
-      (getOrder as jest.Mock).mockResolvedValue(mockOrder); 
-      (updateOrder as jest.Mock).mockResolvedValue(true);
-      (getOrderXML as jest.Mock).mockResolvedValue('Example XML');
+      (getUserV1 as jest.Mock).mockResolvedValue(orderId);
+      (getOrderV1 as jest.Mock).mockResolvedValue(mockOrder); 
+      (updateOrderV1 as jest.Mock).mockResolvedValue(true);
+      (getOrderXMLV1 as jest.Mock).mockResolvedValue('Example XML');
     
       const result = await orderConfirm(userId, Number(orderId));
     
       expect(result).toStrictEqual({ UBL: expect.any(String) });
-      expect(getOrder).toHaveBeenCalledWith(orderId); 
+      expect(getOrderV1).toHaveBeenCalledWith(orderId); 
     });
 
     test("Should return 401 for invalid orderId", async () => {
-      const mockOrder: Order = {
+      const mockOrder: OrderV1 = {
         id: testBuyer.id,
         items: [testItem], 
         quantities: [2], 
@@ -154,10 +154,10 @@ export function getPostResponse(
       };
       const orderId = Number(mockOrder.id) + 1000; 
     
-      (getUser as jest.Mock).mockResolvedValue(testBuyer);
-      (getOrder as jest.Mock).mockResolvedValue(null); 
-      (updateOrder as jest.Mock).mockResolvedValue(true);
-      (getOrderXML as jest.Mock).mockResolvedValue('Example XML');
+      (getUserV1 as jest.Mock).mockResolvedValue(testBuyer);
+      (getOrderV1 as jest.Mock).mockResolvedValue(null); 
+      (updateOrderV1 as jest.Mock).mockResolvedValue(true);
+      (getOrderXMLV1 as jest.Mock).mockResolvedValue('Example XML');
     
       let result;
       try {
@@ -171,11 +171,11 @@ export function getPostResponse(
       }
     
       expect(result).toStrictEqual({ error: expect.any(String) });
-      expect(getOrder).toHaveBeenCalledWith(orderId); 
+      expect(getOrderV1).toHaveBeenCalledWith(orderId); 
     });
 
     test("Should return 401 for invalid userId", async () => {
-      const mockOrder: Order = {
+      const mockOrder: OrderV1 = {
         id: testBuyer.id,
         items: [testItem], 
         quantities: [2], 
@@ -190,10 +190,10 @@ export function getPostResponse(
       };
       const orderId = Number(mockOrder.id); 
     
-      (getUser as jest.Mock).mockResolvedValue(null);
-      (getOrder as jest.Mock).mockResolvedValue(mockOrder); 
-      (updateOrder as jest.Mock).mockResolvedValue(true);
-      (getOrderXML as jest.Mock).mockResolvedValue('Example XML');
+      (getUserV1 as jest.Mock).mockResolvedValue(null);
+      (getOrderV1 as jest.Mock).mockResolvedValue(mockOrder); 
+      (updateOrderV1 as jest.Mock).mockResolvedValue(true);
+      (getOrderXMLV1 as jest.Mock).mockResolvedValue('Example XML');
     
       let result;
       try {
@@ -207,11 +207,11 @@ export function getPostResponse(
       }
     
       expect(result).toStrictEqual({ error: expect.any(String) });
-      expect(getOrder).not.toHaveBeenCalledWith(orderId); 
+      expect(getOrderV1).not.toHaveBeenCalledWith(orderId); 
     });
 
     test("Should return 400 since order is cancelled", async () => {
-      const mockOrder: Order = {
+      const mockOrder: OrderV1 = {
         id: testBuyer.id,
         items: [testItem], 
         quantities: [2], 
@@ -226,10 +226,10 @@ export function getPostResponse(
       };
       const orderId = Number(mockOrder.id); 
     
-      (getUser as jest.Mock).mockResolvedValue(orderId);
-      (getOrder as jest.Mock).mockResolvedValue(mockOrder); 
-      (updateOrder as jest.Mock).mockResolvedValue(true);
-      (getOrderXML as jest.Mock).mockResolvedValue('Example XML');
+      (getUserV1 as jest.Mock).mockResolvedValue(orderId);
+      (getOrderV1 as jest.Mock).mockResolvedValue(mockOrder); 
+      (updateOrderV1 as jest.Mock).mockResolvedValue(true);
+      (getOrderXMLV1 as jest.Mock).mockResolvedValue('Example XML');
     
       let result;
       try {
@@ -243,6 +243,6 @@ export function getPostResponse(
       }
     
       expect(result).toStrictEqual({ error: expect.any(String) });
-      expect(getOrder).toHaveBeenCalledWith(orderId); 
+      expect(getOrderV1).toHaveBeenCalledWith(orderId); 
     });
   });

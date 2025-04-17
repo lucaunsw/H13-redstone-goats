@@ -1,5 +1,5 @@
-import { addUser, getAllUsers, getUser, updateUser } from './dataStore';
-import { Err, ErrKind, UserId, User, SessionId, EmptyObj, UserSummary } from './types';
+import { addUserV1, getAllUsersV1, getUserV1, updateUserV1 } from './dataStoreV1';
+import { Err, ErrKind, UserId, UserV1, SessionId, EmptyObj, UserSummaryV1 } from './types';
 import validator from 'validator';
 import { redisClient } from './server'; // Redis client
 
@@ -24,7 +24,7 @@ export async function userRegister(
     throw new Err('Email is invalid', ErrKind.EINVALID);
   }
 
-  const existingUsers = await getAllUsers();
+  const existingUsers = await getAllUsersV1();
   for (const user of existingUsers) {
       if (user.email === email) {
           throw new Err('This email is already registered on another account', ErrKind.EINVALID);
@@ -36,7 +36,7 @@ export async function userRegister(
   validateName(nameLast, 'last ');
 
   const crypto = require('crypto');
-  const newUser: User = {
+  const newUser: UserV1 = {
     email: email,
     password: crypto.createHash('sha256').update(password).digest('hex'),
     nameFirst: nameFirst,
@@ -45,7 +45,7 @@ export async function userRegister(
     numFailedPasswordsSinceLastLogin: 0,
   };
   
-  const userId = await addUser(newUser);
+  const userId = await addUserV1(newUser);
   return { userId: userId };
 }
 
@@ -65,7 +65,7 @@ export async function userLogin(
   const crypto = require('crypto');
   
   // Fetch all users and find the one with the matching email
-  const allUsers = await getAllUsers();
+  const allUsers = await getAllUsersV1();
   const user = allUsers.find((u) => u.email === email);
 
   if (!user) {
@@ -76,14 +76,14 @@ export async function userLogin(
   const inputHash = crypto.createHash('sha256').update(password).digest('hex');
   if (user.password !== inputHash) {
     user.numFailedPasswordsSinceLastLogin += 1;
-    await updateUser(user); // Update failed login count in DB
+    await updateUserV1(user); // Update failed login count in DB
     throw new Err('Password does not match the provided email', ErrKind.EINVALID);
   }
 
   // Reset failed login attempts and increment successful logins
   user.numFailedPasswordsSinceLastLogin = 0;
   user.numSuccessfulLogins += 1;
-  await updateUser(user);
+  await updateUserV1(user);
 
   return { userId: user.id as number };
 }
@@ -114,9 +114,9 @@ export async function userLogout(token: SessionId | undefined): Promise<EmptyObj
 * numSuccessfulLogins: number,
 * numFailedPasswordsSinceLastLogin: number}}
 */
-export async function userDetails(userId: UserId): Promise<{ user: UserSummary | null }> | never {
+export async function userDetails(userId: UserId): Promise<{ user: UserSummaryV1 | null }> | never {
 
- const currentUser = await getUser(userId);
+ const currentUser = await getUserV1(userId);
 
  if (!currentUser) {
   throw new Err('User not found', ErrKind.EINVALID);

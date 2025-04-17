@@ -1,17 +1,17 @@
 import { orderRecommendations, orderUserSales } from '../app'
-import { UserSimple, 
-  Item, BillingDetails, DeliveryInstructions } from '../types';
-import { getUser, getItemBuyerRecommendations, getPopularItems } from '../dataStore';
+import { UserSimpleV1, 
+  ItemV1, BillingDetailsV1, DeliveryInstructionsV1 } from '../types';
+import { getUserV1, getItemBuyerRecommendationsV1, getPopularItemsV1 } from '../dataStoreV1';
 import dotenv from 'dotenv';
 dotenv.config();
 
 import { server } from '../server';
 import { createClient } from '@redis/client';
 
-jest.mock('../dataStore', () => ({
-  getUser: jest.fn(),
-  getItemBuyerRecommendations: jest.fn(),
-  getPopularItems: jest.fn(),
+jest.mock('../dataStoreV1', () => ({
+  getUserV1: jest.fn(),
+  getItemBuyerRecommendationsV1: jest.fn(),
+  getPopularItemsV1: jest.fn(),
 }));
 
 jest.mock('@redis/client', () => ({
@@ -26,9 +26,9 @@ jest.mock('@redis/client', () => ({
 }));
 
 let seller1Id: number,       seller2Id: number,       buyerId: number;
-let testSeller1: UserSimple, testSeller2: UserSimple, testBuyer: UserSimple;
-let testItem1: Item,         testItem2: Item,         testItem3: Item;
-let testBillingDetails: BillingDetails, testDeliveryDetails: DeliveryInstructions;
+let testSeller1: UserSimpleV1, testSeller2: UserSimpleV1, testBuyer: UserSimpleV1;
+let testItem1: ItemV1,         testItem2: ItemV1,         testItem3: ItemV1;
+let testBillingDetails: BillingDetailsV1, testDeliveryDetails: DeliveryInstructionsV1;
 const date = new Date().toISOString().split('T')[0];
 
 describe('Tests for order recommendations', () => {
@@ -116,23 +116,23 @@ describe('Tests for order recommendations', () => {
     await expect(orderRecommendations(seller1Id, 1.5)).
     rejects.toThrowError('Limit is not a positive integer');
 
-    expect(getUser).toHaveBeenCalledTimes(0);
-    expect(getItemBuyerRecommendations).toHaveBeenCalledTimes(0);
-    expect(getPopularItems).toHaveBeenCalledTimes(0);
+    expect(getUserV1).toHaveBeenCalledTimes(0);
+    expect(getItemBuyerRecommendationsV1).toHaveBeenCalledTimes(0);
+    expect(getPopularItemsV1).toHaveBeenCalledTimes(0);
   });
 
   test('Error from invalid userId', async () => {
-    (getUser as jest.Mock).mockResolvedValue(null);
+    (getUserV1 as jest.Mock).mockResolvedValue(null);
     await expect(orderRecommendations(seller1Id + 10, 3)).
     rejects.toThrowError('Invalid userId');
 
-    expect(getUser).toHaveBeenCalledTimes(1);
-    expect(getItemBuyerRecommendations).toHaveBeenCalledTimes(0);
-    expect(getPopularItems).toHaveBeenCalledTimes(0);
+    expect(getUserV1).toHaveBeenCalledTimes(1);
+    expect(getItemBuyerRecommendationsV1).toHaveBeenCalledTimes(0);
+    expect(getPopularItemsV1).toHaveBeenCalledTimes(0);
   });
 
   test('Successul recommendation with no items', async () => {
-    (getUser as jest.Mock).mockResolvedValue({
+    (getUserV1 as jest.Mock).mockResolvedValue({
       id: 1,
       nameFirst: 'mock',
       nameLast: 'buyer',
@@ -141,20 +141,20 @@ describe('Tests for order recommendations', () => {
       numSuccessfulLogins: 2,
       numFailedPasswordsSinceLastLogin: 2,
     });
-    (getItemBuyerRecommendations as jest.Mock).mockResolvedValue([]);
-    (getPopularItems as jest.Mock).mockResolvedValue([]);
+    (getItemBuyerRecommendationsV1 as jest.Mock).mockResolvedValue([]);
+    (getPopularItemsV1 as jest.Mock).mockResolvedValue([]);
 
     const response = await orderRecommendations(seller1Id, 5);
-    expect(getUser).toHaveBeenCalledTimes(1);
-    expect(getItemBuyerRecommendations).toHaveBeenCalledTimes(1);
-    expect(getPopularItems).toHaveBeenCalledTimes(1);
+    expect(getUserV1).toHaveBeenCalledTimes(1);
+    expect(getItemBuyerRecommendationsV1).toHaveBeenCalledTimes(1);
+    expect(getPopularItemsV1).toHaveBeenCalledTimes(1);
     expect(response).toStrictEqual({ 
       recommendations: [],
     });
   });
 
   test('Successul recommendation with enough recs, no popular items', async () => {
-    (getUser as jest.Mock).mockResolvedValue({
+    (getUserV1 as jest.Mock).mockResolvedValue({
       id: 1,
       nameFirst: 'mock',
       nameLast: 'buyer',
@@ -163,19 +163,19 @@ describe('Tests for order recommendations', () => {
       numSuccessfulLogins: 2,
       numFailedPasswordsSinceLastLogin: 2,
     });
-    (getItemBuyerRecommendations as jest.Mock).mockResolvedValue([testItem1, testItem2]);
+    (getItemBuyerRecommendationsV1 as jest.Mock).mockResolvedValue([testItem1, testItem2]);
 
     const response = await orderRecommendations(seller1Id, 2);
-    expect(getUser).toHaveBeenCalledTimes(1);
-    expect(getItemBuyerRecommendations).toHaveBeenCalledTimes(1);
-    expect(getPopularItems).toHaveBeenCalledTimes(0);
+    expect(getUserV1).toHaveBeenCalledTimes(1);
+    expect(getItemBuyerRecommendationsV1).toHaveBeenCalledTimes(1);
+    expect(getPopularItemsV1).toHaveBeenCalledTimes(0);
     expect(response).toStrictEqual({ 
       recommendations: [testItem1, testItem2],
     });
   });
 
   test('Successul recommendation with not enough recs, more popular items than needed', async () => {
-    (getUser as jest.Mock).mockResolvedValue({
+    (getUserV1 as jest.Mock).mockResolvedValue({
       id: 1,
       nameFirst: 'mock',
       nameLast: 'buyer',
@@ -184,13 +184,13 @@ describe('Tests for order recommendations', () => {
       numSuccessfulLogins: 2,
       numFailedPasswordsSinceLastLogin: 2,
     });
-    (getItemBuyerRecommendations as jest.Mock).mockResolvedValue([testItem1]);
-    (getPopularItems as jest.Mock).mockResolvedValue([testItem2, testItem3]);
+    (getItemBuyerRecommendationsV1 as jest.Mock).mockResolvedValue([testItem1]);
+    (getPopularItemsV1 as jest.Mock).mockResolvedValue([testItem2, testItem3]);
 
     const response = await orderRecommendations(seller1Id, 2);
-    expect(getUser).toHaveBeenCalledTimes(1);
-    expect(getItemBuyerRecommendations).toHaveBeenCalledTimes(1);
-    expect(getPopularItems).toHaveBeenCalledTimes(1);
+    expect(getUserV1).toHaveBeenCalledTimes(1);
+    expect(getItemBuyerRecommendationsV1).toHaveBeenCalledTimes(1);
+    expect(getPopularItemsV1).toHaveBeenCalledTimes(1);
     expect(response).toStrictEqual({ 
       recommendations: [testItem1, testItem2],
     });

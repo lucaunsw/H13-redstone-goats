@@ -1,13 +1,13 @@
 import { userRegister } from '../user';
-import { getAllUsers, addUser } from '../dataStore';
+import { getAllUsersV1, addUserV1 } from '../dataStoreV1';
 import { Err, ErrKind } from '../types'; 
 import validator from 'validator'; 
 import { server } from '../server';  
 
 
-jest.mock('../dataStore', () => ({
-  getAllUsers: jest.fn(),
-  addUser: jest.fn(),
+jest.mock('../dataStoreV1', () => ({
+  getAllUsersV1: jest.fn(),
+  addUserV1: jest.fn(),
 }));
 
 jest.mock('@redis/client', () => ({
@@ -31,7 +31,7 @@ describe('userRegister', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockExistingUsers = [];
-    (getAllUsers as jest.Mock).mockResolvedValue(mockExistingUsers);
+    (getAllUsersV1 as jest.Mock).mockResolvedValue(mockExistingUsers);
   });
 
   afterAll(async () => {
@@ -46,14 +46,14 @@ describe('userRegister', () => {
     const nameFirst = 'John';
     const nameLast = 'Doe';
     
-    (getAllUsers as jest.Mock).mockResolvedValue([]);
-    (addUser as jest.Mock).mockResolvedValue(1); 
+    (getAllUsersV1 as jest.Mock).mockResolvedValue([]);
+    (addUserV1 as jest.Mock).mockResolvedValue(1); 
     (validator.isEmail as jest.Mock).mockReturnValue(true);
 
     const result = await userRegister(email, password, nameFirst, nameLast);
 
     expect(result).toEqual({ userId: 1 });
-    expect(addUser).toHaveBeenCalledWith(expect.objectContaining({
+    expect(addUserV1).toHaveBeenCalledWith(expect.objectContaining({
       email,
       password: expect.any(String), 
       nameFirst,
@@ -72,7 +72,7 @@ describe('userRegister', () => {
     (validator.isEmail as jest.Mock).mockReturnValue(true); 
     
     mockExistingUsers = [{ email }];
-    (getAllUsers as jest.Mock).mockResolvedValue(mockExistingUsers);
+    (getAllUsersV1 as jest.Mock).mockResolvedValue(mockExistingUsers);
 
     await expect(userRegister(email, password, nameFirst, nameLast))
       .rejects

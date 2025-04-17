@@ -1,6 +1,5 @@
-import { Order, UserSimple, ItemSales } from "./types";
-import { getUser, addItem,
-  getItem } from './dataStore'
+import { OrderV1, UserSimpleV1, ItemSalesV1 } from "./types";
+import { getUserV1, addItemV1, getItemV1 } from './dataStoreV1'
 const xml2js = require('xml2js');
 import fs from 'fs';
 import { stringify } from 'csv-stringify/sync';
@@ -16,9 +15,9 @@ Chart.register(...registerables);
  * @param {Order} order - object containing all the order information.
  * @returns { string } UBL document - A string containing the UBL XML document.
  */
-export function generateUBL(orderId: number, order: Order) {
+export function generateUBL(orderId: number, order: OrderV1) {
   // Create a map to keep track of unique sellers.
-  const uniqueSellers = new Map<number, UserSimple>();
+  const uniqueSellers = new Map<number, UserSimpleV1>();
   // Add unique sellers into the map.
   let total = 0;
   for (const item of order.items) {
@@ -115,7 +114,7 @@ export function generateUBL(orderId: number, order: Order) {
  * @returns { boolean } - True if the user exists false else.
  */
 export async function userExists(userId: number, name: string) {
-  const user = await getUser(userId);
+  const user = await getUserV1(userId);
   if (!user || `${user.nameFirst} ${user.nameLast}` !== name) {
     return false
   }
@@ -129,7 +128,7 @@ export async function userExists(userId: number, name: string) {
  * @returns { number } totalPrice - Total price of the order if the item list is
  * valid.
  */
-export async function validItemList(order: Order) {
+export async function validItemList(order: OrderV1) {
   let totalPrice = 0;
   const itemIds = new Set<number>();
   for (let i = 0; i < order.items.length; i++) {
@@ -141,7 +140,7 @@ export async function validItemList(order: Order) {
       throw new Error ('Same item Id is registered to a different item name');
     } 
     
-    const orderItem = await getItem(item.id);
+    const orderItem = await getItemV1(item.id);
     if (orderItem && orderItem.name !== item.name) {
       throw new Error ('Same item Id is registered to a different item name');
     }
@@ -165,7 +164,7 @@ export async function validItemList(order: Order) {
  * @param {Order} order - object containg all the order information.
  * @returns { boolean } - True if all the sellers are valid, false else.
  */
-export async function validSellers(order: Order) {
+export async function validSellers(order: OrderV1) {
   for (let i = 0; i < order.items.length; i++) {
     const item = order.items[i];
     if (!item.seller.id) {
@@ -185,13 +184,13 @@ export async function validSellers(order: Order) {
  * @param {Order} order - object containg all the order information.
  * @returns nothing.
  */
-export async function addItems(order: Order) {
+export async function addItems(order: OrderV1) {
   // Add each order Item to the datastore.
   for (const item of order.items) {
     if (item.id) {
-      const itemId = await getItem(item.id);
+      const itemId = await getItemV1(item.id);
       if (itemId == null) {
-        await addItem(item);
+        await addItemV1(item);
       }
     }
   }
@@ -205,7 +204,7 @@ export async function addItems(order: Order) {
  * @param {string} PDFdirPath - directory path to the pdf file.
  * @returns nothing.
  */
-export async function generatePDF(sales: ItemSales[], sellerId: number, PDFdirPath: string) {
+export async function generatePDF(sales: ItemSalesV1[], sellerId: number, PDFdirPath: string) {
   // Create the new PDF document
   const doc = new PDFDocument();
   // Create the path to the csv file

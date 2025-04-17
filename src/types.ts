@@ -4,11 +4,12 @@ export type SessionId = string;
 // Special Helper type as {} is ambiguous
 export type EmptyObj = Record<string, never>;
 
-export interface User {
+export interface UserV1 {
   id?: number | null;
   nameFirst: string;
   nameLast: string;
   email: string;
+  phone?: string;
   password: string;
   streetName?: string;
   cityName?: string;
@@ -18,7 +19,7 @@ export interface User {
   numFailedPasswordsSinceLastLogin: number;
 }
 
-export interface UserSimple {
+export interface UserSimpleV1 {
   id?: number | null;
   name: string,
   streetName: string,
@@ -27,15 +28,26 @@ export interface UserSimple {
   cbcCode: string
 }
 
-export interface Item {
+export interface UserSimpleV2 {
+  id?: number | null;
+  name: string,
+  email: string,
+  phone?: string,
+  streetName: string,
+  cityName: string,
+  postalZone: string,
+  cbcCode: string
+}
+
+export interface ItemV1 {
   id?: number | null;
   name: string;
-  seller: UserSimple;
+  seller: UserSimpleV1;
   description?: string;
   price: number;
 }
 
-export interface ItemSales {
+export interface ItemSalesV1 {
   id: number;
   name: string;
   description?: string;
@@ -43,13 +55,19 @@ export interface ItemSales {
   amountSold: number;
 }
 
-export interface BillingDetails {
+export interface ItemBuyerV2 {
+  buyer: UserSimpleV2;
+  quantity: number;
+  status: status;
+}
+
+export interface BillingDetailsV1 {
   creditCardNumber: string;
   CVV: number;
   expiryDate: string;
 }
 
-export interface DeliveryInstructions {
+export interface DeliveryInstructionsV1 {
   streetName: string;
   cityName: string;
   postalZone: string;
@@ -68,17 +86,37 @@ export enum status {
   CANCELLED = "cancelled",
 }
 
-export interface Order {
+export interface OrderV1 {
   id?: number | null;
-  items: Item[];
+  items: ItemV1[];
   quantities: number[];
-  buyer: UserSimple;
-  billingDetails: BillingDetails;
-  delivery: DeliveryInstructions;
+  buyer: UserSimpleV1;
+  billingDetails: BillingDetailsV1;
+  delivery: DeliveryInstructionsV1;
   lastEdited?: string;
   status?: status;
   totalPrice: number;
   taxAmount?: number;
+  createdAt: Date;
+  orderXMLId?: number;
+}
+
+export interface OrderV2 {
+  id?: number | null;
+  items: ItemV1[];
+  quantities: number[];
+  buyer: UserSimpleV2;
+  billingDetails: BillingDetailsV1;
+  delivery: DeliveryInstructionsV1;
+  lastEdited?: string;
+  status?: status;
+  totalPrice: number;
+  taxAmount?: number;
+  taxTotal?: number;
+  currency: string;
+  paymentAccountId: string;
+  paymentAccountName: string;
+  financialInstitutionBranchId: string;
   createdAt: Date;
   orderXMLId?: number;
 }
@@ -91,7 +129,7 @@ export enum ErrKind {
 }
 
 // We don't want this to be extensible
-export type UserSummary = {
+export type UserSummaryV1 = {
   userId: UserId;
   name: string;
   email: string;
