@@ -22,7 +22,7 @@ import {
   userDetails,
   // userDetailsUpdate,
 } from './user';
-import { addToken, validToken } from "./dataStore";
+import { addTokenV1, validTokenV1 } from "./dataStoreV1";
 
 const app = express();
 

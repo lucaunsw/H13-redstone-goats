@@ -1,18 +1,18 @@
 import pool from '../db';
-import { User, UserSimple, Item, BillingDetails, DeliveryInstructions, Order } from '../types';
-import { addUser, getUser, getUserSimple, getAllUsers, updateUser, deleteUser,
-         addToken, validToken, deleteToken,
-         addItem, getItem, getItemsBySeller, getItemSellerSales, getPopularItems, getItemBuyerRecommendations, deleteItem,
-         addOrder, getOrder, getOrdersByBuyer, updateOrder, deleteOrder,
-         addOrderXML, getOrderXML, getLatestOrderXML, getAllOrderXMLs, deleteOrderXMLs } from '../dataStore';
+import { UserV1, UserSimpleV1, ItemV1, BillingDetailsV1, DeliveryInstructionsV1, OrderV1 } from '../types';
+import { addUserV1, getUserV1, getUserSimpleV1, getAllUsersV1, updateUserV1, deleteUserV1,
+         addTokenV1, validTokenV1, deleteTokenV1,
+         addItemV1, getItemV1, getItemsBySellerV1, getItemSellerSalesV1, getPopularItemsV1, getItemBuyerRecommendationsV1, deleteItemV1,
+         addOrderV1, getOrderV1, getOrdersByBuyerV1, updateOrderV1, deleteOrderV1,
+         addOrderXMLV1, getOrderXMLV1, getLatestOrderXMLV1, getAllOrderXMLsV1, deleteOrderXMLsV1 } from '../dataStoreV1';
 
-let seller1Id: number,             seller2Id: number,             buyerId: number, buyerToken: string;
-let testSeller1Simple: UserSimple, testSeller2Simple: UserSimple, testBuyerSimple: UserSimple;
-let testSeller1: User,             testSeller2: User,             testBuyer: User;
-let testItem1: Item,               testItem2: Item,               testItem3: Item;
-let testOrder1: Order,             testOrder2: Order,             testOrder3: Order;
-let orderXML1Id: number, testOrderXML1: string, orderXML2Id: number, testOrderXML2: string;
-let testBillingDetails: BillingDetails, testDeliveryDetails: DeliveryInstructions;
+let seller1Id: number,               seller2Id: number,             buyerId: number, buyerToken: string;
+let testSeller1Simple: UserSimpleV1, testSeller2Simple: UserSimpleV1, testBuyerSimple: UserSimpleV1;
+let testSeller1: UserV1,             testSeller2: UserV1,             testBuyer: UserV1;
+let testItem1: ItemV1,               testItem2: ItemV1,               testItem3: ItemV1;
+let testOrder1: OrderV1,             testOrder2: OrderV1,             testOrder3: OrderV1;
+let orderXML1Id: number, testOrderXML1: string,  orderXML2Id: number, testOrderXML2: string;
+let testBillingDetails: BillingDetailsV1, testDeliveryDetails: DeliveryInstructionsV1;
 const date = new Date().toISOString().split('T')[0];
 
 describe('Test dataStore helpers', () => {
@@ -180,11 +180,11 @@ describe('Test dataStore helpers', () => {
     await pool.end();
   }, 5000);
 
-  test('Using every add/get/update/delete', async () => {                    // DATA ADDED:
+  test('Using every V1 function', async () => {                              // DATA ADDED:
     // Adding/getting users                                                     🧑Users
-    seller1Id = await addUser(testSeller1);
-    seller2Id = await addUser(testSeller2);
-    buyerId = await addUser(testBuyer);
+    seller1Id = await addUserV1(testSeller1);
+    seller2Id = await addUserV1(testSeller2);
+    buyerId = await addUserV1(testBuyer);
 
     expect(Number.isInteger(seller1Id));
     expect(Number.isInteger(seller2Id));
@@ -196,52 +196,52 @@ describe('Test dataStore helpers', () => {
     testSeller2Simple.id = seller2Id;
     testBuyer.id = buyerId;
     testBuyerSimple.id = buyerId;
-    expect(await getUser(buyerId)).toStrictEqual(testBuyer);
-    expect(await getUserSimple(seller1Id)).toStrictEqual(testSeller1Simple);
-    expect(await getAllUsers()).toStrictEqual([testSeller1, testSeller2, testBuyer]);
+    expect(await getUserV1(buyerId)).toStrictEqual(testBuyer);
+    expect(await getUserSimpleV1(seller1Id)).toStrictEqual(testSeller1Simple);
+    expect(await getAllUsersV1()).toStrictEqual([testSeller1, testSeller2, testBuyer]);
 
     // Updating/getting user                                                    🧑Users
     testBuyer.password = 'newPassword123';
     testBuyer.numFailedPasswordsSinceLastLogin = 42;
-    expect(await updateUser(testBuyer));
-    expect(await getUser(buyerId)).toStrictEqual(testBuyer);
+    expect(await updateUserV1(testBuyer));
+    expect(await getUserV1(buyerId)).toStrictEqual(testBuyer);
 
     // Adding/validating token                                                  🧑Users 🥮Tokens
-    expect(await addToken(buyerToken, buyerId));
-    expect(await validToken(buyerToken));
-    expect(!await validToken('thisIsNotAToken'));
+    expect(await addTokenV1(buyerToken, buyerId));
+    expect(await validTokenV1(buyerToken));
+    expect(!await validTokenV1('thisIsNotAToken'));
 
     // Adding/getting items                                                     🧑Users 🥮Tokens 💎Items
-    testItem1.id = await addItem(testItem1);
+    testItem1.id = await addItemV1(testItem1);
     expect(Number.isInteger(testItem1.id));
-    testItem2.id = await addItem(testItem2);
+    testItem2.id = await addItemV1(testItem2);
     expect(Number.isInteger(testItem2.id));
-    testItem3.id = await addItem(testItem3);
+    testItem3.id = await addItemV1(testItem3);
     expect(Number.isInteger(testItem3.id));
 
-    expect(await getItem(Number(testItem2.id))).toStrictEqual(testItem2);
-    expect(await getItemsBySeller(seller1Id)).toStrictEqual([testItem1, testItem3]);
+    expect(await getItemV1(Number(testItem2.id))).toStrictEqual(testItem2);
+    expect(await getItemsBySellerV1(seller1Id)).toStrictEqual([testItem1, testItem3]);
 
     // Adding/getting orders                                                    🧑Users 🥮Tokens 💎Items 📦Orders
-    testOrder1.id = await addOrder(testOrder1);
+    testOrder1.id = await addOrderV1(testOrder1);
     expect(Number.isInteger(testOrder1.id));
-    testOrder2.id = await addOrder(testOrder2);
+    testOrder2.id = await addOrderV1(testOrder2);
     expect(Number.isInteger(testOrder2.id));
-    testOrder3.id = await addOrder(testOrder3);
+    testOrder3.id = await addOrderV1(testOrder3);
     expect(Number.isInteger(testOrder3.id));
 
-    expect(await getOrder(Number(testOrder2.id))).toStrictEqual(testOrder2);
-    expect(await getOrdersByBuyer(buyerId)).toStrictEqual([testOrder1, testOrder2, testOrder3]);
+    expect(await getOrderV1(Number(testOrder2.id))).toStrictEqual(testOrder2);
+    expect(await getOrdersByBuyerV1(buyerId)).toStrictEqual([testOrder1, testOrder2, testOrder3]);
 
     // Updating/getting order                                                   🧑Users 🥮Tokens 💎Items 📦Orders
     testOrder2.quantities[0] += 1;
     testOrder2.totalPrice += 5;
     testOrder2.taxAmount = Number(testOrder2.taxAmount) + 0.5;
-    expect(await updateOrder(testOrder2));
-    expect(await getOrder(Number(testOrder2.id))).toStrictEqual(testOrder2);
+    expect(await updateOrderV1(testOrder2));
+    expect(await getOrderV1(Number(testOrder2.id))).toStrictEqual(testOrder2);
 
     // Getting order/item sales stuff                                           🧑Users 🥮Tokens 💎Items 📦Orders
-    expect(await getItemSellerSales(seller1Id)).toStrictEqual([
+    expect(await getItemSellerSalesV1(seller1Id)).toStrictEqual([
       {
         id: 123,
         name: 'Beer-Flavoured Soap',
@@ -258,49 +258,46 @@ describe('Test dataStore helpers', () => {
       }
     ]);
 
-    expect(await getPopularItems(2)).toStrictEqual([testItem1, testItem2]);
-    expect(await getPopularItems(4)).toStrictEqual([testItem1, testItem2, testItem3]);
+    expect(await getPopularItemsV1(2)).toStrictEqual([testItem1, testItem2]);
+    expect(await getPopularItemsV1(4)).toStrictEqual([testItem1, testItem2, testItem3]);
 
-    expect(await getItemBuyerRecommendations(buyerId, 1)).toStrictEqual([testItem1]);
-    expect(await getItemBuyerRecommendations(buyerId, 3)).toStrictEqual([testItem1, testItem2]);
+    expect(await getItemBuyerRecommendationsV1(buyerId, 1)).toStrictEqual([testItem1]);
+    expect(await getItemBuyerRecommendationsV1(buyerId, 3)).toStrictEqual([testItem1, testItem2]);
 
     // Adding/getting order XMLs                                                🧑Users 🥮Tokens 💎Items 📦Orders 📝OrderXMLs
-    orderXML1Id = await addOrderXML(Number(testOrder1.id), testOrderXML1);
+    orderXML1Id = await addOrderXMLV1(Number(testOrder1.id), testOrderXML1);
     expect(Number.isInteger(orderXML1Id));
-    orderXML2Id = await addOrderXML(Number(testOrder1.id), testOrderXML2);
+    orderXML2Id = await addOrderXMLV1(Number(testOrder1.id), testOrderXML2);
     expect(Number.isInteger(orderXML2Id));
 
-    expect(await getOrderXML(orderXML1Id)).toStrictEqual(testOrderXML1);
-    expect(await getLatestOrderXML(Number(testOrder1.id))).toStrictEqual(testOrderXML2);
-    expect(await getAllOrderXMLs(Number(testOrder1.id))).toStrictEqual([testOrderXML2, testOrderXML1]);
+    expect(await getOrderXMLV1(orderXML1Id)).toStrictEqual(testOrderXML1);
+    expect(await getLatestOrderXMLV1(Number(testOrder1.id))).toStrictEqual(testOrderXML2);
+    expect(await getAllOrderXMLsV1(Number(testOrder1.id))).toStrictEqual([testOrderXML2, testOrderXML1]);
 
     // Deleting order XMLs                                                      🧑Users 🥮Tokens 💎Items 📦Orders
-    expect(await deleteOrderXMLs(Number(testOrder1.id)));
+    expect(await deleteOrderXMLsV1(Number(testOrder1.id)));
 
     // Deleting orders                                                          🧑Users 🥮Tokens 💎Items
-    expect(await deleteOrder(Number(testOrder1.id)));
-    expect(await deleteOrder(Number(testOrder2.id)));
-    expect(await deleteOrder(Number(testOrder3.id)));
-    expect(await getOrder(Number(testOrder1.id))).toBeNull();
+    expect(await deleteOrderV1(Number(testOrder1.id)));
+    expect(await deleteOrderV1(Number(testOrder2.id)));
+    expect(await deleteOrderV1(Number(testOrder3.id)));
+    expect(await getOrderV1(Number(testOrder1.id))).toBeNull();
 
     // Deleting items                                                           🧑Users 🥮Tokens
-    expect(await deleteItem(Number(testItem1.id)));
-    expect(await deleteItem(Number(testItem2.id)));
-    expect(await deleteItem(Number(testItem3.id)));
-    expect(await getItem(Number(testItem2.id))).toBeNull();
+    expect(await deleteItemV1(Number(testItem1.id)));
+    expect(await deleteItemV1(Number(testItem2.id)));
+    expect(await deleteItemV1(Number(testItem3.id)));
+    expect(await getItemV1(Number(testItem2.id))).toBeNull();
 
     // Deleting token                                                           🧑Users
-    expect(await deleteToken(buyerToken));
-    expect(!await validToken(buyerToken));
+    expect(await deleteTokenV1(buyerToken));
+    expect(!await validTokenV1(buyerToken));
 
     // Deleting users                                                           DATA CLEARED
-    expect(await deleteUser(seller1Id));
-    expect(await deleteUser(seller2Id));
-    expect(await deleteUser(buyerId));
-    expect(await getUser(buyerId)).toBeNull();
+    expect(await deleteUserV1(seller1Id));
+    expect(await deleteUserV1(seller2Id));
+    expect(await deleteUserV1(buyerId));
+    expect(await getUserV1(buyerId)).toBeNull();
   }, 40000);
-
-  
-    
 });
 

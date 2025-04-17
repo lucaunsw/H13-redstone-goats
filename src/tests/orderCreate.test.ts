@@ -1,17 +1,16 @@
 import { orderCreate } from '../app';
-import { UserSimple, 
-  Item, BillingDetails, DeliveryInstructions } from '../types';
+import { UserSimpleV1, ItemV1, BillingDetailsV1, DeliveryInstructionsV1 } from '../types';
 import dotenv from 'dotenv';
 import { server } from '../server';
-import { addOrderXML, addOrder, getItem } from '../dataStore';
+import { addOrderXMLV1, addOrderV1, getItemV1 } from '../dataStoreV1';
 import { userExists, validItemList, addItems, generateUBL, validSellers } from '../helper';
 dotenv.config();
 import { createClient } from '@redis/client';
 
-jest.mock('../dataStore', () => ({
-  addOrder: jest.fn(),
-  addOrderXML: jest.fn(),
-  getItem: jest.fn(),
+jest.mock('../dataStoreV1', () => ({
+  addOrderV1: jest.fn(),
+  addOrderXMLV1: jest.fn(),
+  getItemV1: jest.fn(),
 }));
 
 jest.mock('../helper', () => ({
@@ -35,11 +34,11 @@ jest.mock('@redis/client', () => ({
 
 let userId: number;
 let testName: string;
-let testBuyer: UserSimple;
-let testSeller: UserSimple;
-let testItem: Item;
-let testBillingDetails: BillingDetails;
-let testDeliveryDetails: DeliveryInstructions;
+let testBuyer: UserSimpleV1;
+let testSeller: UserSimpleV1;
+let testItem: ItemV1;
+let testBillingDetails: BillingDetailsV1;
+let testDeliveryDetails: DeliveryInstructionsV1;
 const date = new Date().toISOString().split('T')[0];
 
 describe('Test orderCreate route', () => {
@@ -196,7 +195,7 @@ describe('Test orderCreate route', () => {
   test('Error from invalid seller', async () => {
     (userExists as jest.Mock).mockResolvedValueOnce(true); 
     (validSellers as jest.Mock).mockResolvedValueOnce(false); 
-    (getItem as jest.Mock).mockResolvedValue(null);
+    (getItemV1 as jest.Mock).mockResolvedValue(null);
   
     const body = {
       items: [{
@@ -232,7 +231,7 @@ describe('Test orderCreate route', () => {
     jest.spyOn(helper, 'validItemList').mockImplementation(jest.requireActual('../helper').validItemList);
     (userExists as jest.Mock).mockResolvedValueOnce(true); 
     (validSellers as jest.Mock).mockResolvedValueOnce(true);
-    (getItem as jest.Mock).mockResolvedValue(null);
+    (getItemV1 as jest.Mock).mockResolvedValue(null);
     
       const body = {
         items: [{
@@ -260,7 +259,7 @@ describe('Test orderCreate route', () => {
     jest.spyOn(helper, 'validItemList').mockImplementation(jest.requireActual('../helper').validItemList);
     (userExists as jest.Mock).mockResolvedValueOnce(true); 
     (validSellers as jest.Mock).mockResolvedValueOnce(true);
-    (getItem as jest.Mock).mockResolvedValue(null);
+    (getItemV1 as jest.Mock).mockResolvedValue(null);
     
       const body = {
         items: [{
@@ -281,7 +280,7 @@ describe('Test orderCreate route', () => {
       }
       await expect(orderCreate(body)).rejects.toThrowError('Invalid item price');
       expect(userExists).toHaveBeenCalledTimes(1);
-      expect(getItem).toHaveBeenCalledTimes(1);
+      expect(getItemV1).toHaveBeenCalledTimes(1);
   });
 
   test('Error from invalid item quantity', async () => {
@@ -289,7 +288,7 @@ describe('Test orderCreate route', () => {
     jest.spyOn(helper, 'validItemList').mockImplementation(jest.requireActual('../helper').validItemList);
     (userExists as jest.Mock).mockResolvedValueOnce(true); 
     (validSellers as jest.Mock).mockResolvedValueOnce(true);
-    (getItem as jest.Mock).mockResolvedValue(null);
+    (getItemV1 as jest.Mock).mockResolvedValue(null);
     
       const body = {
         items: [{
@@ -310,7 +309,7 @@ describe('Test orderCreate route', () => {
       }
       await expect(orderCreate(body)).rejects.toThrowError('Invalid quantities provided');
       expect(userExists).toHaveBeenCalledTimes(1);
-      expect(getItem).toHaveBeenCalledTimes(1);
+      expect(getItemV1).toHaveBeenCalledTimes(1);
   });
 
   test('Error from invalid quantity list', async () => {
@@ -343,7 +342,7 @@ describe('Test orderCreate route', () => {
     jest.spyOn(helper, 'validItemList').mockImplementation(jest.requireActual('../helper').validItemList);
     (userExists as jest.Mock).mockResolvedValueOnce(true);
     (validSellers as jest.Mock).mockResolvedValueOnce(true); 
-    (getItem as jest.Mock).mockResolvedValue(null);
+    (getItemV1 as jest.Mock).mockResolvedValue(null);
     const body = {
       items: [{
         id: 123,
@@ -363,7 +362,7 @@ describe('Test orderCreate route', () => {
     }
     await expect(orderCreate(body)).rejects.toThrowError('Same item Id is registered to a different item name');
     expect(userExists).toHaveBeenCalledTimes(1);
-    expect(getItem).toHaveBeenCalledTimes(1);
+    expect(getItemV1).toHaveBeenCalledTimes(1);
   });
 
   test('Error from invalid item id', async () => {
@@ -371,7 +370,7 @@ describe('Test orderCreate route', () => {
     jest.spyOn(helper, 'validItemList').mockImplementation(jest.requireActual('../helper').validItemList);
     (userExists as jest.Mock).mockResolvedValueOnce(true); 
     (validSellers as jest.Mock).mockResolvedValueOnce(true);
-    (getItem as jest.Mock).mockResolvedValue({
+    (getItemV1 as jest.Mock).mockResolvedValue({
       id: 124,
       name: 'Rock',
       seller: testSeller,
@@ -398,7 +397,7 @@ describe('Test orderCreate route', () => {
       }
       await expect(orderCreate(body)).rejects.toThrowError('Same item Id is registered to a different item name');
       expect(userExists).toHaveBeenCalledTimes(1);
-      expect(getItem).toHaveBeenCalledTimes(1);
+      expect(getItemV1).toHaveBeenCalledTimes(1);
   });
   
   test('Error from invalid bank details', async () => {
@@ -482,9 +481,9 @@ describe('Test orderCreate route', () => {
     (validSellers as jest.Mock).mockResolvedValueOnce(true); 
     (validItemList as jest.Mock).mockResolvedValue(5);
     (addItems as jest.Mock).mockResolvedValue({});
-    (addOrder as jest.Mock).mockResolvedValue(1);
+    (addOrderV1 as jest.Mock).mockResolvedValue(1);
     (generateUBL as jest.Mock).mockResolvedValueOnce('Mock UBL');
-    (addOrderXML as jest.Mock).mockResolvedValue(1);
+    (addOrderXMLV1 as jest.Mock).mockResolvedValue(1);
     const date = new Date().toISOString().split('T')[0];
     const body = {
       items: [testItem],
@@ -497,7 +496,7 @@ describe('Test orderCreate route', () => {
       createdAt: new Date(),
     }
     await orderCreate(body);
-    expect(addOrderXML).toHaveBeenCalledTimes(1);
+    expect(addOrderXMLV1).toHaveBeenCalledTimes(1);
   });
     
 });

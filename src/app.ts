@@ -1,12 +1,12 @@
-import { Item, ItemSales, Order, status } from './types';
+import { ItemV1, ItemSalesV1, OrderV1, status } from './types';
 import { generateUBL, userExists, validItemList, 
   addItems, validSellers, generatePDF } from './helper';
-import { getUser, addOrder, getOrder, updateOrder, 
-  addOrderXML,
-  getOrderXML, getItemSellerSales,
-  getItemBuyerRecommendations,
-  getPopularItems, getOrdersByBuyer
- } from './dataStore'
+import { getUserV1, addOrderV1, getOrderV1, updateOrderV1, 
+  addOrderXMLV1,
+  getOrderXMLV1, getItemSellerSalesV1,
+  getItemBuyerRecommendationsV1,
+  getPopularItemsV1, getOrdersByBuyerV1
+ } from './dataStoreV1'
  import fs from 'fs';
 import { stringify } from 'csv-stringify/sync';
 import path from 'path';
@@ -18,7 +18,7 @@ import path from 'path';
  * @param {OrderParam} order - object containing all the order information
  * @returns {{ orderId: number }} orderId - Unique identifier for an order
  */
-async function orderCreate (order: Order) {
+async function orderCreate (order: OrderV1) {
   if (!order.buyer.id) {
     throw new Error ('No userId provided');
   }
@@ -65,12 +65,12 @@ async function orderCreate (order: Order) {
   await addItems(order);
   order.lastEdited = currDate;
   order.status = status.PENDING;
-  const orderId = await addOrder(order);
+  const orderId = await addOrderV1(order);
 
   // Helper function generates UBl document.
   if (orderId !== null) {
     const UBLDocument = generateUBL(orderId, order);
-    await addOrderXML(orderId, UBLDocument);
+    await addOrderXMLV1(orderId, UBLDocument);
   }
   return { orderId };
 }
@@ -86,11 +86,11 @@ async function orderCreate (order: Order) {
  */
 const orderCancel = async (userId: number, orderId: number, reason: string) => {
   // Check if userId and orderId are valid
-  const user = await getUser(userId);
+  const user = await getUserV1(userId);
   if (!user) {
       throw new Error("invalid userId");
   }
-  const orderData = await getOrder(orderId);
+  const orderData = await getOrderV1(orderId);
   if (!orderData) {
       throw new Error("invalid orderId");
   }
@@ -102,7 +102,7 @@ const orderCancel = async (userId: number, orderId: number, reason: string) => {
   orderData.status = status.CANCELLED;
 
   // Update order object in database
-  const updateSuccess = await updateOrder(orderData);
+  const updateSuccess = await updateOrderV1(orderData);
   if (!updateSuccess) {
       throw new Error("failed to update order status to cancelled");
   }
@@ -120,11 +120,11 @@ const orderCancel = async (userId: number, orderId: number, reason: string) => {
  */
 const orderConfirm = async (userId: number, orderId: number) => {
   // Check if userId and orderId are valid  
-  const user = await getUser(userId);
+  const user = await getUserV1(userId);
   if (!user) {
       throw new Error("invalid userId");
   }
-  const orderData = await getOrder(orderId);
+  const orderData = await getOrderV1(orderId);
   if (!orderData) {
       throw new Error("invalid orderId");
   }
@@ -140,13 +140,13 @@ const orderConfirm = async (userId: number, orderId: number) => {
   orderData.status = status.CONFIRMED;
 
   // Update order object in database
-  const updateSuccess = await updateOrder(orderData);
+  const updateSuccess = await updateOrderV1(orderData);
   if (!updateSuccess) {
       throw new Error("failed to update order status to confirmed");
   }
 
   // Fetch and return XML associated with order
-  const UBL = await getOrderXML(Number(orderData.orderXMLId));
+  const UBL = await getOrderXMLV1(Number(orderData.orderXMLId));
   return { UBL };
 };
 
@@ -166,16 +166,16 @@ async function orderUserSales(csv: boolean, json: boolean, pdf: boolean, sellerI
   if (!sellerId) {
     throw new Error ('No sellerId provided');
   }
-  const seller = await getUser(sellerId);
+  const seller = await getUserV1(sellerId);
   
   if (!seller) {
     throw new Error ('Invalid sellerId');
   }
 
-  const returnBody: { sales?: ItemSales[]; CSVurl?: string
+  const returnBody: { sales?: ItemSalesV1[]; CSVurl?: string
     ; PDFurl?: string } = {};
 
-  const sales = await getItemSellerSales(sellerId);
+  const sales = await getItemSellerSalesV1(sellerId);
   // Convert sales information to type number.
   for (const item of sales) {
     item.amountSold = Number(item.amountSold);
@@ -228,15 +228,15 @@ const orderRecommendations = async (userId: number, limit: number) => {
     throw new Error ('Limit is not a positive integer');
   }
   // Check if userId is valid  
-  const user = await getUser(userId);
+  const user = await getUserV1(userId);
   if (!user) {
     throw new Error("Invalid userId");
   }
 
-  const recommendedItems: Item[] = await getItemBuyerRecommendations(userId, limit);
+  const recommendedItems: ItemV1[] = await getItemBuyerRecommendationsV1(userId, limit);
   if (recommendedItems.length === limit) return { recommendations: recommendedItems };
 
-  const popularItems: Item[] = await getPopularItems(limit);
+  const popularItems: ItemV1[] = await getPopularItemsV1(limit);
   for (let index = 0; index < popularItems.length; index++) {
     if (recommendedItems.length === limit) return { recommendations: recommendedItems };
 
@@ -268,15 +268,15 @@ const orderRecommendations = async (userId: number, limit: number) => {
   if (!userId) {
     throw new Error ('No userId provided');
   }
-  const user = await getUser(userId);
+  const user = await getUserV1(userId);
   if (!user) {
     throw new Error 
     ('Invalid userId');
   }
 
-  const orders = await getOrdersByBuyer(userId);
-  const successfulOrders: Order[] = [];
-  const cancelledOrders: Order[] = [];
+  const orders = await getOrdersByBuyerV1(userId);
+  const successfulOrders: OrderV1[] = [];
+  const cancelledOrders: OrderV1[] = [];
 
   for (const order of orders) {
     if (order.status === "cancelled") {
