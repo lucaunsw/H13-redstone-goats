@@ -308,6 +308,24 @@ app.post("/v1/:userId/order/history", async (req: Request, res: Response) => {
   }
 });
 
+// Route that returns order details for specific order
+app.get("/v1/:userId/order/:orderId/details", async (req: Request, res: Response) => {
+  
+  const { userId, orderId } = req.params
+  
+  try {
+    const result = await orderDetails(userId);
+    res.status(200).json(result);
+  } catch (error) {
+
+    const e = error as Error;
+    // add more error messages later
+    if (e.message === 'Invalid userId' || e.message === 'No userId provided') {
+      res.status(401).json({ error: e.message });
+    } 
+  }
+});
+
 // Custom **error handling** middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   err instanceof Err ? res.status(err.kind.valueOf()).json({ error: err.message }) : next();
