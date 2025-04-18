@@ -604,8 +604,53 @@ paths:
                     type: string
                     example: "Error Message Here"
 
+  /v2/order/create:
+    post:
+      summary: Creates an order and produces a UBL XML document.
+      description: Version 2 of the order creation route. Request body includes
+        an extra field which is the tax amount, as a decimal between 0-1.
+      tags:
+        - "Buyer Routes"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/v2OrderRequest"
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderId:
+                    type: integer
+        '400':
+          description: Bad request from client e.g invalid bank details, invalid order date
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Error Message Here"
+        '401':
+          description: Token is unauthorized/invalid or a different name is registered to the userId.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Error Message Here"
+
 components:
   schemas:
+
     OrderRequest:
       type: object
       properties:
@@ -637,6 +682,41 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    v2OrderRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Item"
+        quantities:
+          type: array
+          items:
+            type: number
+        buyer:
+          $ref: "#/components/schemas/UserSimple"
+        billingDetails:
+          $ref: "#/components/schemas/BillingDetailsParam"
+        delivery:
+          $ref: "#/components/schemas/DeliveryInstructions"
+        lastEdited:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - pending
+            - confirmed
+            - cancelled
+        totalPrice:
+          type: number
+        taxAmount:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+
     UserSimple:
       type: object
       properties:
@@ -652,6 +732,7 @@ components:
           type: string
         cbcCode:
           type: string
+
     BillingDetailsParam:
       type: object
       properties:
@@ -663,6 +744,7 @@ components:
         expiryDate:
           type: string
           format: date
+
     DeliveryInstructions:
       type: object
       properties:
@@ -690,13 +772,14 @@ components:
         endTime:
           type: string
           format: date-time
+
     Status:
       type: string
       enum:
         - pending
         - confirmed
         - cancelled
-        
+    
     OrderUpdate:
       type: object
       properties:
@@ -704,6 +787,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Item"
+
     Item:
       type: object
       properties:
@@ -726,6 +810,7 @@ components:
           type: integer
         name:
           type: string
+
     BillingDetails:
       type: object
       properties:
@@ -735,6 +820,7 @@ components:
           type: integer
         expiryDate:
           type: string
+
     EmailRequest:
       type: object
       properties:
@@ -744,6 +830,7 @@ components:
           type: string
         status:
           type: boolean
+
     OrderHistory:
       type: object
       properties:
@@ -755,6 +842,7 @@ components:
           type: array
           items: 
             $ref: "#/components/schemas/OrderRequest"
+
     OrderRecommendation:
       type: object
       properties:
@@ -762,6 +850,7 @@ components:
           type: array
           items: 
             $ref: "#/components/schemas/OrderRequest"
+            
     SalesData:
       type: object
       properties:

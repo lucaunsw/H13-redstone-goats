@@ -1,12 +1,16 @@
-import { ItemV1, ItemSalesV1, OrderV1, status } from './types';
-import { generateUBL, userExists, validItemList, 
-  addItems, validSellers, generatePDF } from './helper';
+import { ItemV1, ItemSalesV1, OrderV1, OrderV2, status } from './types';
+import { generateUBL, v2generateUBL, userExists, v2userExists, validItemList, 
+         v2validItemList, addItems, validSellers, v2validSellers,
+         generatePDF } from './helper';
 import { getUserV1, addOrderV1, getOrderV1, updateOrderV1, 
-  addOrderXMLV1,
-  getOrderXMLV1, getItemSellerSalesV1,
+  addOrderXMLV1, getOrderXMLV1, getItemSellerSalesV1,
   getItemBuyerRecommendationsV1,
   getPopularItemsV1, getOrdersByBuyerV1
  } from './dataStoreV1'
+
+import {
+  addOrderV2, 
+} from './dataStoreV2'
  import fs from 'fs';
 import { stringify } from 'csv-stringify/sync';
 import path from 'path';
@@ -15,7 +19,7 @@ import path from 'path';
  * Create an order and produce a UBL document, and return the
  * orderId value
  *
- * @param {OrderParam} order - object containing all the order information
+ * @param {OrderV1} order - object containing all the order information
  * @returns {{ orderId: number }} orderId - Unique identifier for an order
  */
 async function orderCreate (order: OrderV1) {
@@ -70,6 +74,83 @@ async function orderCreate (order: OrderV1) {
   // Helper function generates UBl document.
   if (orderId !== null) {
     const UBLDocument = generateUBL(orderId, order);
+    await addOrderXMLV1(orderId, UBLDocument);
+  }
+  return { orderId };
+}
+
+/**
+ * Create an order and produce a UBL document, and return the
+ * orderId value
+ *
+ * @param {OrderV2} order - object containing all the order information
+ * @returns {{ orderId: number }} orderId - Unique identifier for an order
+ */
+async function v2orderCreate (order: OrderV2) {
+  if (!order.buyer.id) {
+    throw new Error ('No userId provided');
+  }
+  const user = await v2userExists(order.buyer.id, order.buyer.name);
+  if (!user) {
+    throw new Error 
+    ('Invalid userId or a different name is registered to userId');
+  }
+
+  // Throw error for invalid bank details
+  if (order.billingDetails.creditCardNumber.length < 12 ||
+      order.billingDetails.creditCardNumber.length > 16 ||
+      !/^[0-9]+$/.test(order.billingDetails.creditCardNumber)) {
+    throw new Error ('Invalid bank details');
+  }
+
+  if (order.buyer.phone && (order.buyer.phone.length < 3 ||
+    order.buyer.phone.length > 15 ||
+    !/^\+?[0-9]+$/.test(order.buyer.phone))) {
+    throw new Error ('Invalid buyer phone number entered');
+  }
+
+  // Throw error for invalid date selection.
+  const currDate = new Date().toISOString().split('T')[0];
+  if (order.delivery.startDate < currDate || order.delivery.endDate < currDate
+    || order.delivery.startDate > order.delivery.endDate) {
+    throw new Error ('Invalid date selection');
+  }
+
+  // If an invalid amount of item quantities are provided, throw error.
+  if (order.items.length !== order.quantities.length) {
+    throw new Error ('Invalid amount of item quantities provided');
+  }
+
+  if (order.taxAmount && (order.taxAmount < 0 || order.taxAmount >= 100)) {
+    throw new Error ('Invalid tax amount entered');
+  }
+
+  // Checks if sellers are valid.
+  const sellersValid = await v2validSellers(order);
+  if (!sellersValid) {
+    throw new Error ('Invalid seller(s)');
+  }
+
+  // Helper function checks if all items/quantities are valid and returns the 
+  // total price if so.
+  const totalPrice = await v2validItemList(order);
+  // Throw error if inputted total price is incorrect.
+  if (totalPrice !== order.totalPrice) {
+    throw new Error ('Incorrect total price provided');
+  }
+
+  if (order.taxTotal && order.taxAmount && 
+    (order.taxTotal !== order.totalPrice * (order.taxAmount / 100))) {
+    throw new Error ('Invalid total tax amount entered');
+  }
+
+  order.lastEdited = currDate;
+  order.status = status.PENDING;
+  const orderId = await addOrderV2(order);
+
+  // Helper function generates UBl document.
+  if (orderId !== null) {
+    const UBLDocument = v2generateUBL(orderId, order);
     await addOrderXMLV1(orderId, UBLDocument);
   }
   return { orderId };
@@ -256,13 +337,13 @@ const orderRecommendations = async (userId: number, limit: number) => {
   return { recommendations: recommendedItems };
 };
 
- /** Returns orderhistory
-  *
-  * @param {number | null} userId - Unique identifier for a user.
-  * @returns { successfulOrders: [], cancelledOrders: [] } 
-  */
+/** Returns orderhistory
+*
+* @param {number | null} userId - Unique identifier for a user.
+* @returns { successfulOrders: [], cancelledOrders: [] } 
+*/
 
- const orderHistory = async (userId: number) => {
+const orderHistory = async (userId: number) => {
 
   // Checks for userId
   if (!userId) {
@@ -288,6 +369,6 @@ const orderRecommendations = async (userId: number, limit: number) => {
 
   return { successfulOrders: successfulOrders, 
            cancelledOrders: cancelledOrders };
- }
+}
 
-export { orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory };
+export { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory };
