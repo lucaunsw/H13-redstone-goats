@@ -47,6 +47,14 @@ export interface ItemV1 {
   price: number;
 }
 
+export interface ItemV2 {
+  id?: number | null;
+  name: string;
+  seller: UserSimpleV2;
+  description?: string;
+  price: number;
+}
+
 export interface ItemSalesV1 {
   id: number;
   name: string;
@@ -103,7 +111,7 @@ export interface OrderV1 {
 
 export interface OrderV2 {
   id?: number | null;
-  items: ItemV1[];
+  items: ItemV2[];
   quantities: number[];
   buyer: UserSimpleV2;
   billingDetails: BillingDetailsV1;

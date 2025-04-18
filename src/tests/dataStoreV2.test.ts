@@ -1,12 +1,14 @@
 import pool from '../db';
-import { UserV1, UserSimpleV2, ItemV1, BillingDetailsV1, DeliveryInstructionsV1, OrderV2, status } from '../types';
-import { addUserV1, deleteUserV1, addItemV1, deleteItemV1, deleteOrderV1 } from '../dataStoreV1';
-import { getUserSimpleV2, getItemBuyersV2, addOrderV2, getOrderV2, getOrdersByBuyerV2, updateOrderV2 } from '../dataStoreV2';
+import { UserV1, UserSimpleV2, ItemV2, BillingDetailsV1,
+  DeliveryInstructionsV1, OrderV2, status } from '../types';
+import { addUserV1, deleteUserV1, deleteItemV1, deleteOrderV1 } from '../dataStoreV1';
+import { getUserSimpleV2, addItemV2, getItemV2, getItemBuyersV2, addOrderV2, getOrderV2,
+  getOrdersByBuyerV2, updateOrderV2, confirmOrderV2, cancelOrderV2 } from '../dataStoreV2';
 
 let seller1Id: number,               seller2Id: number,               buyerId: number;
 let testSeller1Simple: UserSimpleV2, testSeller2Simple: UserSimpleV2, testBuyerSimple: UserSimpleV2;
 let testSeller1: UserV1,             testSeller2: UserV1,             testBuyer: UserV1;
-let testItem1: ItemV1,               testItem2: ItemV1,               testItem3: ItemV1;
+let testItem1: ItemV2,               testItem2: ItemV2,               testItem3: ItemV2;
 let testOrder1: OrderV2,             testOrder2: OrderV2,             testOrder3: OrderV2;
 let testBillingDetails: BillingDetailsV1, testDeliveryDetails: DeliveryInstructionsV1;
 const date = new Date().toISOString().split('T')[0];
@@ -166,7 +168,7 @@ describe('Test dataStore helpers', () => {
   }, 5000);
 
   test('Using every V2 function', async () => {                              // DATA ADDED:
-    // Adding users                                                             🧑Users
+    // Adding/getting users                                                     🧑Users
     seller1Id = await addUserV1(testSeller1);
     seller2Id = await addUserV1(testSeller2);
     buyerId = await addUserV1(testBuyer);
@@ -182,13 +184,18 @@ describe('Test dataStore helpers', () => {
     testBuyer.id = buyerId;
     testBuyerSimple.id = buyerId;
 
+    expect(await getUserSimpleV2(seller1Id)).toStrictEqual(testSeller1Simple);
+    expect(await getUserSimpleV2(buyerId)).toStrictEqual(testBuyerSimple);
+
     // Adding/getting items                                                     🧑Users 💎Items
-    testItem1.id = await addItemV1(testItem1);
+    testItem1.id = await addItemV2(testItem1);
     expect(Number.isInteger(testItem1.id));
-    testItem2.id = await addItemV1(testItem2);
+    testItem2.id = await addItemV2(testItem2);
     expect(Number.isInteger(testItem2.id));
-    testItem3.id = await addItemV1(testItem3);
+    testItem3.id = await addItemV2(testItem3);
     expect(Number.isInteger(testItem3.id));
+
+    expect(await getItemV2(Number(testItem2.id))).toStrictEqual(testItem2);
 
     // Adding/getting orders                                                    🧑Users 💎Items 📦Orders
     testOrder1.id = await addOrderV2(testOrder1);
@@ -221,6 +228,15 @@ describe('Test dataStore helpers', () => {
       }
     ]);
 
+    // Confirming/cancelling order                                              🧑Users 💎Items 📦Orders
+    testOrder1.status = status.CONFIRMED;
+    expect(await confirmOrderV2(Number(testOrder1.id)));
+    expect(await getOrderV2(Number(testOrder1.id))).toStrictEqual(testOrder1);
+
+    testOrder2.status = status.CANCELLED;
+    expect(await cancelOrderV2(Number(testOrder2.id)));
+    expect(await getOrderV2(Number(testOrder2.id))).toStrictEqual(testOrder2);
+
     // Deleting orders                                                          🧑Users 💎Items
     expect(await deleteOrderV1(Number(testOrder1.id)));
     expect(await deleteOrderV1(Number(testOrder2.id)));
@@ -234,6 +250,6 @@ describe('Test dataStore helpers', () => {
     expect(await deleteUserV1(seller1Id));
     expect(await deleteUserV1(seller2Id));
     expect(await deleteUserV1(buyerId));
-  }, 25000);
+  }, 30000);
 });
 

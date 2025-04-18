@@ -1,6 +1,7 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
-import { orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory } from "./app";
+import { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, 
+  orderRecommendations, orderHistory } from "./app";
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
@@ -317,7 +318,7 @@ app.post("/v2/order/create", async (req: Request, res: Response) => {
     return;
   }
   try {
-    const result = await orderCreate(order);
+    const result = await v2orderCreate(order);
     res.status(201).json(result);
   } catch (error) {
     const e = error as Error;
