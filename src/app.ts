@@ -151,7 +151,6 @@ async function v2orderCreate (order: OrderV2) {
   // Helper function generates UBl document.
   if (orderId !== null) {
     const UBLDocument = v2generateUBL(orderId, order);
-    console.log(UBLDocument);
     await addOrderXMLV1(orderId, UBLDocument);
   }
   return { orderId };

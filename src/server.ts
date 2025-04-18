@@ -151,7 +151,6 @@ app.post('/v1/user/register', async (req: Request, res: Response) => {
     const { email, password, nameFirst, nameLast } = req.body;
     const result = await userRegister(email, password, nameFirst, nameLast); 
     const sessionToken = await makeJwtToken(result.userId);
-    console.log(result.userId);
     res.json(sessionToken);
   } catch (err) {
     if (err instanceof Error) {
