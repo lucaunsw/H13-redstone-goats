@@ -1,5 +1,6 @@
 import pool from "./db";
-import { ItemV1, OrderV2, BillingDetailsV1, DeliveryInstructionsV1, UserSimpleV2, ItemSalesV1, status, ItemBuyerV2 } from "./types";
+import { ItemV2, OrderV2, BillingDetailsV1, DeliveryInstructionsV1,
+  UserSimpleV2, ItemSalesV1, status, ItemBuyerV2 } from "./types";
 import { addItemV1 } from "./dataStoreV1";
 
 /**
@@ -7,9 +8,10 @@ import { addItemV1 } from "./dataStoreV1";
  *******************************************************************************
  *  USER FUNCTIONS: getUserSimpleV2
  * -----------------------------------------------------------------------------
- *  ITEM FUNCTIONS: getItemBuyersV2
+ *  ITEM FUNCTIONS: addItemV2, getItemV2, getItemBuyersV2
  * -----------------------------------------------------------------------------
  * ORDER FUNCTIONS: addOrderV2, getOrderV2, getOrdersByBuyerV2, updateOrderV2
+ *                  confirmOrderV2, cancelOrderV2
  */
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -38,6 +40,34 @@ export async function getUserSimpleV2(userId: number): Promise<UserSimpleV2 | nu
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// ITEM FUNCTIONS /////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+// Adds item to DB, returns its ID
+export async function addItemV2(item: ItemV2): Promise<number | null> {
+  const res = await pool.query(
+    "INSERT INTO Items (id, name, seller_id, description, price) VALUES ($1, $2, $3, $4, $5) RETURNING id;",
+    [item.id, item.name, item.seller.id, item.description, item.price]
+  );
+  return (res.rows.length > 0) ? res.rows[0].id : null;
+}
+
+// Fetches item from DB
+export async function getItemV2(itemId: number): Promise<ItemV2 | null> {
+  const res = await pool.query("SELECT * FROM Items WHERE id = $1;", [itemId]);
+  if (res.rows.length === 0) return null;
+
+  const item = res.rows[0];
+  const sellerResult = await getUserSimpleV2(item.seller_id);
+  if (sellerResult === null) return null;
+
+  const itemResult: ItemV2 = {
+    id: item.id,
+    name: item.name,
+    seller: sellerResult,
+    description: item.description,
+    price: Number(item.price),
+  };
+  return itemResult;
+}
 
 // Fetches all items sold by a particular user from DB
 export async function getItemBuyersV2(itemId: number): Promise<ItemBuyerV2[]> {
@@ -144,13 +174,13 @@ export async function getOrderV2(orderId: number): Promise<OrderV2 | null> {
      JOIN Items i ON oi.item_id = i.id WHERE oi.order_id = $1;`, [orderId]
   );
 
-  const itemResults: ItemV1[] = [];
+  const itemResults: ItemV2[] = [];
   const quantityResults: number[] = [];
   for (const item of itemRes.rows) {
     const sellerResult = await getUserSimpleV2(item.seller_id);
     if (sellerResult === null) return null;
 
-    const itemResult: ItemV1 = {
+    const itemResult: ItemV2 = {
       id: item.id,
       name: item.name,
       seller: sellerResult,
@@ -292,4 +322,20 @@ export async function updateOrderV2(order: OrderV2): Promise<boolean> {
   } finally {
     client.release();
   }
+}
+
+// Updates DB fields of a user, returns true if successful
+export async function confirmOrderV2(orderId: number): Promise<boolean> {
+  const res = await pool.query(
+    "UPDATE Orders SET status = $1 WHERE id = $2;", [status.CONFIRMED, orderId]
+  );
+  return (res.rowCount !== 0);
+}
+
+// Updates DB fields of a user, returns true if successful
+export async function cancelOrderV2(orderId: number): Promise<boolean> {
+  const res = await pool.query(
+    "UPDATE Orders SET status = $1 WHERE id = $2;", [status.CANCELLED, orderId]
+  );
+  return (res.rowCount !== 0);
 }
