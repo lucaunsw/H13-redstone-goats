@@ -1,4 +1,4 @@
-import { ItemV1, ItemSalesV1, OrderV1, OrderV2, status } from './types';
+import { ItemV1, ItemV2, ItemSalesV1, OrderV1, OrderV2, status } from './types';
 import { generateUBL, v2generateUBL, userExists, v2userExists, validItemList, 
          v2validItemList, addItems, validSellers, v2validSellers,
          generatePDF } from './helper';
@@ -371,4 +371,16 @@ const orderHistory = async (userId: number) => {
            cancelledOrders: cancelledOrders };
 }
 
-export { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory };
+/**
+ * Create an order and produce a UBL document, and return the
+ * orderId value
+ *
+ * @param {ItemV2} item - object containing all the item information
+ * @returns {{ itemId: number }} itemId - Unique identifier for an item
+ */
+async function userItemAdd (item: ItemV2) {
+  
+  return;
+}
+
+export { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory, userItemAdd };
