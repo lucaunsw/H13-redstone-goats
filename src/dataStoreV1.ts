@@ -1,5 +1,6 @@
 import pool from "./db";
-import { UserV1, ItemV1, OrderV1, BillingDetailsV1, DeliveryInstructionsV1, UserSimpleV1, ItemSalesV1, status } from "./types";
+import { UserV1, ItemV1, OrderV1, BillingDetailsV1, 
+  DeliveryInstructionsV1, UserSimpleV1, ItemSalesV1, status } from "./types";
 
 /**
  *   Database interaction functions for users, tokens, items, and orders.
