@@ -238,7 +238,7 @@ export async function v2userExists(userId: number, name: string) {
 /**
  * Helper function to check if the order contains a valid item list and 
  * calculates the total price if so.
- * @param {Order} order - object containg all the order information.
+ * @param {OrderV1} order - object containg all the order information.
  * @returns { number } totalPrice - Total price of the order if the item list is
  * valid.
  */
@@ -276,11 +276,11 @@ export async function validItemList(order: OrderV1) {
 /**
  * Helper function to check if the order contains a valid item list and 
  * calculates the total price if so.
- * @param {Order} order - object containg all the order information.
+ * @param {OrderV2} order - object containg all the order information.
  * @returns { number } totalPrice - Total price of the order if the item list is
  * valid.
  */
-export async function v2validItemList(order: OrderV1) {
+export async function v2validItemList(order: OrderV2) {
   let totalPrice = 0;
   const itemIds = new Set<number>();
   for (let i = 0; i < order.items.length; i++) {
@@ -313,7 +313,7 @@ export async function v2validItemList(order: OrderV1) {
 
 /**
  * Helper function to check if all sellers in an order are valid.
- * @param {Order} order - object containg all the order information.
+ * @param {OrderV1} order - object containg all the order information.
  * @returns { boolean } - True if all the sellers are valid, false else.
  */
 export async function validSellers(order: OrderV1) {
@@ -333,14 +333,19 @@ export async function validSellers(order: OrderV1) {
 
 /**
  * Helper function to check if all sellers in an order are valid.
- * @param {Order} order - object containg all the order information.
+ * @param {OrderV2} order - object containg all the order information.
  * @returns { boolean } - True if all the sellers are valid, false else.
  */
-export async function v2validSellers(order: OrderV1) {
+export async function v2validSellers(order: OrderV2) {
   for (let i = 0; i < order.items.length; i++) {
     const item = order.items[i];
     if (!item.seller.id) {
       throw new Error ('No seller Id provided');
+    }
+    if (item.seller.phone && (item.seller.phone.length < 3 ||
+      item.seller.phone.length > 15 ||
+      !/^\+?[0-9]+$/.test(item.seller.phone))) {
+      throw new Error ('Invalid seller phone number');
     }
     const seller = await v2userExists(item.seller.id, item.seller.name);
     if (!seller) {

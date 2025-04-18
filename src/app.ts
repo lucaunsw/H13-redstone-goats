@@ -103,6 +103,12 @@ async function v2orderCreate (order: OrderV2) {
     throw new Error ('Invalid bank details');
   }
 
+  if (order.buyer.phone && (order.buyer.phone.length < 3 ||
+    order.buyer.phone.length > 15 ||
+    !/^\+?[0-9]+$/.test(order.buyer.phone))) {
+    throw new Error ('Invalid buyer phone number entered');
+  }
+
   // Throw error for invalid date selection.
   const currDate = new Date().toISOString().split('T')[0];
   if (order.delivery.startDate < currDate || order.delivery.endDate < currDate
@@ -145,6 +151,7 @@ async function v2orderCreate (order: OrderV2) {
   // Helper function generates UBl document.
   if (orderId !== null) {
     const UBLDocument = v2generateUBL(orderId, order);
+    console.log(UBLDocument);
     await addOrderXMLV1(orderId, UBLDocument);
   }
   return { orderId };
