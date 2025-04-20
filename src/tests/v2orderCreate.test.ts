@@ -363,7 +363,13 @@ describe('Test orderCreate route', () => {
     jest.spyOn(helper, 'v2validItemList').mockImplementation(jest.requireActual('../helper').v2validItemList);
     (v2userExists as jest.Mock).mockResolvedValueOnce(true); 
     (v2validSellers as jest.Mock).mockResolvedValueOnce(true);
-    (getItemV2 as jest.Mock).mockResolvedValue(null);
+    (getItemV2 as jest.Mock).mockResolvedValue({
+      id: 124,
+      name: 'Toothpaste',
+      seller: testSeller,
+      price: -2,
+      description: 'This is Toothpaste'
+    });
     
       const body = {
         items: [{
@@ -395,7 +401,13 @@ describe('Test orderCreate route', () => {
     jest.spyOn(helper, 'v2validItemList').mockImplementation(jest.requireActual('../helper').v2validItemList);
     (v2userExists as jest.Mock).mockResolvedValueOnce(true); 
     (v2validSellers as jest.Mock).mockResolvedValueOnce(true);
-    (getItemV2 as jest.Mock).mockResolvedValue(null);
+    (getItemV2 as jest.Mock).mockResolvedValue({
+      id: 124,
+      name: 'Toothpaste',
+      seller: testSeller,
+      price: 5,
+      description: 'This is Toothpaste'
+    });
     
       const body = {
         items: [{
@@ -455,7 +467,15 @@ describe('Test orderCreate route', () => {
     jest.spyOn(helper, 'v2validItemList').mockImplementation(jest.requireActual('../helper').v2validItemList);
     (v2userExists as jest.Mock).mockResolvedValueOnce(true);
     (v2validSellers as jest.Mock).mockResolvedValueOnce(true); 
-    (getItemV2 as jest.Mock).mockResolvedValue(null);
+    (getItemV2 as jest.Mock)
+      .mockResolvedValueOnce({
+        id: 124,
+        name: 'Toothpaste',
+        seller: testSeller,
+        price: 5,
+        description: 'This is Toothpaste'
+      })
+      .mockResolvedValueOnce(testItem);
     const body = {
       items: [{
         id: 123,
@@ -516,7 +536,7 @@ describe('Test orderCreate route', () => {
         financialInstitutionBranchId: 'WPACAU2S',
         createdAt: new Date(),
       }
-      await expect(v2orderCreate(body)).rejects.toThrowError('Same item Id is registered to a different item name');
+      await expect(v2orderCreate(body)).rejects.toThrowError('Same item Id as Toothpaste is registered to a different item name');
       expect(v2userExists).toHaveBeenCalledTimes(1);
       expect(getItemV2).toHaveBeenCalledTimes(1);
   });

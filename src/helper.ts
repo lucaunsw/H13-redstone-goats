@@ -297,9 +297,11 @@ export async function v2validItemList(order: OrderV2) {
       throw new Error (`Same item Id as ${item.name} is registered to a different item name`);
     } else if (!orderItem) {
       throw new Error (`Item ${item.name} does not exist`);
-    } else if (orderItem.price != item.price) {
+    } else if (orderItem.price !== item.price) {
       throw new Error (`Item price for ${item.name} is incorrect`);
-    } else if (JSON.stringify(orderItem.seller) === JSON.stringify(item.seller)) {
+    } else if (orderItem.seller.name !== item.seller.name) {
+      console.log(orderItem.seller);
+      console.log(item.seller);
       throw new Error (`Item seller for ${item.name} is incorrect`);
     }
 
