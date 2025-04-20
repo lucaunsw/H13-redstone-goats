@@ -1,7 +1,7 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
 import { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, 
-  orderRecommendations, orderHistory } from "./app";
+  orderRecommendations, orderHistory, userItemAdd } from "./app";
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
@@ -328,6 +328,17 @@ app.post("/v2/order/create", async (req: Request, res: Response) => {
     } else {
       res.status(ErrKind.EINVALID).json({ error: e.message });
     }
+  }
+});
+
+app.post("/v1/user/item/add", async (req: Request, res: Response) => {
+  const items = req.body.items;
+  try {
+    const result = await userItemAdd(items);
+    res.status(200).json(result);
+  } catch (error) {
+    const e = error as Error;
+    res.status(ErrKind.EINVALID).json({ error: e.message });
   }
 });
 

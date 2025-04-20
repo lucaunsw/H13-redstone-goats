@@ -9,13 +9,15 @@ servers:
 
 tags:
   - name: "User Routes"
-    description: Routes for user account handling
+    description: Routes for user account handling.
   - name: "Buyer Routes"
     description: Routes accessible and usable by the buyer party.
   - name: "Seller Routes"
     description: Routes accessible and usable by the seller party.
-  - name: "Test Routes"
-    description: Routes used for tests.
+  # - name: "Test Routes"
+  #   description: Routes used for tests.
+  - name: "Version 2 Routes"
+    description: version two routes.
 
 paths:      
   /v1/user/register:
@@ -603,20 +605,51 @@ paths:
                   Error:
                     type: string
                     example: "Error Message Here"
-
-  /v2/order/create:
+                    
+  /v1/user/item/add:
     post:
-      summary: Creates an order and produces a UBL XML document.
-      description: Version 2 of the order creation route. Request body includes
-        an extra field which is the tax amount, as a decimal between 0-1.
+      summary: Add items which can be purchased by other users.
+      description: Allows a user (which can be both a buyer and/or a seller) to put items up for sale.
       tags:
-        - "Buyer Routes"
+        - "Seller Routes"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/v2OrderRequest"
+              type: object
+              properties:
+                items:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/ItemV2"
+      responses:
+        '200':
+          description: Items added successfully
+        '400':
+          description: Bad request from client e.g invalid seller name, phone number, item price.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Error Message Here"
+
+  /v2/order/create:
+    post:
+      summary: Creates an order and produces a UBL XML document.
+      description: Version 2 of the order creation route. Request body includes
+        extra fields such as the tax amount, taxTotal, currency, paymentAccountId, paymentAccountName, financialInstitutionBranch. In addition extra phone number and email fields are required for the sellers and buyer information.
+      tags:
+        - "Version 2 Routes"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderRequestV2"
       responses:
         '201':
           description: Order created
@@ -683,19 +716,19 @@ components:
           type: string
           format: date-time
 
-    v2OrderRequest:
+    OrderRequestV2:
       type: object
       properties:
         items:
           type: array
           items:
-            $ref: "#/components/schemas/Item"
+            $ref: "#/components/schemas/ItemV2"
         quantities:
           type: array
           items:
             type: number
         buyer:
-          $ref: "#/components/schemas/UserSimple"
+          $ref: "#/components/schemas/UserSimpleV2"
         billingDetails:
           $ref: "#/components/schemas/BillingDetailsParam"
         delivery:
@@ -713,6 +746,16 @@ components:
           type: number
         taxAmount:
           type: number
+        taxTotal:
+          type: number
+        currency:
+          type: string
+        paymentAccountId:
+          type: string
+        paymentAccountName:
+          type: string
+        financialInstitutionBranch:
+          type: string
         createdAt:
           type: string
           format: date-time
@@ -723,6 +766,26 @@ components:
         id:
           type: number
         name:
+          type: string
+        streetName:
+          type: string
+        cityName:
+          type: string
+        postalZone:
+          type: string
+        cbcCode:
+          type: string
+          
+    UserSimpleV2:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        email:
+          type: string
+        phone:
           type: string
         streetName:
           type: string
@@ -802,6 +865,21 @@ components:
         seller:
           type: object
           $ref: "#/components/schemas/UserSimple"
+          
+    ItemV2:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        price:
+          type: number
+        description:
+          type: string
+        seller:
+          type: object
+          $ref: "#/components/schemas/UserSimpleV2"      
         
     User:
       type: object

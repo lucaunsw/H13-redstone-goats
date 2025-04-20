@@ -1,7 +1,7 @@
-import { ItemV1, ItemSalesV1, OrderV1, OrderV2, status } from './types';
+import { ItemV1, ItemV2, ItemSalesV1, OrderV1, OrderV2, status } from './types';
 import { generateUBL, v2generateUBL, userExists, v2userExists, validItemList, 
          v2validItemList, addItems, validSellers, v2validSellers,
-         generatePDF } from './helper';
+         generatePDF, v1validItems, v2addItems} from './helper';
 import { getUserV1, addOrderV1, getOrderV1, updateOrderV1, 
   addOrderXMLV1, getOrderXMLV1, getItemSellerSalesV1,
   getItemBuyerRecommendationsV1,
@@ -371,4 +371,35 @@ const orderHistory = async (userId: number) => {
            cancelledOrders: cancelledOrders };
 }
 
-export { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory };
+/**
+ * Create an order and produce a UBL document, and return the
+ * orderId value
+ *
+ * @param {ItemV2} item - object containing all the item information
+ * @returns nothing
+ */
+async function userItemAdd (items: ItemV2[]) {
+  const validItems = await v1validItems(items);
+  if (!validItems) {
+    throw new Error('Items could not be added');
+  }
+  for (const item of items) {
+    if (!item.seller.id) {
+      throw new Error ('No seller Id provided');
+    }
+    if (item.seller.phone && (item.seller.phone.length < 3 ||
+      item.seller.phone.length > 15 ||
+      !/^\+?[0-9]+$/.test(item.seller.phone))) {
+      throw new Error ('Invalid seller phone number');
+    }
+    const seller = await v2userExists(item.seller.id, item.seller.name);
+    if (!seller) {
+      throw new Error 
+    ('Invalid sellerId or a different name is registered to sellerId');
+    }
+  }
+  await v2addItems(items);
+  return;
+}
+
+export { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory, userItemAdd };

@@ -1,4 +1,4 @@
-import { OrderV1, OrderV2, UserSimpleV1, ItemSalesV1, UserSimpleV2 } from "./types";
+import { OrderV1, OrderV2, UserSimpleV1, ItemSalesV1, UserSimpleV2, ItemV2 } from "./types";
 import { getUserV1, addItemV1, getItemV1 } from './dataStoreV1'
 // errors occuring because addItem and getItem version 2 have not yet been implemented into db.
 import { getUserSimpleV2, addItemV2, getItemV2 } from './dataStoreV2'
@@ -294,7 +294,15 @@ export async function v2validItemList(order: OrderV2) {
     
     const orderItem = await getItemV2(item.id);
     if (orderItem && orderItem.name !== item.name) {
-      throw new Error ('Same item Id is registered to a different item name');
+      throw new Error (`Same item Id as ${item.name} is registered to a different item name`);
+    } else if (!orderItem) {
+      throw new Error (`Item ${item.name} does not exist`);
+    } else if (orderItem.price !== item.price) {
+      throw new Error (`Item price for ${item.name} is incorrect`);
+    } else if (orderItem.seller.name !== item.seller.name) {
+      console.log(orderItem.seller);
+      console.log(item.seller);
+      throw new Error (`Item seller for ${item.name} is incorrect`);
     }
 
     // Check if item price is valid and correct amount of quantities are provided.
@@ -309,6 +317,38 @@ export async function v2validItemList(order: OrderV2) {
   }
   // Return total order price.
   return totalPrice;
+}
+
+/**
+ * Helper function to check if the order contains a valid item list and 
+ * calculates the total price if so.
+ * @param {OrderV2} order - object containg all the order information.
+ * @returns { number } totalPrice - Total price of the order if the item list is
+ * valid.
+ */
+export async function v1validItems(items: ItemV2[]) {
+  const itemIds = new Set<number>();
+  for (const item of items) {
+    // Check if each item Id is provided/valid.
+    if (!item.id) {
+      throw new Error ('No item Id provided');
+    } else if (itemIds.has(item.id)) {
+      throw new Error ('Same item Id is registered to a different item name, or same item was entered more than once');
+    } 
+    // console.log('reached getItemV2');
+    const orderItem = await getItemV2(item.id);
+    if (orderItem) {
+      throw new Error ('Same item Id is already registered to a different item name');
+    }
+
+    // Check if item price is valid and correct amount of quantities are provided.
+    if (item.price < 0) {
+      throw new Error ('Invalid item price');
+    } 
+    itemIds.add(item.id);
+    
+  }
+  return true;
 }
 
 /**
@@ -368,6 +408,24 @@ export async function addItems(order: OrderV1) {
       const itemId = await getItemV1(item.id);
       if (itemId == null) {
         await addItemV1(item);
+      }
+    }
+  }
+  return;
+}
+
+/**
+ * Helper function to add all order items to the datastore.
+ * @param {Order} order - object containg all the order information.
+ * @returns nothing.
+ */
+export async function v2addItems(items: ItemV2[]) {
+  // Add each order Item to the datastore.
+  for (const item of items) {
+    if (item.id) {
+      // Item Ids have already been checked for validity.
+      if (item.id !== null) {
+        await addItemV2(item);
       }
     }
   }
