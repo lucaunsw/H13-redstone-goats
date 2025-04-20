@@ -332,19 +332,13 @@ app.post("/v2/order/create", async (req: Request, res: Response) => {
 });
 
 app.post("/v1/user/item/add", async (req: Request, res: Response) => {
-  const item = req.body;
+  const items = req.body.items;
   try {
-    const result = await userItemAdd(item);
+    const result = await userItemAdd(items);
     res.status(200).json(result);
   } catch (error) {
-    // TODO
     const e = error as Error;
-    if (e.message === 'Invalid userId or a different name is registered to userId' ||
-      e.message === 'No userId provided') {
-      res.status(ErrKind.ENOTOKEN).json({ error: e.message });
-    } else {
-      res.status(ErrKind.EINVALID).json({ error: e.message });
-    }
+    res.status(ErrKind.EINVALID).json({ error: e.message });
   }
 });
 

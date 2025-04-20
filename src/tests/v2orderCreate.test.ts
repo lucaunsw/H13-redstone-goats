@@ -4,7 +4,7 @@ import { UserSimpleV2,
 import dotenv from 'dotenv';
 import { server } from '../server';
 import { addOrderXMLV1 } from '../dataStoreV1';
-import { addOrderV2, getItemV2 } from '../dataStoreV2'
+import { addOrderV2, getItemV2, getUserSimpleV2 } from '../dataStoreV2'
 import { v2userExists, v2validItemList, v2generateUBL, v2validSellers } from '../helper';
 dotenv.config();
 import { createClient } from '@redis/client';
@@ -16,6 +16,7 @@ jest.mock('../dataStoreV1', () => ({
 jest.mock('../dataStoreV2', () => ({
   addOrderV2: jest.fn(),
   getItemV2: jest.fn(),
+  getUserSimpleV2: jest.fn(),
 }));
 
 jest.mock('../helper', () => ({
@@ -56,7 +57,7 @@ describe('Test orderCreate route', () => {
       id: sellerId,
       name: 'Test Seller',
       email: 'TestSeller1@gmail.com',
-      phone: '+61400 000 000',
+      phone: '+61400000000',
       streetName: 'Yellow St',
       cityName: 'Brisbane',
       postalZone: '4000',
@@ -260,12 +261,78 @@ describe('Test orderCreate route', () => {
     expect(v2userExists).toHaveBeenCalledTimes(1);
   });
 
+  test('Error from invalid seller phone number', async () => {
+    (v2userExists as jest.Mock).mockResolvedValue(true); 
+    const helper = await import('../helper'); 
+    jest.spyOn(helper, 'v2validSellers').mockImplementation(jest.requireActual('../helper').v2validSellers);
+    (getUserSimpleV2 as jest.Mock)
+      .mockResolvedValue({
+        id: 1,
+          name: 'Test Seller',
+          email: 'TestSeller1@gmail.com',
+          phone: '+61400000000',
+          streetName: 'Yellow St',
+          cityName: 'Brisbane',
+          postalZone: '4000',
+          cbcCode: 'AU'
+      });
+    // (v2validSellers as jest.Mock).mockResolvedValueOnce(); 
+    
+    const body = {
+      items: [{
+        id: 124,
+        name: 'Toothpaste',
+        seller: {
+          id: 1,
+          name: 'Test Seller',
+          email: 'TestSeller1@gmail.com',
+          phone: '+61400000000',
+          streetName: 'Yellow St',
+          cityName: 'Brisbane',
+          postalZone: '4000',
+          cbcCode: 'AU',
+        },
+        price: 5,
+        description: 'This is Toothpaste',
+      },
+      {
+        id: 125,
+        name: 'Globe',
+        seller: {
+          id: 1,
+          name: 'Test Seller',
+          email: 'TestSeller1@gmail.com',
+          phone: '+61400000000000000',
+          streetName: 'Yellow St',
+          cityName: 'Brisbane',
+          postalZone: '4000',
+          cbcCode: 'AU',
+        },
+        price: 20,
+        description: 'This is a globe',
+      }],
+      quantities: [1, 1],
+      buyer: testBuyer,
+      billingDetails: testBillingDetails,
+      totalPrice: 25,
+      delivery: testDeliveryDetails,
+      lastEdited: date,
+      currency: 'AUD',
+      paymentAccountId: '123456',
+      paymentAccountName: 'payName',
+      financialInstitutionBranchId: 'WPACAU2S',
+      createdAt: new Date(),
+    };
+  
+    await expect(v2orderCreate(body)).rejects.toThrowError('Invalid seller phone number');
+    expect(v2userExists).toHaveBeenCalledTimes(1);
+  });
+
   test('Error from no itemId provided', async () => {
     const helper = await import('../helper'); 
     jest.spyOn(helper, 'v2validItemList').mockImplementation(jest.requireActual('../helper').v2validItemList);
     (v2userExists as jest.Mock).mockResolvedValueOnce(true); 
     (v2validSellers as jest.Mock).mockResolvedValueOnce(true);
-    (getItemV2 as jest.Mock).mockResolvedValue(null);
     
       const body = {
         items: [{
