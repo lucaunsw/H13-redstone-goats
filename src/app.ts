@@ -9,7 +9,7 @@ import { getUserV1, addOrderV1, getOrderV1, updateOrderV1,
  } from './dataStoreV1'
 
 import {
-  addOrderV2, 
+  addOrderV2, getOrderV2
 } from './dataStoreV2'
  import fs from 'fs';
 import { stringify } from 'csv-stringify/sync';
@@ -375,7 +375,7 @@ const orderHistory = async (userId: number) => {
  * Create an order and produce a UBL document, and return the
  * orderId value
  *
- * @param {ItemV2} item - object containing all the item information
+ * @param {ItemV2[]} items - object containing all the item information
  * @returns nothing
  */
 async function userItemAdd (items: ItemV2[]) {
@@ -402,4 +402,19 @@ async function userItemAdd (items: ItemV2[]) {
   return;
 }
 
-export { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory, userItemAdd };
+/**
+ * Create an order and produce a UBL document, and return the
+ * orderId value
+ *
+ * @param {number} orderId - The ID of the order to find the details of.
+ * @returns {OrderV2} order - JSON body containing the order details.
+ */
+async function getOrderDetails (orderId: number) {
+  const order = await getOrderV2(orderId);
+  if (!order) {
+    throw new Error('Order could not be found');
+  }
+  return order;
+}
+
+export { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory, userItemAdd, getOrderDetails };

@@ -1,7 +1,8 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
 import { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, 
-  orderRecommendations, orderHistory, userItemAdd } from "./app";
+  orderRecommendations, orderHistory, userItemAdd, 
+  getOrderDetails} from "./app";
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
@@ -331,10 +332,23 @@ app.post("/v2/order/create", async (req: Request, res: Response) => {
   }
 });
 
+// post route to add items which can be sold to the database.
 app.post("/v1/user/item/add", async (req: Request, res: Response) => {
   const items = req.body.items;
   try {
     const result = await userItemAdd(items);
+    res.status(200).json(result);
+  } catch (error) {
+    const e = error as Error;
+    res.status(ErrKind.EINVALID).json({ error: e.message });
+  }
+});
+
+// Route to get the details of a order given the orderId.
+app.get("/v1/order/:orderId/details", async (req: Request, res: Response) => {
+  const orderId = parseInt(req.params.orderId);
+  try {
+    const result = await getOrderDetails(orderId);
     res.status(200).json(result);
   } catch (error) {
     const e = error as Error;
