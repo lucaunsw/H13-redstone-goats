@@ -61,6 +61,11 @@ const CreateOrderForm = () => {
     issueDate: new Date().toISOString().split('T')[0],
     note: '',
     totalPrice: 0,
+    taxAmount: 10,
+    taxTotal: 0,
+    currency: 'AUD',
+    paymentAccountId: 0,
+    paymentAccountName: '',
     createdAt: new Date().toISOString()
   });
 
@@ -199,7 +204,7 @@ const CreateOrderForm = () => {
         quantities: formData.quantities,
         buyer: {
           id: payload.userId,  
-          name: formData.buyer.name,
+          name: formData.buyer.name.trim(),
           streetName: formData.buyer.streetName,
           cityName: formData.buyer.cityName,
           postalZone: formData.buyer.postalZone,
@@ -224,12 +229,18 @@ const CreateOrderForm = () => {
           endTime: formData.delivery.endTime
         },
         createdAt: new Date().toISOString(), 
+        status: 'pending',
+        taxAmount: formData.taxAmount,
+        taxTotal: (calculateTotal(formData.items, formData.quantities).toFixed(2) * (formData.taxAmount / 100).toFixed(2)),
+        currency: formData.currency,
+        paymentAccountId: formData.paymentAccountId,
+        paymentAccountName: formData.paymentAccountName,
         lastEdited: new Date().toISOString() 
       };
 
       console.log(orderData);
   
-      const response = await axios.post('https://h13-redstone-goats.vercel.app/v1/order/create', orderData, {
+      const response = await axios.post('https://h13-redstone-goats.vercel.app/v2/order/create', orderData, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -631,6 +642,29 @@ const CreateOrderForm = () => {
       </div>
 
       <div className="form-section">
+        <h3>Tax Rate</h3>
+        <div className="form-grid">
+          <div className="form-group">
+            <label>Tax Rate (%)</label>
+                <input
+                  type="number"
+                  min="10"
+                  step="0.1"
+                  value={formData.taxAmount}
+                  onChange={(e) => handleInputChange('taxAmount', e.target.value)}
+                  required
+                />
+          </div>
+          <div className="form-group">
+                <label>Tax Total</label>
+                <div className="calculated-value">
+                  ${(calculateTotal(formData.items, formData.quantities).toFixed(2) * (formData.taxAmount / 100).toFixed(2))}
+                </div>
+              </div>
+        </div>
+      </div>
+
+      <div className="form-section">
         <h3>Order Summary</h3>
         <div className="summary-grid">
           <div className="form-group">
@@ -657,11 +691,11 @@ const CreateOrderForm = () => {
             </div>
             <div className="total-row">
               <span>Tax:</span>
-              <span>$0.00</span>
+              <span>${(calculateTotal(formData.items, formData.quantities).toFixed(2) * (formData.taxAmount / 100).toFixed(2))}</span>
             </div>
             <div className="total-row grand-total">
               <span>Total Amount:</span>
-              <span>${calculateTotal(formData.items, formData.quantities).toFixed(2)}</span>
+              <span>${(calculateTotal(formData.items, formData.quantities).toFixed(2) * ((100 - formData.taxAmount) / 100).toFixed(2))}</span>
             </div>
           </div>
         </div>
