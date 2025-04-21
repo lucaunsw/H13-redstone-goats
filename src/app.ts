@@ -372,8 +372,7 @@ const orderHistory = async (userId: number) => {
 }
 
 /**
- * Create an order and produce a UBL document, and return the
- * orderId value
+ * Add items which can be sold.
  *
  * @param {ItemV2[]} items - object containing all the item information
  * @returns nothing
@@ -403,8 +402,7 @@ async function userItemAdd (items: ItemV2[]) {
 }
 
 /**
- * Create an order and produce a UBL document, and return the
- * orderId value
+ * Retrieve details of an order given the orderId.
  *
  * @param {number} orderId - The ID of the order to find the details of.
  * @returns {OrderV2} order - JSON body containing the order details.
