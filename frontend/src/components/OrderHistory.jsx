@@ -58,7 +58,7 @@ const OrderHistory = () => {
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalRevenue: 0,
-    completedOrders: 0,
+    confirmedOrders: 0,
     cancelledOrders: 0,
     pendingOrders: 0
   });
@@ -98,7 +98,7 @@ const OrderHistory = () => {
         setStats({
           totalOrders: allOrders.length,
           totalRevenue,
-          completedOrders: successfulOrders.filter(o => o.status === 'completed').length,
+          confirmedOrders: successfulOrders.filter(o => o.status === 'confirmed').length,
           cancelledOrders: cancelledOrders.length,
           pendingOrders
         });
@@ -123,7 +123,7 @@ const OrderHistory = () => {
 
   const filteredOrders = orders.filter(order => {
     if (activeFilter === 'all') return true;
-    if (activeFilter === 'completed') return order.status === 'completed';
+    if (activeFilter === 'confirmed') return order.status === 'confirmed';
     if (activeFilter === 'pending') return order.status === 'pending';
     if (activeFilter === 'cancelled') return order.status === 'cancelled';
     return true;
@@ -266,8 +266,8 @@ const OrderHistory = () => {
             <FiCheckCircle />
           </div>
           <div className="stat-content">
-            <h3>Completed</h3>
-            <p>{stats.completedOrders}</p>
+            <h3>confirmed</h3>
+            <p>{stats.confirmedOrders}</p>
           </div>
         </motion.div>
         <motion.div className="stat-card" variants={itemVariants}>
@@ -300,12 +300,12 @@ const OrderHistory = () => {
           All ({orders.length})
         </motion.button>
         <motion.button 
-          className={activeFilter === 'completed' ? 'active' : ''}
-          onClick={() => setActiveFilter('completed')}
+          className={activeFilter === 'confirmed' ? 'active' : ''}
+          onClick={() => setActiveFilter('confirmed')}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.98 }}
         >
-          Completed ({stats.completedOrders})
+          confirmed ({stats.confirmedOrders})
         </motion.button>
         <motion.button 
           className={activeFilter === 'pending' ? 'active' : ''}

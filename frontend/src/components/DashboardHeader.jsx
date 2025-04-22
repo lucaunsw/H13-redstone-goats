@@ -3,10 +3,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { itemVariants } from '../pages/LandingPage';
 import { 
-  FiBell,
   FiUser,
   FiLogOut,
-  FiSettings,
   FiChevronDown 
 } from 'react-icons/fi';
 import '../styles/DashboardHeader.css';
@@ -14,26 +12,26 @@ import axios from 'axios';
 
 const DashboardHeader = () => {
   const navigate = useNavigate();
-  const [showNotifications, setShowNotifications] = useState(false);
+  // const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentUser, setCurrentUser] = useState({ user: {} });
-  const notificationsRef = useRef(null);
+  // const notificationsRef = useRef(null);
   const profileRef = useRef(null);
 
 
-  // Sample notifications data
-  const notifications = [
-    { id: 1, text: 'New order received from John Doe', time: '2 mins ago', read: false },
-    { id: 2, text: 'Your product has been shipped', time: '1 hour ago', read: true },
-    { id: 3, text: 'Payment received for order #12345', time: '3 hours ago', read: true },
-  ];
+  // // Sample notifications data
+  // const notifications = [
+  //   { id: 1, text: 'New order received from John Doe', time: '2 mins ago', read: false },
+  //   { id: 2, text: 'Your product has been shipped', time: '1 hour ago', read: true },
+  //   { id: 3, text: 'Payment received for order #12345', time: '3 hours ago', read: true },
+  // ];
 
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
-        setShowNotifications(false);
-      }
+      // if (notificationsRef.current && !notificationsRef.current.contains(event.target)) {
+      //   setShowNotifications(false);
+      // }
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setShowProfileMenu(false);
       }
@@ -84,13 +82,13 @@ const DashboardHeader = () => {
     fetchUserDetails();
   }, []);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  // const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <motion.header className="dashboard-header" variants={itemVariants}>
       <h1>Dashboard</h1>
       <div className="user-controls">
-        {/* Notifications */}
+        {/* Notifications
         <div className="notifications-wrapper" ref={notificationsRef}>
           <button 
             className="notifications-button"
@@ -124,7 +122,7 @@ const DashboardHeader = () => {
               </div>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Profile Menu */}
         <div className="profile-menu-wrapper" ref={profileRef}>
@@ -151,9 +149,6 @@ const DashboardHeader = () => {
                 </div>
               </div>
               <div className="dropdown-divider"></div>
-              <button className="dropdown-item">
-                <FiSettings /> Settings
-              </button>
               <button 
                 className="dropdown-item"
                 onClick={() => navigate('/')}
