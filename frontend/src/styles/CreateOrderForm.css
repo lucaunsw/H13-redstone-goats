@@ -364,3 +364,111 @@ input[type="text"][placeholder="MM/YY"] {
   font-weight: bold;
 }
 
+/* Dropdown Styling */
+.select-group {
+  position: relative;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.select-group select {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.select-group select:focus {
+  outline: none;
+  border-color: #a8200896;
+  box-shadow: 0 0 0 2px rgba(94, 16, 7, 0.736);
+}
+
+/* Dropdown arrow */
+.select-group::after {
+  content: "▼";
+  font-size: 12px;
+  color: #666;
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* Hover state */
+.select-group select:hover {
+  border-color: #bbb;
+}
+
+/* Disabled state */
+.select-group select:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* Dropdown options styling */
+.select-group option {
+  padding: 8px 12px;
+}
+
+/* For Webkit browsers (Chrome, Safari) */
+.select-group select option:checked,
+.select-group select option:hover {
+  background: linear-gradient(#a820086c, #a820086c);
+  background-color: #a820086c !important; 
+  color: white !important;
+}
+
+/* Style for dropdown options on hover */
+.select-group option:hover {
+  background-color: #a820086c; 
+  color: white;
+}
+
+/* For Firefox */
+.select-group option:checked {
+  background-color: #a820086c; 
+  color: white;
+}
+
+
+/* Dark mode compatibility */
+@media (prefers-color-scheme: dark) {
+  .select-group select {
+    background-color: #2d2d2d;
+    color: #fff;
+    border-color: #444;
+  }
+  
+  .select-group::after {
+    color: #aaa;
+  }
+  
+  .select-group select:hover {
+    border-color: #666;
+  }
+  
+  .select-group select:disabled {
+    background-color: #333;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .select-group select {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  
+  .select-group::after {
+    right: 12px;
+  }
+}

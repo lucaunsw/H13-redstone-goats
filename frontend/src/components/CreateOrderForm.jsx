@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -26,7 +26,6 @@ const CreateOrderForm = () => {
       expirationDate: '',
       cvv: ''
     },
-    
     
     // Delivery Information
     delivery: {
@@ -58,8 +57,8 @@ const CreateOrderForm = () => {
       },
       price: 0,
       description: '',
+      quantity: 1
     }],
-    quantities: [], 
     
     // Order Metadata
     issueDate: new Date().toISOString().split('T')[0],
@@ -80,6 +79,7 @@ const CreateOrderForm = () => {
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const location = useLocation();
   const [successMessage, setSuccessMessage] = useState('');
+  const [items, setItems] = useState([]);
 
   // Helper function to update nested state
   const handleInputChange = (path, value) => {
@@ -122,33 +122,21 @@ const CreateOrderForm = () => {
       
       return {
         ...prev,
-        items: newItems
-      };
-    });
-  };
-
-  // Handle quantity changes
-  const handleQuantityChange = (index, value) => {
-    setFormData(prev => {
-      const newQuantities = [...prev.quantities];
-      newQuantities[index] = parseInt(value) || 0;
-      
-      return { 
-        ...prev,
-        quantities: newQuantities,
-        totalPrice: calculateTotal(prev.items, newQuantities)
+        items: newItems,
+        totalPrice: calculateTotal(newItems)
       };
     });
   };
 
   // Calculate total price
-  const calculateTotal = (items = [], quantities = []) => {
-    return items.reduce((sum, item, index) => {
-      const quantity = quantities[index] || 0;
+  const calculateTotal = (items = []) => {
+    return items.reduce((sum, item) => {
+      const quantity = item.quantity || 0;
       const price = item.price || 0;
       return sum + (price * quantity);
     }, 0);
   };
+
   // Add/remove items
   const addItem = () => {
     setFormData(prev => ({
@@ -156,7 +144,7 @@ const CreateOrderForm = () => {
       items: [
         ...prev.items,
         {
-          id: '', // Item ID if available
+          id: '',
           name: '',
           seller: {
             id: '', 
@@ -168,9 +156,9 @@ const CreateOrderForm = () => {
           },
           price: 0,
           description: '',
+          quantity: 1
         }
-      ],
-      quantities: [...prev.quantities, 1]
+      ]
     }));
   };
 
@@ -179,20 +167,63 @@ const CreateOrderForm = () => {
     setFormData(prev => ({
       ...prev,
       items: prev.items.filter((_, i) => i !== index),
-      quantities: prev.quantities.filter((_, i) => i !== index),
-      totalPrice: calculateTotal(
-        prev.items.filter((_, i) => i !== index),
-        prev.quantities.filter((_, i) => i !== index)
-      )
+      totalPrice: calculateTotal(prev.items.filter((_, i) => i !== index))
     }));
   };
 
   function decodeJWT(token) {
     if (!token) return null;
-    const payload = token.split('.')[1]; // JWT format: header.payload.signature
+    const payload = token.split('.')[1];
     const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
     return JSON.parse(decoded);
   }
+
+  const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+  const payload = decodeJWT(token);
+
+  // Fetch all items from the API when the component mounts
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        const response = await axios.get(`https://h13-redstone-goats.vercel.app/v1/${payload.userId}/item/all/details`);
+        setItems(response.data || []);
+      } catch (err) {
+        setError('Failed to fetch items');
+      }
+    };
+
+    fetchItems();
+  }, [payload.userId]);
+
+  // Handle item selection from dropdown
+  const handleItemSelection = (e, index) => {
+    const itemId = e.target.value;
+    
+    // Find the selected item by ID
+    const selectedItemData = items.find(item => item.id === parseInt(itemId));
+    
+    if (selectedItemData) {
+      setFormData(prev => {
+        const newItems = [...prev.items];
+        
+        // Update the specific item at the given index
+        newItems[index] = {
+          id: selectedItemData.id,
+          name: selectedItemData.name,
+          description: selectedItemData.description,
+          price: selectedItemData.price,
+          seller: selectedItemData.seller,
+          quantity: newItems[index]?.quantity || 1 // Keep existing quantity or default to 1
+        };
+        
+        return {
+          ...prev,
+          items: newItems,
+          totalPrice: calculateTotal(newItems)
+        };
+      });
+    }
+  };
 
   // Handle form submission
   const handleSubmitConfirmed = async () => {
@@ -206,7 +237,7 @@ const CreateOrderForm = () => {
       
       const orderData = {
         items: formData.items,
-        quantities: formData.quantities,
+        quantities: formData.items.map(item => item.quantity),
         buyer: {
           id: payload.userId,  
           name: formData.buyer.name.trim(),
@@ -220,7 +251,7 @@ const CreateOrderForm = () => {
           CVV: formData.billingDetails.cvv,  
           expiryDate: formData.billingDetails.expirationDate, 
         },
-        totalPrice: calculateTotal(formData.items, formData.quantities),
+        totalPrice: calculateTotal(formData.items),
         delivery: {
           streetName: formData.delivery.streetName,
           cityName: formData.delivery.cityName,
@@ -236,7 +267,7 @@ const CreateOrderForm = () => {
         createdAt: new Date().toISOString(), 
         status: 'pending',
         taxAmount: formData.taxAmount,
-        taxTotal: (calculateTotal(formData.items, formData.quantities).toFixed(2) * (formData.taxAmount / 100).toFixed(2)),
+        taxTotal: (calculateTotal(formData.items) * (formData.taxAmount / 100)).toFixed(2),
         currency: formData.currency,
         paymentAccountId: formData.paymentAccountId,
         paymentAccountName: formData.paymentAccountName,
@@ -244,8 +275,6 @@ const CreateOrderForm = () => {
         lastEdited: new Date().toISOString() 
       };
 
-      console.log(orderData);
-  
       const response = await axios.post('https://h13-redstone-goats.vercel.app/v2/order/create', orderData, {
         headers: {
           'Content-Type': 'application/json',
@@ -253,7 +282,6 @@ const CreateOrderForm = () => {
         }
       });
       
-
       if (response.data?.orderId) {
         const orderId = response.data.orderId;
         setSuccessMessage('Order created! OrderId: ' + orderId);
@@ -320,10 +348,11 @@ const CreateOrderForm = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
+      {/* Buyer Information Section */}
       <div className="form-section">
         <h3>Buyer Information</h3>
         <div className="form-grid">
-          <div className="form-group">
+        <div className="form-group">
             <label>Name</label>
             <input
               type="text"
@@ -399,7 +428,7 @@ const CreateOrderForm = () => {
             + Add Item
           </button>
         </div>
-        
+
         {formData.items.map((item, index) => (
           <div key={index} className="item-group">
             <div className="item-header">
@@ -414,6 +443,26 @@ const CreateOrderForm = () => {
                 </button>
               )}
             </div>
+
+            {/* Item Selection Dropdown */}
+            <div className="form-group">
+              <label>Select Item</label>
+              <div className="select-group">
+                <select 
+                  value={item.id || ''}
+                  onChange={(e) => handleItemSelection(e, index)}
+                >
+                  <option value="">-- Select an Item --</option>
+                  {items.map((itemOption) => (
+                    <option key={itemOption.id} value={itemOption.id}>
+                      {itemOption.name} (${itemOption.price})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Item Details (auto-filled when item is selected) */}
             <div className="form-grid">
               <div className="form-group">
                 <label>Product ID</label>
@@ -446,9 +495,9 @@ const CreateOrderForm = () => {
                 <label>Quantity</label>
                 <input
                   type="number"
-                  min="0"
-                  value={formData.quantities[index] || 0}
-                  onChange={(e) => handleQuantityChange(index, e.target.value)}
+                  min="1"
+                  value={item.quantity}
+                  onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value) || 1)}
                   required
                 />
               </div>
@@ -466,61 +515,75 @@ const CreateOrderForm = () => {
               <div className="form-group">
                 <label>Line Total</label>
                 <div className="calculated-value">
-                  ${(item.price * (formData.quantities[index] || 1)).toFixed(2)}
+                  ${(item.price * item.quantity).toFixed(2)}
                 </div>
               </div>
+              {/* Seller Information Fields */}
+              
               <div className="form-group">
-                  <label>Seller ID</label>
-                  <input
-                    type="number"
-                    value={item.seller.id}
-                    onChange={(e) => handleItemChange(index, 'seller.id', e.target.value)}
-                    required
-                  />
+                <label>Seller ID</label>
+                <input
+                  type="number"
+                  value={item.seller?.id || ''}
+                  onChange={(e) => handleItemChange(index, 'seller.id', e.target.value)}
+                  required
+                />
               </div>
               <div className="form-group">
-                <label>Name</label>
+                <label>Seller Name</label>
                 <input
                   type="text"
-                  value={item.seller.name}
+                  value={item.seller?.name || ''}
                   onChange={(e) => handleItemChange(index, 'seller.name', e.target.value)}
                   required
                 />
               </div>
               <div className="form-group">
-                <label>Street Address</label>
+                <label>Seller Email</label>
+                <input
+                  type="email"
+                  value={item.seller?.email || ''}
+                  onChange={(e) => handleItemChange(index, 'seller.email', e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label>Seller Phone</label>
                 <input
                   type="text"
-                  value={item.seller.streetName}
+                  value={item.seller?.phone || ''}
+                  onChange={(e) => handleItemChange(index, 'seller.phone', e.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label>Seller Street Address</label>
+                <input
+                  type="text"
+                  value={item.seller?.streetName || ''}
                   onChange={(e) => handleItemChange(index, 'seller.streetName', e.target.value)}
-                  required
                 />
               </div>
               <div className="form-group">
-                <label>City</label>
+                <label>Seller City</label>
                 <input
                   type="text"
-                  value={item.seller.cityName}
+                  value={item.seller?.cityName || ''}
                   onChange={(e) => handleItemChange(index, 'seller.cityName', e.target.value)}
-                  required
                 />
               </div>
               <div className="form-group">
-                <label>Postal Code</label>
+                <label>Seller Postal Code</label>
                 <input
                   type="text"
-                  value={item.seller.postalZone}
+                  value={item.seller?.postalZone || ''}
                   onChange={(e) => handleItemChange(index, 'seller.postalZone', e.target.value)}
-                  required
                 />
               </div>
               <div className="form-group">
-                <label>Country Code (ISO)</label>
+                <label>Seller Country Code</label>
                 <input
                   type="text"
-                  value={item.seller.countryCode}
+                  value={item.seller?.countryCode || ''}
                   onChange={(e) => handleItemChange(index, 'seller.countryCode', e.target.value)}
-                  required
                   maxLength="2"
                   placeholder="e.g., US, GB, DE"
                 />
@@ -528,98 +591,6 @@ const CreateOrderForm = () => {
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="form-section">
-        <h3>Delivery Information</h3>
-        <div className="form-grid">
-          <div className="form-group">
-            <label>Street Address</label>
-            <input
-              type="text"
-              value={formData.delivery.streetName}
-              onChange={(e) => handleInputChange('delivery.streetName', e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>City</label>
-            <input
-              type="text"
-              value={formData.delivery.cityName}
-              onChange={(e) => handleInputChange('delivery.cityName', e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Postal Code</label>
-            <input
-              type="text"
-              value={formData.delivery.postalZone}
-              onChange={(e) => handleInputChange('delivery.postalZone', e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>State/Region</label>
-            <input
-              type="text"
-              value={formData.delivery.countrySubentity}
-              onChange={(e) => handleInputChange('delivery.countrySubentity', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label>Address Line</label>
-            <input
-              type="text"
-              value={formData.delivery.addressLine}
-              onChange={(e) => handleInputChange('delivery.addressLine', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label>Country Code (ISO)</label>
-            <input
-              type="text"
-              value={formData.delivery.countryCode}
-              onChange={(e) => handleInputChange('delivery.countryCode', e.target.value)}
-              required
-              maxLength="2"
-              placeholder="e.g., US, GB, DE"
-            />
-          </div>
-          <div className="form-group">
-            <label>Delivery Start Date</label>
-            <input
-              type="date"
-              value={formData.delivery.startDate}
-              onChange={(e) => handleInputChange('delivery.startDate', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label>Start Time</label>
-            <input
-              type="time"
-              value={formData.delivery.startTime}
-              onChange={(e) => handleInputChange('delivery.startTime', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label>Delivery End Date</label>
-            <input
-              type="date"
-              value={formData.delivery.endDate}
-              onChange={(e) => handleInputChange('delivery.endDate', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label>End Time</label>
-            <input
-              type="time"
-              value={formData.delivery.endTime}
-              onChange={(e) => handleInputChange('delivery.endTime', e.target.value)}
-            />
-          </div>
-        </div>
       </div>
 
       <div className="form-section">
