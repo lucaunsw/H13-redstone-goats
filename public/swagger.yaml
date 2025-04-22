@@ -652,13 +652,43 @@ paths:
             type: integer
       responses:
         '200':
-          description: Order history retrieved
+          description: Order retrieved
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/OrderRequestV2"
         '400':
           description: Bad request from client e.g invalid orderId.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Error Message Here"
+
+  /v1/item/{itemId}/details:
+    get:
+      summary: Finds and returns item details given an item Id.
+      description: Finds and returns item details given an item Id.
+      tags:
+        - "Buyer Routes"
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Item retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemV2"
+        '400':
+          description: Bad request from client e.g invalid itemId.
           content:
             application/json:
               schema:
