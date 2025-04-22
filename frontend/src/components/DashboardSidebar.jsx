@@ -25,6 +25,13 @@ const DashboardSidebar = ({ activeTab, setActiveTab }) => {
           <FiPlus /> Create Order
         </button>
 
+        <button 
+          className="create-order-button"
+          onClick={() => setActiveTab('item')}
+        >
+          <FiPlus /> Sell Item
+        </button>
+
         <nav className="sidebar-nav">
           <ul>
             <li 
