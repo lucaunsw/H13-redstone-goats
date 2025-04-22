@@ -1,8 +1,8 @@
 import express from "express";
 import { Request, Response, NextFunction } from "express";
 import { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, 
-  orderRecommendations, orderHistory, userItemAdd, 
-  getOrderDetails} from "./app";
+  orderRecommendations, orderHistory, userItemAdd, getOrderDetails, getItemDetails
+  } from "./app";
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
@@ -349,6 +349,18 @@ app.get("/v1/order/:orderId/details", async (req: Request, res: Response) => {
   const orderId = parseInt(req.params.orderId);
   try {
     const result = await getOrderDetails(orderId);
+    res.status(200).json(result);
+  } catch (error) {
+    const e = error as Error;
+    res.status(ErrKind.EINVALID).json({ error: e.message });
+  }
+});
+
+// Route to get the details of an item, given an itemId.
+app.get("/v1/item/:itemId/details", async (req: Request, res: Response) => {
+  const itemId = parseInt(req.params.itemId);
+  try {
+    const result = await getItemDetails(itemId);
     res.status(200).json(result);
   } catch (error) {
     const e = error as Error;
