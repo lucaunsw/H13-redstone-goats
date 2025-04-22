@@ -697,6 +697,41 @@ paths:
                   Error:
                     type: string
                     example: "Error Message Here"
+                    
+  /v1/{userId}/item/all/details:
+    get:
+      summary: Finds and returns all items that exist.
+      description: Finds and returns all items that exist.
+      tags:
+        - "Buyer Routes"
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Items retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: 
+                      $ref: "#/components/schemas/ItemV2"
+        '400':
+          description: Bad request from client e.g invalid itemId.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Error Message Here"
 
   /v2/order/create:
     post:
