@@ -11,6 +11,8 @@ const CreateOrderForm = () => {
     buyer: {
       id: '', 
       name: '',
+      email: '',
+      phone: '',
       streetName: '',
       cityName: '',
       postalZone: '',
@@ -47,6 +49,8 @@ const CreateOrderForm = () => {
       seller: {
         id: '', 
         name: '',
+        email: '',
+        phone: '',
         streetName: '',
         cityName: '',
         postalZone: '',
@@ -66,6 +70,7 @@ const CreateOrderForm = () => {
     currency: 'AUD',
     paymentAccountId: 0,
     paymentAccountName: '',
+    financialInstitutionBranch: '',
     createdAt: new Date().toISOString()
   });
 
@@ -235,6 +240,7 @@ const CreateOrderForm = () => {
         currency: formData.currency,
         paymentAccountId: formData.paymentAccountId,
         paymentAccountName: formData.paymentAccountName,
+        financialInstitutionBranch: formData.financialInstitutionBranch,
         lastEdited: new Date().toISOString() 
       };
 
@@ -326,6 +332,24 @@ const CreateOrderForm = () => {
               required
             />
           </div>
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="text"
+              value={formData.buyer.email}
+              onChange={(e) => handleInputChange('buyer.email', e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Phone</label>
+            <input
+              type="text"
+              value={formData.buyer.phone}
+              onChange={(e) => handleInputChange('buyer.phone', e.target.value)}
+              required
+            />
+          </div>  
           <div className="form-group">
             <label>Street Address</label>
             <input
@@ -453,7 +477,7 @@ const CreateOrderForm = () => {
                     onChange={(e) => handleItemChange(index, 'seller.id', e.target.value)}
                     required
                   />
-                </div>
+              </div>
               <div className="form-group">
                 <label>Name</label>
                 <input
@@ -602,6 +626,24 @@ const CreateOrderForm = () => {
         <h3>Billing Details</h3>
         <div className="form-grid">
           <div className="form-group">
+              <label>Payment Account ID</label>
+              <input
+                type="number"
+                value={formData.paymentAccountId}
+                onChange={(e) => handleInputChange('paymentAccountId', e.target.value)}
+                required
+              />
+          </div>
+          <div className="form-group">
+              <label>Payment Account Name</label>
+              <input
+                type="text"
+                value={formData.paymentAccountName}
+                onChange={(e) => handleInputChange('paymentAccountName', e.target.value)}
+                required
+              />
+          </div>
+          <div className="form-group">
             <label>Credit Card Number</label>
             <input
               type="text"
@@ -636,6 +678,16 @@ const CreateOrderForm = () => {
               value={formData.billingDetails.cvv}
               onChange={(e) => handleInputChange('billingDetails.cvv', e.target.value)}
               required
+            />
+          </div>
+          <div className="form-group">
+            <label>Financial Institution Branch</label>
+            <input
+              type="text"
+              value={formData.financialInstitutionBranch}
+              onChange={(e) => handleInputChange('financialInstitutionBranch', e.target.value)}
+              required
+              placeholder="e.g., ANZ, CommBank, NAB"
             />
           </div>
         </div>
