@@ -376,7 +376,7 @@ app.get("/v1/:userId/item/all/details", async (req: Request, res: Response) => {
     res.status(200).json(result);
   } catch (error) {
     const e = error as Error;
-    res.status(ErrKind.EINVALID).json({ error: e.message });
+    res.status(ErrKind.ENOTOKEN).json({ error: e.message });
   }
 });
 

@@ -438,8 +438,8 @@ async function getItemDetails (itemId: number) {
  *                            that exist.
  */
 async function getAllItemDetails (userId: number) {
-  const user = await getUserSimpleV2(userId);
-  if (!user) {
+  const userValid = await getUserSimpleV2(userId);
+  if (!userValid) {
     throw new Error 
     ('Invalid userId or a different name is registered to userId');
   }
@@ -447,7 +447,6 @@ async function getAllItemDetails (userId: number) {
   const users = await getAllUsersV1();
   const items: ItemV2[] = [];
   for (const user of users) {
-    console.log(user.id);
     if (user.id) {
       const seller = await getUserSimpleV2(user.id);
       
