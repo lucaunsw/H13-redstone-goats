@@ -1,15 +1,16 @@
-import { ItemV1, ItemV2, ItemSalesV1, OrderV1, OrderV2, status } from './types';
+import { ItemV1, ItemV2, ItemSalesV1, OrderV1, OrderV2, status, UserSimpleV2 } from './types';
 import { generateUBL, v2generateUBL, userExists, v2userExists, validItemList, 
          v2validItemList, addItems, validSellers, v2validSellers,
          generatePDF, v1validItems, v2addItems} from './helper';
 import { getUserV1, addOrderV1, getOrderV1, updateOrderV1, 
   addOrderXMLV1, getOrderXMLV1, getItemSellerSalesV1,
-  getItemBuyerRecommendationsV1,
-  getPopularItemsV1, getOrdersByBuyerV1
+  getItemBuyerRecommendationsV1, getPopularItemsV1, 
+  getOrdersByBuyerV1, getAllUsersV1, getItemsBySellerV1
  } from './dataStoreV1'
 
 import {
-  addOrderV2, getOrderV2, getItemV2
+  addOrderV2, getOrderV2, getItemV2,
+  getUserSimpleV2
 } from './dataStoreV2'
  import fs from 'fs';
 import { stringify } from 'csv-stringify/sync';
@@ -429,4 +430,44 @@ async function getItemDetails (itemId: number) {
   return item;
 }
 
-export { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory, userItemAdd, getOrderDetails, getItemDetails };
+/**
+ * Retrieve details of every item that exists.
+ *
+ * @param nothing - This function has no parameters.
+ * @returns {ItemV2[]} item - JSON body containing an array of all the items 
+ *                            that exist.
+ */
+async function getAllItemDetails (userId: number) {
+  const user = await getUserSimpleV2(userId);
+  if (!user) {
+    throw new Error 
+    ('Invalid userId or a different name is registered to userId');
+  }
+
+  const users = await getAllUsersV1();
+  const items: ItemV2[] = [];
+  for (const user of users) {
+    console.log(user.id);
+    if (user.id) {
+      const seller = await getUserSimpleV2(user.id);
+      
+      const itemsFromSeller = await getItemsBySellerV1(user.id);
+      for (const item of itemsFromSeller) {
+        if (item && seller) {
+          const itemV2: ItemV2 = {
+            id: item.id, 
+            name: item.name,
+            seller: seller,
+            description: item.description,
+            price: item.price,
+          }
+          items.push(itemV2);
+        }
+      }
+    }
+  }
+
+  return items;
+}
+
+export { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory, userItemAdd, getOrderDetails, getItemDetails, getAllItemDetails };
