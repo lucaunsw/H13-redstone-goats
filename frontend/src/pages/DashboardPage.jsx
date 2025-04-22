@@ -9,6 +9,7 @@ import OrderRecommendations from '../components/OrderRecommendations';
 import CreateOrderForm from '../components/CreateOrderForm';
 import OrderSales from '../components/OrderSales';
 import '../styles/Dashboard.css';
+import AddItems from '../components/AddItems';
 
 const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -49,6 +50,12 @@ const DashboardPage = () => {
           {activeTab === 'create' && (
             <>
               <CreateOrderForm />
+            </>
+          )}
+          {/* Create Order Tab */}
+          {activeTab === 'item' && (
+            <>
+              <AddItems />
             </>
           )}
 
