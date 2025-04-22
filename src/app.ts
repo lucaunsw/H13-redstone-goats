@@ -9,7 +9,7 @@ import { getUserV1, addOrderV1, getOrderV1, updateOrderV1,
  } from './dataStoreV1'
 
 import {
-  addOrderV2, getOrderV2
+  addOrderV2, getOrderV2, getItemV2
 } from './dataStoreV2'
  import fs from 'fs';
 import { stringify } from 'csv-stringify/sync';
@@ -415,4 +415,18 @@ async function getOrderDetails (orderId: number) {
   return order;
 }
 
-export { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory, userItemAdd, getOrderDetails };
+/**
+ * Retrieve details of an item given the itemId.
+ *
+ * @param {number} orderId - The ID of the item to find the details of.
+ * @returns {ItemV2} item - JSON body containing the item details.
+ */
+async function getItemDetails (itemId: number) {
+  const item = await getItemV2(itemId);
+  if (!item) {
+    throw new Error('Item could not be found');
+  }
+  return item;
+}
+
+export { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory, userItemAdd, getOrderDetails, getItemDetails };
