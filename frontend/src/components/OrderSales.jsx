@@ -203,7 +203,7 @@ const OrderSales = () => {
                 <table className="sales-table">
                   <thead>
                     <tr>
-                      <th>Order ID</th>
+                      <th>Item ID</th>
                       <th>Product</th>
                       <th>Description</th>
                       <th>Amount Sold</th>

@@ -18,48 +18,72 @@ const DashboardSidebar = ({ activeTab, setActiveTab }) => {
       animate="visible"
     >
       <div className="sidebar-content">
-        <button 
-          className="create-order-button"
-          onClick={() => setActiveTab('create')}
-        >
-          <FiPlus /> Create Order
-        </button>
+        
+        {/* Overview Section */}
+        <div className="sidebar-section">
+          <nav className="sidebar-nav">
+              <ul>
+                <li 
+                  className={activeTab === 'overview' ? 'active' : ''}
+                  onClick={() => setActiveTab('overview')}
+                >
+                  <FiGrid /> Overview
+                </li>
+              </ul>
+          </nav>
+        </div>
 
-        <button 
+        
+
+
+        {/* Seller Section */}
+        <div className="sidebar-section">
+          <h3 className="section-title">Seller Tools</h3>
+          <button 
           className="create-order-button"
           onClick={() => setActiveTab('item')}
-        >
-          <FiPlus /> Sell Item
-        </button>
+          >
+            <FiPlus /> Sell Items
+          </button>
+          <nav className="sidebar-nav">
+              <ul>
+                <li 
+                  className={activeTab === 'sales' ? 'active' : ''}
+                  onClick={() => setActiveTab('sales')}
+                >
+                  <FiTrendingUp /> Item Sales
+                </li>
+              </ul>
+          </nav>
+        </div>
 
-        <nav className="sidebar-nav">
-          <ul>
-            <li 
-              className={activeTab === 'overview' ? 'active' : ''}
-              onClick={() => setActiveTab('overview')}
-            >
-              <FiGrid /> Overview
-            </li>
-            <li 
-              className={activeTab === 'orders' ? 'active' : ''}
-              onClick={() => setActiveTab('orders')}
-            >
-              <FiPackage /> Order History
-            </li>
-            <li 
-              className={activeTab === 'sales' ? 'active' : ''}
-              onClick={() => setActiveTab('sales')}
-            >
-              <FiTrendingUp /> Order Sales
-            </li>
-            <li 
-              className={activeTab === 'recommendations' ? 'active' : ''}
-              onClick={() => setActiveTab('recommendations')}
-            >
-              <FiHelpCircle /> Order Recommendations
-            </li>
-          </ul>
-        </nav>
+        {/* Buyer Section */}
+        <div className="sidebar-section">
+          <h3 className="section-title">Buyer Tools</h3>
+          <button 
+          className="create-order-button"
+          onClick={() => setActiveTab('create')}
+          >
+            <FiPlus /> Create Order
+          </button>
+
+          <nav className="sidebar-nav">
+            <ul>
+              <li 
+                className={activeTab === 'orders' ? 'active' : ''}
+                onClick={() => setActiveTab('orders')}
+              >
+                <FiPackage /> Order History
+              </li>
+              <li 
+                className={activeTab === 'recommendations' ? 'active' : ''}
+                onClick={() => setActiveTab('recommendations')}
+              >
+                <FiHelpCircle /> Order Recommendations
+              </li>
+            </ul>
+          </nav>
+        </div>
       </div>
     </motion.aside>
   );
