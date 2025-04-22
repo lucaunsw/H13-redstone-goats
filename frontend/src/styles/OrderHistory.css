@@ -188,7 +188,7 @@
   text-align: center;
 }
 
-.status-badge.completed {
+.status-badge.confirmed {
   background: rgba(40, 167, 69, 0.15);
   color: #28a745;
 }

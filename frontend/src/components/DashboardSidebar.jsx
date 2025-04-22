@@ -5,7 +5,8 @@ import {
   FiPlus,
   FiPackage,
   FiGrid,
-  FiHelpCircle 
+  FiHelpCircle,
+  FiCheckCircle
 } from 'react-icons/fi';
 import '../styles/DashboardSideBar.css';
 
@@ -70,17 +71,25 @@ const DashboardSidebar = ({ activeTab, setActiveTab }) => {
           <nav className="sidebar-nav">
             <ul>
               <li 
+                className={activeTab === 'confirm' ? 'active' : ''}
+                onClick={() => setActiveTab('confirm')}
+              >
+                <FiCheckCircle /> Order Confirm
+              </li>
+              <li 
                 className={activeTab === 'orders' ? 'active' : ''}
                 onClick={() => setActiveTab('orders')}
               >
                 <FiPackage /> Order History
               </li>
+              
               <li 
                 className={activeTab === 'recommendations' ? 'active' : ''}
                 onClick={() => setActiveTab('recommendations')}
               >
                 <FiHelpCircle /> Order Recommendations
               </li>
+              
             </ul>
           </nav>
         </div>
