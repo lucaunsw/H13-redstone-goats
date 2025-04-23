@@ -300,8 +300,8 @@ const OrderConfirm = () => {
         <motion.div className="loading-spinner-expanded" variants={itemVariants}>
           <motion.div 
             className="spinner-expanded"
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+            // animate={{ rotate: 360 }}
+            // transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
           ></motion.div>
           <p>Loading pending orders...</p>
         </motion.div>

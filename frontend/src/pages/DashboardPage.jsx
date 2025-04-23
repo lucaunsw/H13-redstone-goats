@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { containerVariants } from './LandingPage';
+import { useLocation } from 'react-router-dom';
 import DashboardHeader from '../components/DashboardHeader';
 import DashboardSidebar from '../components/DashboardSidebar';
 import Overview from '../components/Overview';
@@ -13,7 +14,11 @@ import AddItems from '../components/AddItems';
 import OrderConfirm from '../components/OrderConfirm';
 
 const DashboardPage = () => {
-  const [activeTab, setActiveTab] = useState('overview');
+  const location = useLocation();
+  const [orderItem, setOrderItem] = useState(location.state?.orderItem || null);
+  const { activeTab: stateTab } = location.state || {};
+  const [activeTab, setActiveTab] = useState(stateTab || 'overview');
+
   // const updateOrderStatus = (orderId, newStatus) => {
   //   setOrders(orders.map(order => 
   //     order.id === orderId ? { ...order, status: newStatus } : order
@@ -26,6 +31,12 @@ const DashboardPage = () => {
   //     }));
   //   }
   // };
+
+  useEffect(() => {
+    if (activeTab !== 'create') {
+      setOrderItem(null);
+    }
+  }, [activeTab]);
 
   return (
     <motion.div 
@@ -50,7 +61,7 @@ const DashboardPage = () => {
           {/* Create Order Tab */}
           {activeTab === 'create' && (
             <>
-              <CreateOrderForm />
+              <CreateOrderForm orderItem={orderItem}/>
             </>
           )}
           {/* Create Order Tab */}

@@ -229,3 +229,56 @@
       grid-template-columns: 1fr;
     }
   }
+
+/* Overlay for the ordering process */
+.ordering-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8); 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* Content within the ordering overlay */
+.ordering-content {
+  background-color: #3b1e1e; /* Dark slate background */
+  padding: 2rem 3rem;
+  border-radius: 0.75rem;
+  text-align: center;
+  color: #f1f5f9; /* Light text color */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 90%;
+}
+
+/* Spinner icon styling */
+.spinner-icon {
+  animation: spin 1s linear infinite;
+  color: #f83838; /* Sky blue color */
+  margin-bottom: 1rem;
+}
+
+/* Spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Heading within the ordering content */
+.ordering-content h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+/* Paragraph within the ordering content */
+.ordering-content p {
+  font-size: 1rem;
+  color: #cbd5e1; /* Muted text color */
+}

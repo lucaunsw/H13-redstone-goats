@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiThumbsUp, FiStar, FiPlus, FiHeart } from 'react-icons/fi';
+import { FiThumbsUp, FiStar, FiPlus, FiLoader } from 'react-icons/fi';
 import axios from 'axios';
 import '../styles/Dashboard.css';
 import '../styles/OrderRecommendations.css';
@@ -27,10 +28,12 @@ const itemVariants = {
 };
 
 const OrderRecommendations = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [recommendations, setRecommendations] = useState([]);
   const [limit, setLimit] = useState(6);
+  const [isOrdering, setIsOrdering] = useState(false);
 
   function decodeJWT(token) {
     if (!token) return null;
@@ -43,7 +46,6 @@ const OrderRecommendations = () => {
   const payload = decodeJWT(token);
 
   useEffect(() => {
-
     const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
     const payload = decodeJWT(token);
 
@@ -58,7 +60,6 @@ const OrderRecommendations = () => {
             headers: { Authorization: `Bearer ${token}` }
           }
         );
-
         setRecommendations(response.data.recommendations || []);
       } catch (err) {
         console.error('Error fetching recommendations:', err);
@@ -84,9 +85,17 @@ const OrderRecommendations = () => {
     }).format(amount);
   };
 
-  const handleAddToCart = (item) => {
-    // Implement your add to cart functionality
-    alert(`Added ${item.name} to cart`);
+  const handleNavigate = async (item) => {
+    setIsOrdering(true);
+    // Add a small delay to ensure the loading screen is visible
+    await new Promise(resolve => setTimeout(resolve, 500));
+    navigate('/dashboard', {
+      state: {
+        orderItem: item,
+        activeTab: 'create'
+      }
+    });
+    window.location.reload();
   };
 
   return (
@@ -96,6 +105,30 @@ const OrderRecommendations = () => {
       initial="hidden"
       animate="visible"
     >
+      {/* Ordering overlay */}
+      <AnimatePresence>
+        {isOrdering && (
+          <motion.div 
+            className="ordering-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <motion.div
+              className="ordering-content"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 300 }}
+            >
+              <FiLoader className="spinner-icon" size={48} />
+              <h3>Creating Order...</h3>
+              <p>Please wait while we prepare your order</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div className="recommendations-header" variants={itemVariants}>
         <h2>Recommended For You</h2>
         <div className="recommendations-controls">
@@ -188,18 +221,13 @@ const OrderRecommendations = () => {
                     <div className="item-actions">
                       <motion.button 
                         className="add-to-cart"
-                        onClick={() => handleAddToCart(item)}
+                        onClick={() => handleNavigate(item)}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        disabled={isOrdering}
                       >
-                        <FiPlus /> Order
-                      </motion.button>
-                      <motion.button 
-                        className="wishlist"
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.9 }}
-                      >
-                        <FiHeart />
+                        {isOrdering ? <FiLoader className="button-spinner" /> : <FiPlus />} 
+                        {isOrdering ? 'Ordering...' : 'Order'}
                       </motion.button>
                     </div>
                   </div>

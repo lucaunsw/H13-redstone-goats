@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/CreateOrderForm.css';
 
-const CreateOrderForm = () => {
+const CreateOrderForm = ({ orderItem }) => {
   const navigate = useNavigate();
+  const itemsSectionRef = useRef(null);
   const [formData, setFormData] = useState({
     // Buyer Information
     buyer: {
@@ -80,6 +81,42 @@ const CreateOrderForm = () => {
   const location = useLocation();
   const [successMessage, setSuccessMessage] = useState('');
   const [items, setItems] = useState([]);
+
+  // Auto-fill item if orderItem prop is provided
+  useEffect(() => {
+    if (orderItem) {
+      setFormData(prev => ({
+        ...prev,
+        items: [{
+          id: orderItem.id || '',
+          name: orderItem.name || '',
+          description: orderItem.description || '',
+          price: orderItem.price || 0,
+          seller: {
+            id: orderItem.seller?.id || '',
+            name: orderItem.seller?.name || '',
+            email: orderItem.seller?.email || '',
+            phone: orderItem.seller?.phone || '',
+            streetName: orderItem.seller?.streetName || '',
+            cityName: orderItem.seller?.cityName || '',
+            postalZone: orderItem.seller?.postalZone || '',
+            countryCode: orderItem.seller?.countryCode || ''
+          },
+          quantity: 1
+        }],
+        totalPrice: orderItem.price || 0
+      }));
+
+      // Scroll to items section after a short delay to allow rendering
+      const timer = setTimeout(() => {
+        if (itemsSectionRef.current) {
+          itemsSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [orderItem]);
 
   // Helper function to update nested state
   const handleInputChange = (path, value) => {
@@ -281,6 +318,8 @@ const CreateOrderForm = () => {
           'Authorization': `Bearer ${token}`
         }
       });
+
+      console.log(response.data);
       
       if (response.data?.orderId) {
         const orderId = response.data.orderId;
@@ -421,7 +460,7 @@ const CreateOrderForm = () => {
       </div>
 
       {/* Order Items Section */}
-      <div className="form-section">
+      <div className="form-section" ref={itemsSectionRef}>
         <div className="section-header">
           <h3>Order Items</h3>
           <button type="button" onClick={addItem} className="add-button">
@@ -810,7 +849,7 @@ const CreateOrderForm = () => {
             </div>
             <div className="total-row grand-total">
               <span>Total Amount:</span>
-              <span>${(calculateTotal(formData.items, formData.quantities).toFixed(2) * ((100 - formData.taxAmount) / 100).toFixed(2))}</span>
+              <span>${(calculateTotal(formData.items, formData.quantities).toFixed(2) * ((100 + formData.taxAmount) / 100).toFixed(2)).toFixed(2)}</span>
             </div>
           </div>
         </div>
