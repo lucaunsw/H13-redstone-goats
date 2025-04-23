@@ -57,13 +57,14 @@ const OrderSales = () => {
         `https://h13-redstone-goats.vercel.app/v1/order/${payload.userId}/sales`,
         {
           params: { [type]: true },
-          responseType: type === 'pdf' ? 'blob' : 'json',
+          responseType: type === 'pdf' ? 'csv' : 'json',
           headers: {
             Authorization: `Bearer ${token}`
           }
         }
       );
       
+      console.log(response);
 
       if (type === 'pdf') {
         // Handle PDF download

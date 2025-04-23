@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { 
-  FiDollarSign,
-  FiTrendingUp,
-  FiShoppingCart,
   FiClock,
   FiUser,
   FiPackage,
-  FiCalendar
+  FiCalendar,
+  FiCheckCircle,
+  FiFileText,
+  FiXCircle
 } from 'react-icons/fi';
 import axios from 'axios';
 import StatCard from './StatCard';
@@ -17,9 +17,10 @@ const Overview = () => {
   const [currentUser, setCurrentUser] = useState({ user: {} });
   const [error, setError] = useState('');
   const [stats, setStats] = useState({
-    today: 0,
-    month: 0,
     totalOrders: 0,
+    totalCost: 0,
+    confirmedOrders: 0,
+    cancelledOrders: 0,
     pendingOrders: 0
   });
   const [recentOrders, setRecentOrders] = useState([]);
@@ -74,20 +75,29 @@ const Overview = () => {
 
         console.log(response.data);
 
+        const successfulOrders = response.data.successfulOrders || [];
+        const cancelledOrders = response.data.cancelledOrders || [];
+        const allOrders = [...successfulOrders, ...cancelledOrders];
+
+        
+        const totalCost = successfulOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+        const pendingOrders = successfulOrders.filter(o => o.status === 'pending').length;
+  
         setStats({
-          today: response.data.todaySales || 0,
-          month: response.data.monthSales || 0,
-          totalOrders: response.data.totalOrders || 0,
-          pendingOrders: response.data.pendingOrders || 0
+          totalOrders: allOrders.length,
+          totalCost,
+          confirmedOrders: successfulOrders.filter(o => o.status === 'confirmed').length,
+          cancelledOrders: cancelledOrders.length,
+          pendingOrders
         });
 
-        const allOrders = [
+        const recentOrders = [
           ...(response.data.successfulOrders || []),
           ...(response.data.cancelledOrders || [])
         ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
          .slice(0, 3);
 
-        setRecentOrders(allOrders);
+        setRecentOrders(recentOrders);
 
       } catch (err) {
         console.error('Error fetching overview data:', err);
@@ -131,25 +141,24 @@ const Overview = () => {
   return (
     <div className="overview-container">
       <div className="overview-header">
-        <h2>Business Overview</h2>
-        <h3>Welcome {currentUser.user.name}!</h3>
+        <h2>Welcome {currentUser.user.name}!</h2>
       </div>
       
       <div className="stats-grid">
         <StatCard 
-          icon={<FiDollarSign />}
-          title="Today's Sales"
-          value={formatCurrency(stats.today)}
-        />
-        <StatCard 
-          icon={<FiTrendingUp />}
-          title="This Month"
-          value={formatCurrency(stats.month)}
-        />
-        <StatCard 
-          icon={<FiShoppingCart />}
+          icon={<FiFileText />}
           title="Total Orders"
           value={stats.totalOrders}
+        />
+        <StatCard 
+          icon={<FiCheckCircle />}
+          title="Confirmed Orders"
+          value={stats.confirmedOrders}
+        />
+        <StatCard 
+          icon={<FiXCircle />}
+          title="Cancelled Orders"
+          value={stats.cancelledOrders}
         />
         <StatCard 
           icon={<FiClock />}

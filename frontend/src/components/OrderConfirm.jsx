@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiCheckCircle,
@@ -55,6 +55,7 @@ const OrderConfirm = () => {
     totalOrders: 0,
     pendingOrders: 0
   });
+  const detailRefs = useRef({})
   const [successMessage, setSuccessMessage] = useState('');
 
 
@@ -102,7 +103,15 @@ const OrderConfirm = () => {
   }, [payload.userId, token]);
 
   const toggleOrderDetails = (orderId) => {
-    setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
+    const nextId = expandedOrderId === orderId ? null : orderId;
+    setExpandedOrderId(nextId);
+  
+    // Scroll into view after expansion
+    setTimeout(() => {
+      if (nextId && detailRefs.current[nextId]) {
+        detailRefs.current[nextId].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 300); // allow animation to start before scrolling
   };
 
   const handleOrderAction = async (orderId, action) => {
@@ -384,11 +393,12 @@ const OrderConfirm = () => {
                   expandedOrderId === order.id && (
                     <motion.tr 
                       key={`details-${order.id}`}
-                      className="details-row-expanded"
+                      className="details-row"
                       variants={expandVariants}
                       initial="hidden"
                       animate="visible"
                       exit="exit"
+                      ref={(el) => (detailRefs.current[order.id] = el)}
                     >
                       <td colSpan="8">
                         {renderOrderDetails(order)}
