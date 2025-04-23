@@ -267,7 +267,7 @@ const CreateOrderForm = () => {
         createdAt: new Date().toISOString(), 
         status: 'pending',
         taxAmount: formData.taxAmount,
-        taxTotal: (calculateTotal(formData.items) * (formData.taxAmount / 100)).toFixed(2),
+        taxTotal: (calculateTotal(formData.items, formData.quantities).toFixed(2) * (formData.taxAmount / 100).toFixed(2)),
         currency: formData.currency,
         paymentAccountId: formData.paymentAccountId,
         paymentAccountName: formData.paymentAccountName,
@@ -591,6 +591,98 @@ const CreateOrderForm = () => {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="form-section">
+        <h3>Delivery Information</h3>
+        <div className="form-grid">
+          <div className="form-group">
+            <label>Street Address</label>
+            <input
+              type="text"
+              value={formData.delivery.streetName}
+              onChange={(e) => handleInputChange('delivery.streetName', e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>City</label>
+            <input
+              type="text"
+              value={formData.delivery.cityName}
+              onChange={(e) => handleInputChange('delivery.cityName', e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Postal Code</label>
+            <input
+              type="text"
+              value={formData.delivery.postalZone}
+              onChange={(e) => handleInputChange('delivery.postalZone', e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>State/Region</label>
+            <input
+              type="text"
+              value={formData.delivery.countrySubentity}
+              onChange={(e) => handleInputChange('delivery.countrySubentity', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Address Line</label>
+            <input
+              type="text"
+              value={formData.delivery.addressLine}
+              onChange={(e) => handleInputChange('delivery.addressLine', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Country Code (ISO)</label>
+            <input
+              type="text"
+              value={formData.delivery.countryCode}
+              onChange={(e) => handleInputChange('delivery.countryCode', e.target.value)}
+              required
+              maxLength="2"
+              placeholder="e.g., US, GB, DE"
+            />
+          </div>
+          <div className="form-group">
+            <label>Delivery Start Date</label>
+            <input
+              type="date"
+              value={formData.delivery.startDate}
+              onChange={(e) => handleInputChange('delivery.startDate', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Start Time</label>
+            <input
+              type="time"
+              value={formData.delivery.startTime}
+              onChange={(e) => handleInputChange('delivery.startTime', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Delivery End Date</label>
+            <input
+              type="date"
+              value={formData.delivery.endDate}
+              onChange={(e) => handleInputChange('delivery.endDate', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>End Time</label>
+            <input
+              type="time"
+              value={formData.delivery.endTime}
+              onChange={(e) => handleInputChange('delivery.endTime', e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="form-section">
