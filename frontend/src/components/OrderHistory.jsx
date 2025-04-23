@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FiDollarSign,
@@ -57,11 +57,12 @@ const OrderHistory = () => {
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [stats, setStats] = useState({
     totalOrders: 0,
-    totalRevenue: 0,
+    totalCost: 0,
     confirmedOrders: 0,
     cancelledOrders: 0,
     pendingOrders: 0
   });
+  const detailRefs = useRef({})
 
   function decodeJWT(token) {
     if (!token) return null;
@@ -92,12 +93,12 @@ const OrderHistory = () => {
   
         setOrders(allOrders);
         
-        const totalRevenue = successfulOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+        const totalCost = successfulOrders.reduce((sum, order) => sum + order.totalPrice, 0);
         const pendingOrders = successfulOrders.filter(o => o.status === 'pending').length;
   
         setStats({
           totalOrders: allOrders.length,
-          totalRevenue,
+          totalCost,
           confirmedOrders: successfulOrders.filter(o => o.status === 'confirmed').length,
           cancelledOrders: cancelledOrders.length,
           pendingOrders
@@ -118,7 +119,15 @@ const OrderHistory = () => {
   }, [payload.userId]);
 
   const toggleOrderDetails = (orderId) => {
-    setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
+    const nextId = expandedOrderId === orderId ? null : orderId;
+    setExpandedOrderId(nextId);
+  
+    // Scroll into view after expansion
+    setTimeout(() => {
+      if (nextId && detailRefs.current[nextId]) {
+        detailRefs.current[nextId].scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 300); // allow animation to start before scrolling
   };
 
   const filteredOrders = orders.filter(order => {
@@ -257,8 +266,8 @@ const OrderHistory = () => {
             <FiDollarSign />
           </div>
           <div className="stat-content">
-            <h3>Total Revenue</h3>
-            <p>{formatCurrency(stats.totalRevenue)}</p>
+            <h3>Total Expenditure</h3>
+            <p>{formatCurrency(stats.totalCost)}</p>
           </div>
         </motion.div>
         <motion.div className="stat-card" variants={itemVariants}>
@@ -405,6 +414,7 @@ const OrderHistory = () => {
                   initial="hidden"
                   animate="visible"
                   exit="exit"
+                  ref={(el) => (detailRefs.current[order.id] = el)}
                 >
                   <td colSpan="8">
                     {renderOrderDetails(order)}
