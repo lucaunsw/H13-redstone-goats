@@ -1,13 +1,24 @@
 .dashboard-sidebar {
-  width: 250px;
-  background: var(--bg-secondary);
-  position: static;
+  width: 280px;
+  background: #121212; /* Dark black background */
+  position: fixed;
   left: 0;
-  top: 80px; 
+  top: 0;
+  bottom: 0;
   padding: 1.5rem 1rem;
-  z-index: 100;
+  z-index: 1000; /* Higher z-index to ensure it stays on top */
   box-sizing: border-box;
   overflow-y: auto;
+  border-right: 1px solid #333; /* Subtle dark border */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3); /* Stronger shadow for depth */
+}
+
+/* Add this to your main content area to push it aside */
+.main-content {
+  margin-left: 280px; /* Same as sidebar width */
+  width: calc(100% - 280px);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-content {
@@ -24,34 +35,43 @@
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   width: 100%;
-  background: #c62828;
+  background: #770202; 
   color: white;
   border: none;
   border-radius: 8px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 5px rgba(198, 40, 40, 0.3);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  margin-bottom: 1rem;
 }
 
 .create-order-button:hover {
-  background: #b71c1c;
+  background: #8b2a2a;
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(198, 40, 40, 0.3);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar-nav {
   flex-grow: 1;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #444 #222;
 }
-  
-  /* Rest of your sidebar styles remain the same */
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background-color: #444;
+  border-radius: 3px;
+}
 
 .sidebar-nav ul {
   list-style: none;
   padding: 0;
-  margin-bottom: 2rem;
-  margin-top: 1rem;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -65,53 +85,99 @@
   gap: 0.75rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: var(--text-secondary);
-  background: transparent;
+  color: #b3b3b3; /* Light gray text */
 }
 
 .sidebar-nav ul li:hover {
-  background: rgba(198, 40, 40, 0.1);
-  color: var(--text-primary);
+  background: #2a2a2a; /* Slightly lighter black */
+  color: #ffffff;
 }
 
 .sidebar-nav ul li.active {
-  background: rgba(198, 40, 40, 0.15);
-  color: var(--primary);
+  background: #333; /* Even lighter for active state */
+  color: #ffffff;
   font-weight: 500;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-.dashboard-sidebar {
-  width: 200px;
-  padding: 1rem 0.75rem;
-}
-
-.dashboard-content {
-  margin-left: 200px;
-  width: calc(100% - 200px);
-}
-
-.create-order-button {
-  padding: 0.6rem;
-  font-size: 0.9rem;
-}
-
-.sidebar-nav ul li {
-    padding: 0.6rem;
-    font-size: 0.9rem;
-  }
+.sidebar-nav ul li.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  height: 20px;
+  width: 3px;
+  background: #ff4757; /* Matching button color */
+  border-radius: 0 3px 3px 0;
 }
 
 .sidebar-section {
-  margin-bottom: 0.2rem;
+  margin-bottom: 1.5rem;
 }
 
 .section-title {
   color: #666;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   padding: 0 1rem;
+  font-weight: 600;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 992px) {
+  .dashboard-sidebar {
+    transform: translateX(-100%);
+  }
+  
+  .dashboard-sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.5);
+  }
+  
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .sidebar-open .main-content {
+    margin-left: 280px;
+    width: calc(100% - 280px);
+  }
+}
+
+/* Add this for a smooth overlay effect on mobile */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-open .sidebar-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Logo/Image Styles */
+.sidebar-logo-container {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #333;
+  text-align: center;
+}
+
+.sidebar-logo {
+  max-width: 180px;
+  height: auto;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-logo:hover {
+  transform: scale(1.05);
 }

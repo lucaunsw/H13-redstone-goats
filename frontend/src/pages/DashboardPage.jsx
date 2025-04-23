@@ -53,48 +53,48 @@ const DashboardPage = () => {
         <main className="dashboard-main">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
-            <>
+            <div class = "main-content">
               <Overview />
-            </>
+            </div>
           )}
 
           {/* Create Order Tab */}
           {activeTab === 'create' && (
-            <>
+            <div class = "main-content">
               <CreateOrderForm orderItem={orderItem}/>
-            </>
+            </div>
           )}
           {/* Create Order Tab */}
           {activeTab === 'item' && (
-            <>
+            <div class = "main-content">
               <AddItems />
-            </>
+            </div>
           )}
 
           {/* Order History Tab */}
           {activeTab === 'orders' && (
-            <>
+            <div class = "main-content">
               <OrderHistory />
-            </>
+            </div>
           )}
 
           {/* Order Sales Tab */}
           {activeTab === 'sales' && (
-            <>
+            <div class = "main-content">
               <OrderSales />
-            </>
+            </div>
           )}
           {/* Order History Tab */}
           {activeTab === 'recommendations' && (
-            <>
+            <div class = "main-content">
               <OrderRecommendations />
-            </>
+            </div>
           )}
           {/* Order Confirm Tab */}
           {activeTab === 'confirm' && (
-            <>
+            <div class = "main-content">
               <OrderConfirm />
-            </>
+            </div>
           )}
         </main>
       </div>
