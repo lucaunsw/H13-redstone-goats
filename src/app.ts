@@ -481,8 +481,8 @@ async function renderXML (orderId: number) {
   if (!xmlDocument) {
     throw new Error('Invalid orderId entered');
   }
-  console.log(xmlDocument);
-  return xmlDocument;
+
+  return {xmlDocument};
 }
 
 export { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory, userItemAdd, getOrderDetails, getItemDetails, getAllItemDetails, renderXML };
