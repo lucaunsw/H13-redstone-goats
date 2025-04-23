@@ -5,7 +5,7 @@ import { generateUBL, v2generateUBL, userExists, v2userExists, validItemList,
 import { getUserV1, addOrderV1, getOrderV1, updateOrderV1, 
   addOrderXMLV1, getOrderXMLV1, getItemSellerSalesV1,
   getItemBuyerRecommendationsV1, getPopularItemsV1, 
-  getOrdersByBuyerV1, getAllUsersV1, getItemsBySellerV1
+  getOrdersByBuyerV1, getAllUsersV1, getItemsBySellerV1, getLatestOrderXMLV1
  } from './dataStoreV1'
 
 import {
@@ -469,4 +469,20 @@ async function getAllItemDetails (userId: number) {
   return items;
 }
 
-export { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory, userItemAdd, getOrderDetails, getItemDetails, getAllItemDetails };
+/**
+ * Retrieve the xml string for an order, given an orderId.
+ *
+ * @param orderId - This function has no parameters.
+ * @returns {string} xml - string containing the XML document to be returned.
+ */
+async function renderXML (orderId: number) {
+
+  const xmlDocument = await getLatestOrderXMLV1(orderId);
+  if (!xmlDocument) {
+    throw new Error('Invalid orderId entered');
+  }
+
+  return {xmlDocument};
+}
+
+export { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, orderRecommendations, orderHistory, userItemAdd, getOrderDetails, getItemDetails, getAllItemDetails, renderXML };

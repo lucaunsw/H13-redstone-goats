@@ -733,6 +733,39 @@ paths:
                     type: string
                     example: "Error Message Here"
 
+  /v1/order/{orderId}/XML/render:
+    get:
+      summary: Finds and returns an XML string given an orderId.
+      description: Finds and returns the corresponding XML string for an order.
+      tags:
+        - "Buyer Routes"
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: XML string retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  xmlDocument:
+                    type: string
+        '400':
+          description: Bad request from client e.g invalid orderId.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Error:
+                    type: string
+                    example: "Error Message Here"
+
   /v2/order/create:
     post:
       summary: Creates an order and produces a UBL XML document.

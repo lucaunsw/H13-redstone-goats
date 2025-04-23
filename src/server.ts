@@ -2,7 +2,7 @@ import express from "express";
 import { Request, Response, NextFunction } from "express";
 import { orderCreate, v2orderCreate, orderCancel, orderConfirm, orderUserSales, 
   orderRecommendations, orderHistory, userItemAdd, getOrderDetails, getItemDetails,
-  getAllItemDetails} from "./app";
+  getAllItemDetails, renderXML} from "./app";
 import config from "./config.json";
 import cors from "cors";
 import morgan from "morgan";
@@ -377,6 +377,18 @@ app.get("/v1/:userId/item/all/details", async (req: Request, res: Response) => {
   } catch (error) {
     const e = error as Error;
     res.status(ErrKind.ENOTOKEN).json({ error: e.message });
+  }
+});
+
+// Route to retrieve an orderXML given an orderId.
+app.get("/v1/order/:orderId/XML/render", async (req: Request, res: Response) => {
+  const orderId = Number(req.params.orderId);
+  try {
+    const result = await renderXML(orderId);
+    res.status(200).json(result);
+  } catch (error) {
+    const e = error as Error;
+    res.status(ErrKind.EINVALID).json({ error: e.message });
   }
 });
 
