@@ -9,6 +9,7 @@ import {
   FiCheckCircle
 } from 'react-icons/fi';
 import '../styles/DashboardSideBar.css';
+import logo from '../assets/logo.png'; // Adjust the path to your logo/image
 
 const DashboardSidebar = ({ activeTab, setActiveTab }) => {
   return (
@@ -19,6 +20,15 @@ const DashboardSidebar = ({ activeTab, setActiveTab }) => {
       animate="visible"
     >
       <div className="sidebar-content">
+        {/* Logo/Image Section */}
+        <div className="sidebar-logo-container">
+          <img 
+            src={logo} 
+            alt="Company Logo" 
+            className="sidebar-logo"
+            onClick={() => setActiveTab('overview')} // Optional: make logo clickable
+          />
+        </div>
         
         {/* Overview Section */}
         <div className="sidebar-section">
@@ -34,15 +44,12 @@ const DashboardSidebar = ({ activeTab, setActiveTab }) => {
           </nav>
         </div>
 
-        
-
-
         {/* Seller Section */}
         <div className="sidebar-section">
           <h3 className="section-title">Seller Tools</h3>
           <button 
-          className="create-order-button"
-          onClick={() => setActiveTab('item')}
+            className="create-order-button"
+            onClick={() => setActiveTab('item')}
           >
             <FiPlus /> Sell Items
           </button>
@@ -62,8 +69,8 @@ const DashboardSidebar = ({ activeTab, setActiveTab }) => {
         <div className="sidebar-section">
           <h3 className="section-title">Buyer Tools</h3>
           <button 
-          className="create-order-button"
-          onClick={() => setActiveTab('create')}
+            className="create-order-button"
+            onClick={() => setActiveTab('create')}
           >
             <FiPlus /> Create Order
           </button>
@@ -82,14 +89,12 @@ const DashboardSidebar = ({ activeTab, setActiveTab }) => {
               >
                 <FiPackage /> Order History
               </li>
-              
               <li 
                 className={activeTab === 'recommendations' ? 'active' : ''}
                 onClick={() => setActiveTab('recommendations')}
               >
                 <FiHelpCircle /> Order Recommendations
               </li>
-              
             </ul>
           </nav>
         </div>
