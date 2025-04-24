@@ -349,22 +349,22 @@ const CreateOrderForm = ({ orderItem }) => {
       // );    
 
       const login = await axios.post(
-        `http://sushi-invoice-application.ap-southeast-2.elasticbeanstalk.com/v1/users/login`,
+        `/api/proxy/v1/users/login`, // Use the proxy API path here
         {
           email: 'TestUser@gmail.com',
-          password: 'ThisIsATest1234!'
+          password: 'ThisIsATest1234!',
         },
         {
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
         }
       );
-
+      
       const tempToken = login.data.data.token;
-
+      
       document.cookie = `token=${login.data.data.token}; path=/; samesite=strict`;
-
+      
       const orderData2 = {
         // invoiceId: "AUTO-GENERATED-ID", // Optional or generated server-side
         invoice: {
@@ -376,58 +376,57 @@ const CreateOrderForm = ({ orderItem }) => {
             calculateTotal(formData.items, formData.quantities) *
             (formData.taxAmount / 100)
           ).toFixed(2),
-          currency: "AUD",
+          currency: 'AUD',
           issueDate: new Date().toISOString().split('T')[0], // e.g., "2025-04-23"
           dueDate: formData.delivery.endDate,
-        
+      
           items: formData.items.map(item => ({
             name: item.name,
             count: item.quantity,
-            cost: item.cost
+            cost: item.cost,
           })),
-        
+      
           buyerAddress: {
             street: formData.buyer.streetName,
-            country: formData.buyer.countryCode
+            country: formData.buyer.countryCode,
           },
           buyerEmail: formData.buyer.email,
           buyerPhone: formData.buyer.phone,
-        
+      
           supplierAddress: {
             street: formData.supplier.supplierAddress.street,
-            country: formData.supplier.supplierAddress.country
+            country: formData.supplier.supplierAddress.country,
           },
           supplierEmail: formData.supplier.email,
           supplierPhone: formData.supplier.phone,
-        
+      
           paymentAccountId: formData.paymentAccountId,
           paymentAccountName: formData.paymentAccountName,
-          financialInstitutionBranchId: formData.financialInstitutionBranch
+          financialInstitutionBranchId: formData.financialInstitutionBranch,
         },
       };
       
-
-      const response2 = await axios.post('http://sushi-invoice-application.ap-southeast-2.elasticbeanstalk.com/v2/invoices/create', orderData2, {
+      const response2 = await axios.post('/api/proxy/v2/invoices/create', orderData2, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tempToken}`
-        }       
+          'Authorization': `Bearer ${tempToken}`,
+        },
       });
-
+      
       console.log(response2.data.invoiceId);
-
-      const schema = { 
-        schemas: ["peppol"] 
+      
+      const schema = {
+        schemas: ['peppol'],
       };
       
       await axios.post(
-        `http://sushi-invoice-application.ap-southeast-2.elasticbeanstalk.com/v2/invoices/${response2.data.invoiceId}/validate`,
+        `/api/proxy/v2/invoices/${response2.data.invoiceId}/validate`,
         schema,
         {
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${tempToken}`
-          }
+            'Authorization': `Bearer ${tempToken}`,
+          },
         }
       );
       
