@@ -63,6 +63,8 @@ const RegisterPage = () => {
       );      
       
       if (response.data.token) {
+        const token = response.data.token;
+        document.cookie = `token=${token}; path=/; samesite=strict`;
         localStorage.setItem('authToken', response.data.token);
         navigate('/dashboard');
       } else {

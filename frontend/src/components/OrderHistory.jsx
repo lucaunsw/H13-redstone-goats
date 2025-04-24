@@ -121,13 +121,11 @@ const OrderHistory = () => {
   const toggleOrderDetails = (orderId) => {
     const nextId = expandedOrderId === orderId ? null : orderId;
     setExpandedOrderId(nextId);
-  
-    // Scroll into view after expansion
     setTimeout(() => {
       if (nextId && detailRefs.current[nextId]) {
         detailRefs.current[nextId].scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    }, 300); // allow animation to start before scrolling
+    }, 300); 
   };
 
   const filteredOrders = orders.filter(order => {
@@ -266,7 +264,7 @@ const OrderHistory = () => {
             <FiDollarSign />
           </div>
           <div className="stat-content">
-            <h3>Total Expenditure</h3>
+            <h3>Total Expense</h3>
             <p>{formatCurrency(stats.totalCost)}</p>
           </div>
         </motion.div>
@@ -275,7 +273,7 @@ const OrderHistory = () => {
             <FiCheckCircle />
           </div>
           <div className="stat-content">
-            <h3>confirmed</h3>
+            <h3>Confirmed</h3>
             <p>{stats.confirmedOrders}</p>
           </div>
         </motion.div>

@@ -47,6 +47,8 @@ const Login = () => {
 
       // Handle successful login
       const token = response.data.token;
+
+      document.cookie = `token=${token}; path=/; samesite=strict`;
       
       // Store token securely
       localStorage.setItem('authToken', token); 

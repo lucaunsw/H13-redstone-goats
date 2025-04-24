@@ -35,6 +35,14 @@
     height: 2px;
     background: #c62828;
   }
+  .form-section p {
+    color: #888686;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    position: relative;
+    padding-bottom: 0.5rem;
+    font-style: italic;
+  }
   
   .section-header {
     display: flex;
@@ -423,43 +431,17 @@ input[type="text"][placeholder="MM/YY"] {
 .select-group select option:checked,
 .select-group select option:hover {
   background: linear-gradient(#a820086c, #a820086c);
-  background-color: #a820086c !important; 
+  background-color: #770202 !important; 
   color: white !important;
 }
 
 /* Style for dropdown options on hover */
 .select-group option:hover {
-  background-color: #a820086c; 
-  color: white;
-}
-
-/* For Firefox */
-.select-group option:checked {
-  background-color: #a820086c; 
+  background-color: #bbb; 
   color: white;
 }
 
 
-/* Dark mode compatibility */
-@media (prefers-color-scheme: dark) {
-  .select-group select {
-    background-color: #2d2d2d;
-    color: #fff;
-    border-color: #444;
-  }
-  
-  .select-group::after {
-    color: #aaa;
-  }
-  
-  .select-group select:hover {
-    border-color: #666;
-  }
-  
-  .select-group select:disabled {
-    background-color: #333;
-  }
-}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {

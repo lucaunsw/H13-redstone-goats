@@ -19,6 +19,17 @@ const CreateOrderForm = ({ orderItem }) => {
       postalZone: '',
       countryCode: ''
     },
+
+    // Supplier Details
+    supplier: {
+      name: '',
+      email: '',
+      phone: '',
+      supplierAddress: {
+        street: '',
+        country: '',
+      }
+    },
     
     // Billing Details (added to match backend requirements)
     billingDetails: {
@@ -320,16 +331,119 @@ const CreateOrderForm = ({ orderItem }) => {
       });
 
       console.log(response.data);
+
+      // await axios.post(
+      //   `http://sushi-invoice-application.ap-southeast-2.elasticbeanstalk.com/v1/users/register`,
+        
+      //   {
+      //     email: 'TestUser@gmail.com',
+      //     name: 'Test User',
+      //     password: 'ThisIsATest1234!',
+      //   },
+      //   {
+      //     headers: {
+      //       'Content-Type': 'application/json',
+      //       'Accept': 'application/json'
+      //     }
+      //   }
+      // );    
+
+      const login = await axios.post(
+        `http://sushi-invoice-application.ap-southeast-2.elasticbeanstalk.com/v1/users/login`,
+        {
+          email: 'TestUser@gmail.com',
+          password: 'ThisIsATest1234!'
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          },
+        }
+      );
+
+      const tempToken = login.data.data.token;
+
+      document.cookie = `token=${login.data.data.token}; path=/; samesite=strict`;
+
+      const orderData2 = {
+        // invoiceId: "AUTO-GENERATED-ID", // Optional or generated server-side
+        invoice: {
+          supplier: formData.supplier.name,
+          buyer: formData.buyer.name.trim(),
+          total: calculateTotal(formData.items, formData.quantities),
+          taxRate: formData.taxAmount,
+          taxTotal: (
+            calculateTotal(formData.items, formData.quantities) *
+            (formData.taxAmount / 100)
+          ).toFixed(2),
+          currency: "AUD",
+          issueDate: new Date().toISOString().split('T')[0], // e.g., "2025-04-23"
+          dueDate: formData.delivery.endDate,
+        
+          items: formData.items.map(item => ({
+            name: item.name,
+            count: item.quantity,
+            cost: item.cost
+          })),
+        
+          buyerAddress: {
+            street: formData.buyer.streetName,
+            country: formData.buyer.countryCode
+          },
+          buyerEmail: formData.buyer.email,
+          buyerPhone: formData.buyer.phone,
+        
+          supplierAddress: {
+            street: formData.supplier.supplierAddress.street,
+            country: formData.supplier.supplierAddress.country
+          },
+          supplierEmail: formData.supplier.email,
+          supplierPhone: formData.supplier.phone,
+        
+          paymentAccountId: formData.paymentAccountId,
+          paymentAccountName: formData.paymentAccountName,
+          financialInstitutionBranchId: formData.financialInstitutionBranch
+        },
+      };
+      
+
+      const response2 = await axios.post('http://sushi-invoice-application.ap-southeast-2.elasticbeanstalk.com/v2/invoices/create', orderData2, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${tempToken}`
+        }       
+      });
+
+      console.log(response2.data.invoiceId);
+
+      const schema = { 
+        schemas: ["peppol"] 
+      };
+      
+      await axios.post(
+        `http://sushi-invoice-application.ap-southeast-2.elasticbeanstalk.com/v2/invoices/${response2.data.invoiceId}/validate`,
+        schema,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${tempToken}`
+          }
+        }
+      );
       
       if (response.data?.orderId) {
         const orderId = response.data.orderId;
-        setSuccessMessage('Order created! OrderId: ' + orderId);
+        setSuccessMessage('Order has been sucessfully validated and created! OrderId: ' + orderId);
         setTimeout(() => setSuccessMessage(''), 5000);
       }
       
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.error || 'Failed to create order');
+        if (err.response?.config?.url?.includes('http://sushi-invoice-application.ap-southeast-2.elasticbeanstalk.com/v2/invoices/create')) {
+          setError(err.response?.data?.error || 'Failed to create and validate order');
+        } else {
+          setError(err.response?.data?.error || 'Failed to create and validate order');
+        }
       } else {
         setError('An unexpected error occurred');
       }
@@ -337,6 +451,8 @@ const CreateOrderForm = ({ orderItem }) => {
       setIsSubmitting(false);
     }
   };
+
+  
 
   const ConfirmationDialog = ({ 
     isOpen, 
@@ -389,6 +505,7 @@ const CreateOrderForm = ({ orderItem }) => {
     >
       {/* Buyer Information Section */}
       <div className="form-section">
+        <p>All Orders are validated against UBL-XML Australian and New Zealand PEPPOL Standards.</p>
         <h3>Buyer Information</h3>
         <div className="form-grid">
         <div className="form-group">
@@ -631,6 +748,59 @@ const CreateOrderForm = ({ orderItem }) => {
           </div>
         ))}
       </div>
+
+      <div className="form-section">
+        <h3>Supplier Information</h3>
+        <div className="form-grid">
+          <div className="form-group">
+            <label>Name</label>
+            <input
+              type="text"
+              value={formData.supplier.name}
+              onChange={(e) => handleInputChange('supplier.name', e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="text"
+              value={formData.supplier.email}
+              onChange={(e) => handleInputChange('supplier.email', e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Phone</label>
+            <input
+              type="text"
+              value={formData.supplier.phone}
+              onChange={(e) => handleInputChange('supplier.phone', e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Address Line</label>
+            <input
+              type="text"
+              value={formData.supplier.supplierAddress.street}
+              onChange={(e) => handleInputChange('supplier.supplierAddress.street', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Country Code (ISO)</label>
+            <input
+              type="text"
+              value={formData.supplier.supplierAddress.country}
+              onChange={(e) => handleInputChange('supplier.supplierAddress.country', e.target.value)}
+              required
+              maxLength="2"
+              placeholder="e.g., US, GB, DE"
+            />
+          </div>
+        </div>
+      </div>
+
 
       <div className="form-section">
         <h3>Delivery Information</h3>
