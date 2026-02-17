@@ -1,3 +1,4 @@
+-- Active: 1771305710451@@redstone-postgres.cbcse2moaurb.ap-southeast-2.rds.amazonaws.com@5432@postgres
 -- Create schema:
 -----------------
 CREATE TABLE Users (

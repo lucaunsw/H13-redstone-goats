@@ -89,7 +89,7 @@ async function connectRedis() {
 }
 
 // Call the function
-connectRedis();
+// connectRedis(); // Temporarily disabled - Redis service is down
 
 // ===========================================================================
 // ============================= VERCEL HANDLER ==============================

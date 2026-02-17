@@ -10,14 +10,14 @@
                 }
             },
             "previewLimit": 50,
-            "server": "redstone-postgres.cwc3grcl9mtw.us-east-1.rds.amazonaws.com",
+            "server": "redstone-postgres.cbcse2moaurb.ap-southeast-2.rds.amazonaws.com",
             "port": 5432,
             "driver": "PostgreSQL",
             "name": "PostgreSQL - Redstone",
             "username": "postgredstone",
             "database": "postgres",
             "connectionTimeout": 30,
-            "password": "Q9!Y69TOY)su",
+            "password": "redstonegoats1234",
             "group": "PostgreSQL - Redstone"
         }
     ]
