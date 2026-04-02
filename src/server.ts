@@ -68,7 +68,7 @@ export const redisClient = createClient({
     username: 'default',
     password: process.env.REDIS_PASSWORD,
     socket: {
-        host: 'redis-13657.c326.us-east-1-3.ec2.redns.redis-cloud.com',
+        host: 'redis-13657.c326.us-east-1-3.ec2.cloud.redislabs.com',
         port: 13657
     }
 });
@@ -80,15 +80,14 @@ async function connectRedis() {
     if (!redisClient.isOpen) {
       await redisClient.connect();
     }
-    await redisClient.set('foo', 'bar');
-    const result = await redisClient.get('foo');
+    console.log('Redis connected');
   } catch (err) {
     console.error('❌ Redis connection failed:', err);
   }
 }
 
 // Call the function
-// connectRedis(); // Temporarily disabled - Redis service is down
+connectRedis();
 
 // ===========================================================================
 // ============================= VERCEL HANDLER ==============================
@@ -105,11 +104,16 @@ export default (req: VercelRequest, res: VercelResponse) => {
 
 //Custom middleware for JWT
 const jwtMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const token = req.header('Authorization')?.split(' ')[1];
+  const token = req.header('Authorization')?.split(' ')[1];
 
-    if (!token) {
-      return next(); // No token, continue
+  if (!token) {
+    return next(); // No token, continue
+  }
+
+  try {
+    // Ensure redis is connected before blacklist checks.
+    if (!redisClient.isOpen) {
+      await redisClient.connect();
     }
 
     // Check if token is blacklisted in Redis
@@ -119,10 +123,16 @@ const jwtMiddleware = async (req: Request, res: Response, next: NextFunction): P
       return 
     }
 
+  } catch (error) {
+    console.error('Redis auth check failed:', error);
+    res.status(500).json({ error: 'Token validation unavailable (redis connection failed)' });
+    return 
+  }
+
+  try {
     // Verify and decode the token
     const decoded: any = jwt.verify(token, JWT_SECRET);
     req.body.token = decoded.userId; // Attach userId from JWT payload
-
     next(); // Continue to the next middleware/route
   } catch (error) {
     res.status(ErrKind.ENOTOKEN).json({ error: 'Token is not valid or expired' });  // Send response and exit
