@@ -1,6 +1,6 @@
 import request from 'sync-request-curl';
 import config from '../config.json';
-import { HttpVerb, Options, Response } from 'sync-request-curl/dist/cjs/types';
+import type { HttpVerb, Options, Response } from 'sync-request-curl';
 import { EmptyObj, SessionId, UserV1, OrderV1 } from '../types';
 
 const port = config.port;

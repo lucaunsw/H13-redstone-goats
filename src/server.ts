@@ -11,7 +11,6 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv'; 
 import { createClient } from 'redis';
 import swaggerUi from 'swagger-ui-express';
-import YAML from 'yamljs';
 import path from 'path';
 import fs from 'fs';
 import yaml from 'js-yaml';
